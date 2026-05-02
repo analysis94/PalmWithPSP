@@ -429,48 +429,66 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 <input type="file" id="geo-input" accept=".geojson,.json,.csv" style="display:none" onchange="loadGeo(this)">
 
 <!-- ══════════════════════════════════════════════════════════
-     SERVICE WORKER 등록 + PWA 설치 프롬프트
-     manifest.json / icon-192.png / icon-512.png / screenshot.png
-     은 별도 파일로 분리되어 GitHub Pages에서 실제 URL로 제공됨
+     SERVICE WORKER 등록 + PWA 고급 기능 초기화
+     sw.js / manifest.json / icon-*.png / screenshot*.png
+     은 별도 파일로 분리 → GitHub Pages에서 실제 URL로 제공
 ═══════════════════════════════════════════════════════════ -->
 <script>
 (function() {
-  // ── Service Worker 등록 ───────────────────────────────────────────────
   if (!('serviceWorker' in navigator)) return;
 
-  // sw.js 파일이 같은 폴더에 있을 경우 등록
-  // GitHub Pages 배포 후에는 /sw.js 로 자동 찾음
+  // ── sw.js 등록 ──────────────────────────────────────────────
   navigator.serviceWorker.register('./sw.js')
-    .then(reg => reg.update())
-    .catch(() => {
-      // sw.js 없을 때 (로컬 file:// 실행 시) Blob SW로 폴백
-      const swCode = `
-const CACHE = 'palmmap-v7';
-self.addEventListener('install', e => { self.skipWaiting(); });
-self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(ks =>
-    Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))
-  ).then(()=>self.clients.claim()));
-});
-self.addEventListener('fetch', e => {
-  if(!e.request.url.startsWith('http')||e.request.method!=='GET') return;
-  e.respondWith(caches.open(CACHE).then(cache=>
-    cache.match(e.request).then(hit=>{
-      const net=fetch(e.request).then(res=>{
-        if(res&&res.ok&&res.type!=='opaque') cache.put(e.request,res.clone());
-        return res;
-      }).catch(()=>hit||new Response('Offline',{status:503}));
-      return hit||net;
+    .then(async reg => {
+      reg.update();
+
+      // SW 메시지 수신 (sync 완료 알림 등)
+      navigator.serviceWorker.addEventListener('message', e => {
+        const { type } = e.data || {};
+        if (type === 'SYNC_MEMOS')   console.log('[App] Memos synced');
+        if (type === 'SYNC_TRACKS')  console.log('[App] Tracks synced');
+        if (type === 'MAP_DATA_UPDATED') console.log('[App] Map data updated');
+      });
+
+      // ── Periodic Background Sync 등록 ───────────────────────
+      if ('periodicSync' in reg) {
+        try {
+          const status = await navigator.permissions.query({ name: 'periodic-background-sync' });
+          if (status.state === 'granted') {
+            await reg.periodicSync.register('update-map-data', {
+              minInterval: 24 * 60 * 60 * 1000 // 24시간마다
+            });
+          }
+        } catch (e) { /* 미지원 브라우저 무시 */ }
+      }
     })
-  ));
-});
-`;
-      const blob = new Blob([swCode], {type:'application/javascript'});
-      navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+    .catch(() => {
+      // file:// 로컬 실행 시 Blob SW 폴백
+      const c = `const C='palmmap-v8';
+self.addEventListener('install',e=>{self.skipWaiting();});
+self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
+self.addEventListener('fetch',e=>{if(!e.request.url.startsWith('http')||e.request.method!=='GET')return;e.respondWith(caches.open(C).then(cache=>cache.match(e.request).then(hit=>{const net=fetch(e.request).then(res=>{if(res&&res.ok&&res.type!=='opaque')cache.put(e.request,res.clone());return res;}).catch(()=>hit||new Response('Offline',{status:503}));return hit||net;})));});`;
+      navigator.serviceWorker.register(URL.createObjectURL(new Blob([c],{type:'application/javascript'}))).catch(()=>{});
     });
+
+  // ── Background Sync 헬퍼 (앱에서 호출) ─────────────────────
+  window.requestBackgroundSync = async (tag = 'sync-memos') => {
+    const reg = await navigator.serviceWorker.ready;
+    if ('sync' in reg) {
+      try { await reg.sync.register(tag); } catch (e) {}
+    }
+  };
+
+  // ── Push 알림 권한 요청 헬퍼 ────────────────────────────────
+  window.requestPushPermission = async () => {
+    if (!('Notification' in window)) return false;
+    if (Notification.permission === 'granted') return true;
+    const result = await Notification.requestPermission();
+    return result === 'granted';
+  };
 })();
 
-// ── PWA 설치 프롬프트 ─────────────────────────────────────────────────────
+// ── PWA 설치 프롬프트 ────────────────────────────────────────
 let deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();

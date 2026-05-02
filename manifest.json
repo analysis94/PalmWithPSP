@@ -8,7 +8,9 @@
   "display": "standalone",
   "display_override": [
     "standalone",
-    "minimal-ui"
+    "minimal-ui",
+    "window-controls-overlay",
+    "tabbed"
   ],
   "orientation": "any",
   "background_color": "#0f1a0f",
@@ -20,9 +22,16 @@
     "utilities",
     "navigation"
   ],
+  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
   "prefer_related_applications": false,
-  "related_applications": [],
-  "iarc_rating_id": "",
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://palmfarmmap.github.io/palm-farm-app/manifest.json",
+      "id": "palm.farm.fieldmap"
+    }
+  ],
+  "scope_extensions": [],
   "icons": [
     {
       "src": "icon-192.png",
@@ -55,15 +64,34 @@
       "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Palm Farm Field Map — GIS map with GPS tracking"
+      "label": "Palm Farm Field Map — GPS tracking on mobile"
+    },
+    {
+      "src": "screenshot-wide.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Palm Farm Field Map — Desktop view"
     }
   ],
   "shortcuts": [
     {
       "name": "지도 열기",
       "short_name": "지도",
-      "description": "Palm Farm Field Map 열기",
+      "description": "GIS 팜 농장 지도 열기",
       "url": "./index.html",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "메모 목록",
+      "short_name": "메모",
+      "description": "현장 메모 목록 보기",
+      "url": "./index.html#memos",
       "icons": [
         {
           "src": "icon-192.png",
@@ -72,7 +100,85 @@
       ]
     }
   ],
+  "file_handlers": [
+    {
+      "action": "./index.html",
+      "accept": {
+        "application/pdf": [
+          ".pdf"
+        ],
+        "application/geo+json": [
+          ".geojson"
+        ],
+        "application/json": [
+          ".json"
+        ],
+        "text/csv": [
+          ".csv"
+        ]
+      }
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+palmmap",
+      "url": "./index.html?action=%s"
+    }
+  ],
+  "share_target": {
+    "action": "./index.html",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "mapfile",
+          "accept": [
+            "application/pdf",
+            ".geojson",
+            ".json",
+            ".csv"
+          ]
+        }
+      ]
+    }
+  },
   "launch_handler": {
     "client_mode": "focus-existing"
+  },
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "widgets": [
+    {
+      "name": "Palm Farm GPS",
+      "description": "현재 GPS 위치 표시",
+      "tag": "gps-widget",
+      "template": "generic-icon",
+      "ms_ac_template": "widgets/gps-widget.json",
+      "data": "widgets/gps-data.json",
+      "type": "application/json",
+      "screenshots": [
+        {
+          "src": "screenshot.png",
+          "sizes": "390x844",
+          "label": "GPS Widget"
+        }
+      ],
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ],
+      "auth": false,
+      "update": 3600
+    }
+  ],
+  "note_taking": {
+    "new_note_url": "./index.html?action=new-memo"
   }
 }
