@@ -289,6 +289,42 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
   display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s; }
 #fs-btn:active { border-color:var(--border2);color:var(--green2); }
 
+/* ══ 지도 슬롯 선택기 ══ */
+#map-switcher{position:absolute;top:50px;left:0;right:0;background:var(--bg2);border-bottom:.5px solid var(--border);z-index:110;display:none;padding:6px 8px;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+#map-switcher.show{display:flex;gap:6px;align-items:center}
+.map-slot{display:inline-flex;flex-direction:column;align-items:center;min-width:72px;max-width:90px;background:var(--bg3);border:.5px solid var(--border);border-radius:8px;padding:6px 6px 4px;cursor:pointer;position:relative;flex-shrink:0;transition:.15s}
+.map-slot:active,.map-slot.active{border-color:var(--green);background:var(--gdim)}
+.map-slot-icon{font-size:20px;line-height:1}
+.map-slot-name{font-size:9px;color:var(--text2);font-family:var(--mono);margin-top:3px;width:100%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.map-slot-del{position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:var(--red);color:#fff;font-size:10px;display:none;align-items:center;justify-content:center;cursor:pointer;line-height:1;border:1.5px solid var(--bg)}
+.map-slot:hover .map-slot-del{display:flex}
+.map-slot-add{border-style:dashed;color:var(--text3);font-size:22px;line-height:1;padding:10px 14px}
+.map-slot-add:active{border-color:var(--green2);color:var(--green2)}
+#btn-maps{position:relative}
+.maps-badge{position:absolute;top:-4px;right:-4px;width:14px;height:14px;border-radius:50%;background:var(--amber);color:#111;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1}
+
+/* ══ 트랙 목록 패널 ══ */
+.track-item{display:flex;align-items:center;gap:8px;background:var(--panel);border:.5px solid var(--border);border-radius:8px;padding:9px 11px;margin-bottom:6px}
+.track-color-swatch{width:24px;height:10px;border-radius:3px;flex-shrink:0;cursor:pointer}
+.track-item-info{flex:1;min-width:0}
+.track-item-name{font-size:12px;color:var(--text);font-weight:500}
+.track-item-meta{font-size:10px;color:var(--text3);font-family:var(--mono)}
+.track-vis-btn{background:none;border:.5px solid var(--border);color:var(--text3);border-radius:5px;padding:2px 8px;font-size:10px;cursor:pointer}
+.track-vis-btn.on{border-color:var(--green);color:var(--green2)}
+.track-del-btn{background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:2px 4px}
+.track-del-btn:active{color:var(--red)}
+
+/* ══ 메모 핀 드래그 ══ */
+.memo-pin-draggable{cursor:grab;user-select:none}
+.memo-pin-draggable.dragging{cursor:grabbing}
+#memo-drag-hint{position:absolute;bottom:84px;left:50%;transform:translateX(-50%);background:rgba(232,168,74,.9);color:#111;font-size:11px;font-weight:700;padding:7px 16px;border-radius:99px;z-index:300;display:none;white-space:nowrap;pointer-events:none}
+#memo-drag-hint.show{display:block}
+
+/* ══ 트랙 색상 팔레트 ══ */
+.color-palette{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.color-swatch{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:.1s}
+.color-swatch:hover,.color-swatch.sel{border-color:#fff;transform:scale(1.15)}
+
 </style>
 </head>
 <body>
@@ -297,9 +333,9 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 <div id="topbar">
   <div class="logo">🌴 PALM<em> MAP</em></div>
   <div id="ts"></div>
-  <button class="tbtn" onclick="triggerPDF()">
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 11v2h12v-2M8 2v8M5 7l3 3 3-3"/></svg>
-    <span id="t-pdf">PDF</span>
+  <button class="tbtn" id="btn-maps" onclick="toggleMapSwitcher()">
+    🗺 <span id="t-maps">지도</span>
+    <span class="maps-badge" id="maps-badge">0</span>
   </button>
   <button class="tbtn" onclick="openLayerPanel()">
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 5l6-3 6 3-6 3-6-3zM2 9l6 3 6-3M2 13l6 3 6-3"/></svg>
@@ -314,6 +350,16 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 </div>
 
 <!-- MAP AREA -->
+<!-- 지도 슬롯 선택기 -->
+<div id="map-switcher">
+  <!-- JS로 동적 렌더링 -->
+</div>
+
+<div id="map-switcher-overlay" onclick="toggleMapSwitcher()" style="display:none;position:absolute;inset:0;z-index:105;background:rgba(0,0,0,.3)"></div>
+
+<!-- 메모 핀 드래그 안내 -->
+<div id="memo-drag-hint">📍 핀을 손가락으로 드래그해서 위치 조정 → 탭으로 메모 작성</div>
+
 <div id="map-area">
   <div id="map-wrap">
     <canvas id="pdf-canvas"></canvas>
@@ -500,17 +546,39 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 </div>
 
 <!-- ══ TRACK PANEL ══ -->
-<div class="panel panel-bot" id="track-panel">
+<div class="panel panel-bot" id="track-panel" style="max-height:70vh;overflow-y:auto">
   <button class="panel-close" onclick="hidePanel('track-panel')">×</button>
-  <h3 id="t-track-title">🛣️ 트래킹 정보</h3>
-  <div class="trk-row"><span id="t-tpts">포인트 수</span><span id="trk-pts">0</span></div>
-  <div class="trk-row"><span id="t-tdist">거리</span><span id="trk-dist">0 m</span></div>
-  <div class="trk-row"><span id="t-tstart">시작 시간</span><span id="trk-start">—</span></div>
-  <div class="btn-row" style="margin-top:10px">
-    <button class="btn-green" onclick="exportGPX()" id="t-gpx">GPX 내보내기</button>
-    <button class="btn-red" onclick="clearTrack()" id="t-clr">초기화</button>
-    <button class="btn-grey" onclick="hidePanel('track-panel')" id="t-tclose">닫기</button>
+  <h3 id="t-track-title">🛣️ 트랙 관리</h3>
+  <!-- 현재 녹화 중 상태 -->
+  <div id="track-recording-info" style="display:none;background:rgba(255,120,20,.12);border:.5px solid rgba(255,120,20,.4);border-radius:8px;padding:9px 12px;margin-bottom:10px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <div style="width:8px;height:8px;border-radius:50%;background:#ff7814;animation:pulse 1s infinite"></div>
+      <span style="font-size:12px;color:#ff7814;font-weight:700">녹화 중</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+      <div style="font-size:10px;color:var(--text3)">포인트: <span id="trk-pts" style="color:var(--text);font-family:var(--mono)">0</span></div>
+      <div style="font-size:10px;color:var(--text3)">거리: <span id="trk-dist" style="color:var(--text);font-family:var(--mono)">0m</span></div>
+      <div style="font-size:10px;color:var(--text3)">시작: <span id="trk-start" style="color:var(--text);font-family:var(--mono)">—</span></div>
+    </div>
+    <!-- 트랙 색상 선택 -->
+    <div style="font-size:10px;color:var(--text3);margin-top:8px;margin-bottom:4px">트랙 색상:</div>
+    <div class="color-palette" id="track-color-picker">
+      <div class="color-swatch sel" style="background:#ff7814" data-color="#ff7814" onclick="selectTrackColor(this)"></div>
+      <div class="color-swatch" style="background:#ffdd00" data-color="#ffdd00" onclick="selectTrackColor(this)"></div>
+      <div class="color-swatch" style="background:#ff4db8" data-color="#ff4db8" onclick="selectTrackColor(this)"></div>
+      <div class="color-swatch" style="background:#00e5ff" data-color="#00e5ff" onclick="selectTrackColor(this)"></div>
+      <div class="color-swatch" style="background:#a3d46e" data-color="#a3d46e" onclick="selectTrackColor(this)"></div>
+      <div class="color-swatch" style="background:#ffffff" data-color="#ffffff" onclick="selectTrackColor(this)"></div>
+    </div>
+    <div class="btn-row" style="margin-top:8px">
+      <button class="btn-red" onclick="stopAndSaveTrack()" style="flex:1">⏹ 정지 & 저장</button>
+      <button class="btn-grey" onclick="discardTrack()">버리기</button>
+    </div>
   </div>
+  <!-- 저장된 트랙 목록 -->
+  <div style="font-size:11px;color:var(--text3);margin-bottom:8px;font-family:var(--mono)">저장된 트랙</div>
+  <div id="track-list-body"><!-- JS --></div>
+  <button class="btn-grey" onclick="hidePanel('track-panel')" style="width:100%;margin-top:6px">닫기</button>
 </div>
 
 <!-- ══ LAYER POPUP ══ -->
@@ -876,10 +944,25 @@ let scale=1, ox=0, oy=0, cW=0, cH=0;
 const DPR = Math.min(window.devicePixelRatio||1, 2);
 let dragging=false, dsx=0, dsy=0, lastPinch=null;
 let gpsOn=false, watchId=null, curPos=null;
-let trackOn=false, trkPts=[], trkStart=null;
-let memos=[];
 let calibDrawMode=false, calibPts=[];
 let layers=[], selFeat=null;
+
+/* ─── 멀티 지도 슬롯 ─── */
+// MapSlot 구조: { id, name, pdfName, calibPts, layers, geoPDFData,
+//                 tracks:[{id,name,color,visible,pts,startTime,dist}],
+//                 memos:[{id,lat,lon,pinX,pinY,text,date,time,layerName}] }
+let mapSlots = [];       // 최대 10개
+let curMapId = null;     // 현재 활성 지도 ID
+let trackOn=false, trkPts=[], trkStart=null, trkColor='#ff7814';
+
+// 현재 지도의 memos/tracks는 curSlot()에서 직접 읽음
+function curSlot(){ return mapSlots.find(s=>s.id===curMapId)||null; }
+function get_memos(){ return curSlot()?.memos||[]; }
+function get_tracks(){ return curSlot()?.tracks||[]; }
+
+/* ─── 메모 핀 드래그 상태 ─── */
+let pinDragActive=false, pinDragMemoId=null;
+let pinDragX=0, pinDragY=0;
 
 const TYPE_META = {
   estate:  {stroke:'rgba(122,180,80,.85)',  fill:'rgba(122,180,80,.12)',  lw:2.5, ls:14, badgeCls:'b-estate',  lKey:'ly_est'},
@@ -1050,7 +1133,7 @@ function onGPSPos(p){
   document.getElementById('gps-lbl').textContent = T('gps_active');
   document.getElementById('gps-dot').className = 'on';
   if(!gpsOn) setGPSActive(true);
-  if(trackOn) trkPts.push({lat,lon,time:new Date().toISOString()});
+  if(trackOn && curMapId) trkPts.push({lat,lon,time:new Date().toISOString()});
   drawGPS();
   // auto-detect block
   if(calibPts.length>=2){
@@ -1534,134 +1617,8 @@ function centerGPS(){
 /* ─── GPS SVG OVERLAY ─── */
 function mkSVG(tag){ return document.createElementNS('http://www.w3.org/2000/svg',tag); }
 
-function drawGPS(){
-  const svg=document.getElementById('gps-svg'); svg.innerHTML='';
+// drawGPS: see MultiMap engine below
 
-  // Track path
-  if(trkPts.length>=2 && calibPts.length>=2){
-    const pts=trkPts.map(p=>ll2c(p.lat,p.lon)).filter(Boolean);
-    if(pts.length>=2){
-      const pa=mkSVG('path');
-      pa.setAttribute('d','M'+pts.map(p=>p.px+','+p.py).join('L'));
-      pa.setAttribute('class','track-path'); svg.appendChild(pa);
-    }
-  }
-
-  // Calibration markers
-  calibPts.forEach((cp,i)=>{
-    const g=mkSVG('g');
-    const c=mkSVG('circle');
-    c.setAttribute('cx',cp.px); c.setAttribute('cy',cp.py);
-    c.setAttribute('r','8'); c.setAttribute('class','calib-pin');
-    const t=mkSVG('text');
-    t.setAttribute('x',cp.px); t.setAttribute('y',cp.py);
-    t.setAttribute('class','calib-lbl'); t.textContent=i+1;
-    g.appendChild(c); g.appendChild(t); svg.appendChild(g);
-  });
-
-  // Memo pins
-  memos.forEach((m,i)=>{
-    let px=m.px, py=m.py;
-    if(calibPts.length>=2 && m.lat){ const c=ll2c(m.lat,m.lon); if(c){px=c.px;py=c.py;} }
-    const g=mkSVG('g'); g.style.cursor='pointer';
-    const c=mkSVG('circle');
-    c.setAttribute('cx',px); c.setAttribute('cy',py);
-    c.setAttribute('r','11'); c.setAttribute('class','memo-pin');
-    const t=mkSVG('text');
-    t.setAttribute('x',px); t.setAttribute('y',py);
-    t.setAttribute('class','memo-num'); t.textContent=i+1;
-    g.appendChild(c); g.appendChild(t);
-    g.addEventListener('click', e=>{ e.stopPropagation(); toast((i+1)+': '+m.text.substring(0,50)); });
-    svg.appendChild(g);
-  });
-
-  if(!curPos) return;
-  let px, py;
-  if(calibPts.length>=2){ const c=ll2c(curPos.lat,curPos.lon); if(c){px=c.px;py=c.py;} }
-  if(px===undefined){ px=cW/2; py=cH/2; }
-
-  // ── 화면 고정 크기 계산 ──────────────────────────────────────
-  // SVG는 지도와 같은 scale transform을 받으므로,
-  // r = 화면픽셀 / scale  →  화면에서 항상 동일한 크기로 표시됨
-  const S = scale || 1;  // 현재 지도 확대 배율
-
-  // 목표 화면 크기 (CSS px 기준)
-  const CORE_PX  = 6;   // 중심 도트 반지름 (화면 6px)
-  const HALO_PX  = 11;  // 헤일로 반지름 (화면 11px)
-  const ARROW_PX = 16;  // 방향 화살표 거리 (화면 16px)
-
-  // 정확도 링: 실제 미터 거리를 픽셀로 (지도 스케일 반영)
-  // acc(m) / 픽셀당미터수 — 픽셀당 미터: (지도범위m) / (캔버스px)
-  let accR_px = 30 / S;  // 최소 화면 30px 보장
-  if(calibPts.length >= 2 && cW > 0){
-    const latRange = Math.abs(calibPts[1].lat - calibPts[0].lat);
-    const mPerPx = (latRange * 111320) / cH;  // 1픽셀당 미터
-    if(mPerPx > 0) accR_px = Math.min(60/S, Math.max(15/S, curPos.acc / mPerPx));
-  }
-
-  // SVG 좌표계 기준 반지름 (= 화면px / scale)
-  const coreR  = CORE_PX  / S;
-  const haloR  = HALO_PX  / S;
-  const arrowD = ARROW_PX / S;
-  const strokeW = 1.5 / S;  // stroke-width도 역변환
-
-  // ── 정확도 링 ────────────────────────────────────────────────
-  const ar=mkSVG('circle');
-  ar.setAttribute('cx',px); ar.setAttribute('cy',py);
-  ar.setAttribute('r', accR_px);
-  ar.setAttribute('class','acc-ring');
-  ar.setAttribute('stroke-width', 1/S);
-  svg.appendChild(ar);
-
-  // ── 펄스 애니메이션 링 (큰 링) ──────────────────────────────
-  const pulse=mkSVG('circle');
-  pulse.setAttribute('cx',px); pulse.setAttribute('cy',py);
-  pulse.setAttribute('r', haloR*1.8);
-  pulse.setAttribute('class','gps-pulse');
-  pulse.setAttribute('stroke-width', 1/S);
-  svg.appendChild(pulse);
-
-  // ── 헤일로 (반투명 원) ───────────────────────────────────────
-  const ha=mkSVG('circle');
-  ha.setAttribute('cx',px); ha.setAttribute('cy',py);
-  ha.setAttribute('r', haloR);
-  ha.setAttribute('class','gps-halo');
-  svg.appendChild(ha);
-
-  // ── 방향 화살표 (heading) ────────────────────────────────────
-  if(curPos.heading!=null && !isNaN(curPos.heading)){
-    const rad=(curPos.heading-90)*Math.PI/180;
-    const poly=mkSVG('polygon');
-    const ax=px+Math.cos(rad)*arrowD*1.4, ay=py+Math.sin(rad)*arrowD*1.4;
-    const a1x=px+Math.cos(rad-.45)*arrowD*.8, a1y=py+Math.sin(rad-.45)*arrowD*.8;
-    const a2x=px+Math.cos(rad+.45)*arrowD*.8, a2y=py+Math.sin(rad+.45)*arrowD*.8;
-    poly.setAttribute('points', ax+','+ay+' '+a1x+','+a1y+' '+a2x+','+a2y);
-    poly.setAttribute('fill','#ff4db8'); poly.setAttribute('opacity','.8');
-    svg.appendChild(poly);
-  }
-
-  // ── 중심 도트 ────────────────────────────────────────────────
-  const cd=mkSVG('circle');
-  cd.setAttribute('cx',px); cd.setAttribute('cy',py);
-  cd.setAttribute('r', coreR);
-  cd.setAttribute('class','gps-core');
-  cd.setAttribute('stroke-width', strokeW);
-  svg.appendChild(cd);
-
-  // ── 십자선 (정밀 위치 표시) ──────────────────────────────────
-  const crossSize = haloR * 0.7;
-  const crossStroke = 0.8 / S;
-  for(const [dx,dy] of [[-crossSize,0],[crossSize,0],[0,-crossSize],[0,crossSize]]){
-    const line=mkSVG('line');
-    const mid = crossSize * 0.25;
-    line.setAttribute('x1', px + (dx > 0 ? mid : dx < 0 ? -mid : 0));
-    line.setAttribute('y1', py + (dy > 0 ? mid : dy < 0 ? -mid : 0));
-    line.setAttribute('x2', px+dx); line.setAttribute('y2', py+dy);
-    line.setAttribute('stroke','#ff4db8'); line.setAttribute('stroke-width', crossStroke);
-    line.setAttribute('opacity','0.9');
-    svg.appendChild(line);
-  }
-}
 
 /* ─── TRACKING ─── */
 function toggleTrack(){
@@ -1695,7 +1652,8 @@ function calcDist(){
   return Math.round(d);
 }
 
-function exportGPX(){
+// exportGPX: use exportGPXAll
+function exportGPX_legacy(){
   if(trkPts.length<2){ toast(T('gpx_few')); return; }
   const pts=trkPts.map(p=>'    <trkpt lat="'+p.lat+'" lon="'+p.lon+'"><time>'+p.time+'</time></trkpt>').join('\n');
   const gpx='<?xml version="1.0"?>\n<gpx version="1.1" creator="PalmFarmMap">\n  <trk><name>Palm Farm Track</name><trkseg>\n'+pts+'\n  </trkseg></trk>\n</gpx>';
@@ -1705,11 +1663,13 @@ function exportGPX(){
   a.click(); hidePanel('track-panel'); toast(T('gpx_ok'));
 }
 
-function clearTrack(){ trkPts=[]; trkStart=null; drawGPS(); hidePanel('track-panel'); toast(T('track_clr')); }
+function clearTrack(){ trkPts=[]; trkStart=null; drawGPS(); hidePanel('track-panel'); toast(T('track_clr')); } // legacy
 
 /* ─── MEMOS ─── */
-function loadMemos(){ try{ memos=JSON.parse(localStorage.getItem('palmmap_memos')||'[]'); }catch(e){ memos=[]; } }
-function saveMemos(){ localStorage.setItem('palmmap_memos', JSON.stringify(memos)); }
+// loadMemos: defined in MultiMap engine above
+
+// saveMemos: defined in MultiMap engine above
+
 
 /* ─── LAYER PERSISTENCE ─── */
 function saveLayers(){
@@ -1735,30 +1695,11 @@ function loadCalibFromStorage(){
   return false;
 }
 
-function openMemo(pre){
-  document.getElementById('memo-input').value=pre;
-  showPanel('memo-panel');
-  setTimeout(()=>document.getElementById('memo-input').focus(),150);
-}
+// openMemo: defined in MultiMap engine above
 
-function saveMemo(){
-  const txt=document.getElementById('memo-input').value.trim();
-  if(!txt){ toast(T('memo_empty_input')); return; }
-  const now=new Date();
-  memos.push({
-    id:Date.now(),
-    lat: curPos?curPos.lat:0, lon: curPos?curPos.lon:0,
-    px:cW/2, py:cH/2,
-    text: txt,
-    date: now.toLocaleDateString(),
-    time: now.toLocaleTimeString(),
-    layerName: selFeat?.feat?.name || selFeat?.feat?.code || ''
-  });
-  saveMemos();
-  document.getElementById('memo-input').value='';
-  hidePanel('memo-panel');
-  drawGPS(); toast(T('memo_saved'));
-}
+
+// saveMemo: defined in MultiMap engine above
+
 
 function memoFromPop(){
   const f=selFeat?.feat;
@@ -1766,46 +1707,14 @@ function memoFromPop(){
   openMemo(f ? '['+( f.name||f.code||'')+'] ' : '');
 }
 
-function openMemoList(){
-  renderMemoList();
-  document.getElementById('memo-list-panel').classList.add('show');
-}
+// openMemoList: defined in MultiMap engine above
 
-function renderMemoList(){
-  const body=document.getElementById('memo-list-body');
-  if(!memos.length){
-    body.innerHTML='<div class="memo-empty">'+T('memo_none')+'</div>'; return;
-  }
-  // Group by date, newest first
-  const grps={};
-  [...memos].reverse().forEach(m=>{ if(!grps[m.date])grps[m.date]=[]; grps[m.date].push(m); });
-  const dates=Object.keys(grps); // already in reverse order due to reverse() above
 
-  body.innerHTML=dates.map(date=>`
-    <div class="memo-date-group">
-      <div class="memo-date-hdr">📅 ${date} &nbsp; (${grps[date].length})</div>
-      ${grps[date].map(m=>`
-        <div class="memo-item" id="mi-${m.id}">
-          <div class="memo-body">
-            <div class="memo-meta">
-              <span class="memo-time">${m.time||''}</span>
-              ${m.layerName?'<span class="memo-layer-tag">'+escHTML(m.layerName)+'</span>':''}
-            </div>
-            ${m.lat?'<div class="memo-coords">'+m.lat.toFixed(5)+', '+m.lon.toFixed(5)+'</div>':''}
-            <div class="memo-text">${escHTML(m.text)}</div>
-          </div>
-          <button class="memo-del" onclick="delMemo(${m.id})" title="삭제">🗑</button>
-        </div>
-      `).join('')}
-    </div>
-  `).join('');
-}
+// renderMemoList: defined in MultiMap engine above
 
-function delMemo(id){
-  memos=memos.filter(m=>m.id!==id);
-  saveMemos(); drawGPS(); renderMemoList();
-  toast(T('memo_del'));
-}
+
+// delMemo: defined in MultiMap engine above
+
 
 function escHTML(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -1904,19 +1813,7 @@ async function clearPDF(){
 
 function loadPDF(input){
   const file=input.files[0]; if(!file) return;
-  hidePanel('pdf-menu-panel');
-  showLoad(T('load_pdf'));
-  if(window.pdfjsLib){ doPDF(file); }
-  else{
-    const s=document.createElement('script');
-    s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-    s.onload=()=>{
-      pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-      doPDF(file);
-    };
-    s.onerror=()=>{ hideLoad(); toast(T('pdf_err')+' (offline)'); };
-    document.head.appendChild(s);
-  }
+  addMapSlot(file);
   input.value='';
 }
 
@@ -2439,12 +2336,782 @@ window.addEventListener('resize', () => {
   if (pdfDoc) { clamp(); applyTx(); }
 });
 
+
+/* ════════════════════════════════════════════════════════════════
+   멀티 지도 슬롯 엔진
+   ────────────────────────────────────────────────────────────────
+   - 최대 10개 지도 저장 (IndexedDB: PDF blob, localStorage: meta)
+   - 지도별 독립 tracks / memos / calibPts / layers
+   - 트랙: 형광 주황 기본, 색상 선택, 개별 표시/숨김/삭제
+   - 메모 핀: GPS 위치에 생성 후 드래그로 이동
+════════════════════════════════════════════════════════════════ */
+
+// ── 슬롯 데이터 저장/불러오기 ────────────────────────────────
+const SLOT_META_KEY = 'palmmap_slots_meta';
+const MAX_SLOTS = 10;
+
+function saveSlotsMeta(){
+  // PDF blob 제외한 메타만 저장
+  const meta = mapSlots.map(s=>({
+    id:s.id, name:s.name, pdfName:s.pdfName, ts:s.ts,
+    calibPts:s.calibPts, layers:s.layers, geoPDFData:s.geoPDFData,
+    tracks:s.tracks, memos:s.memos
+  }));
+  try{ localStorage.setItem(SLOT_META_KEY, JSON.stringify(meta)); }catch(e){}
+}
+
+function loadSlotsMeta(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(SLOT_META_KEY)||'null');
+    if(saved&&saved.length) mapSlots = saved;
+  }catch(e){ mapSlots=[]; }
+}
+
+// PDF blob은 IndexedDB에 slot별로 저장
+async function savePDFSlot(slotId, arrayBuf, name){
+  try{
+    const db = await openIDB();
+    const tx = db.transaction(IDB_STORE,'readwrite');
+    tx.objectStore(IDB_STORE).put({buf:arrayBuf,name,ts:Date.now()}, 'slot_'+slotId);
+    await new Promise((res,rej)=>{tx.oncomplete=res;tx.onerror=e=>rej(e.target.error);});
+  }catch(e){ console.warn('PDF slot save failed:',e); }
+}
+
+async function loadPDFSlot(slotId){
+  try{
+    const db = await openIDB();
+    const tx = db.transaction(IDB_STORE,'readonly');
+    const req = tx.objectStore(IDB_STORE).get('slot_'+slotId);
+    return await new Promise((res,rej)=>{req.onsuccess=e=>res(e.target.result);req.onerror=e=>rej(e.target.error);});
+  }catch(e){ return null; }
+}
+
+async function deletePDFSlot(slotId){
+  try{
+    const db = await openIDB();
+    const tx = db.transaction(IDB_STORE,'readwrite');
+    tx.objectStore(IDB_STORE).delete('slot_'+slotId);
+  }catch(e){}
+}
+
+// ── 지도 슬롯 생성 ────────────────────────────────────────────
+function createSlot(pdfName){
+  return {
+    id: 'slot_'+Date.now(),
+    name: pdfName.replace(/\.[^.]+$/,'').substring(0,20),
+    pdfName, ts: Date.now(),
+    calibPts:[], layers:[], geoPDFData:null,
+    tracks:[], memos:[]
+  };
+}
+
+// ── 지도 전환 ─────────────────────────────────────────────────
+async function switchToSlot(slotId){
+  if(slotId===curMapId) return;
+
+  // 현재 지도 상태 저장
+  if(curMapId){
+    const cur = curSlot();
+    if(cur){
+      cur.calibPts = calibPts.slice();
+      cur.layers   = JSON.parse(JSON.stringify(layers));
+      cur.geoPDFData = geoPDFData;
+    }
+    saveSlotsMeta();
+  }
+
+  curMapId = slotId;
+  const slot = curSlot();
+  if(!slot){ toast('지도를 찾을 수 없습니다.'); return; }
+
+  showLoad('🗺 지도 불러오는 중...');
+
+  // 상태 복원
+  calibPts   = slot.calibPts || [];
+  layers     = slot.layers   || [];
+  geoPDFData = slot.geoPDFData || null;
+
+  // PDF 복원
+  try{
+    const saved = await loadPDFSlot(slotId);
+    if(saved&&saved.buf){
+      await loadPDFJS();
+      pdfDoc = await pdfjsLib.getDocument({data:saved.buf.slice(0)}).promise;
+      totalPgs=pdfDoc.numPages; curPg=1;
+      await renderPg(1);
+      document.getElementById('empty-state').style.display='none';
+      document.getElementById('page-nav').classList.toggle('show', totalPgs>1);
+      updPgLbl();
+      updatePDFInfoBar(slot.pdfName||slot.name);
+    }
+  }catch(e){ console.warn('Slot PDF load failed:',e); }
+
+  // GeoPDF 재적용
+  if(calibPts.length<2 && pdfDoc){
+    try{ await extractGeoPDFCoords(pdfDoc,cW,cH); }catch(e){}
+  } else if(calibPts.length>=2){
+    drawGPS();
+  }
+
+  renderLayerList();
+  drawLayerSVG();
+  drawGPS();
+  renderMapSwitcher();
+  updateMapBadge();
+  hideLoad();
+  toast('🗺 '+slot.name);
+}
+
+// ── 새 지도 추가 (PDF 로드) ───────────────────────────────────
+async function addMapSlot(file){
+  if(mapSlots.length>=MAX_SLOTS){
+    toast('지도는 최대 '+MAX_SLOTS+'개까지 저장 가능합니다.'); return;
+  }
+  hidePanel('pdf-menu-panel');
+  showLoad(T('load_pdf'));
+
+  // PDF.js 로드
+  if(!window.pdfjsLib){
+    try{ await loadPDFJS(); }catch(e){ hideLoad(); toast(T('pdf_err')+' (offline)'); return; }
+  }
+
+  const fr = new FileReader();
+  fr.onload = async e=>{
+    try{
+      const buf = e.target.result;
+      const doc = await pdfjsLib.getDocument({data:buf.slice(0)}).promise;
+
+      // 현재 지도 상태 저장
+      if(curMapId){
+        const cur=curSlot();
+        if(cur){ cur.calibPts=calibPts.slice(); cur.layers=JSON.parse(JSON.stringify(layers)); cur.geoPDFData=geoPDFData; }
+        saveSlotsMeta();
+      }
+
+      // 새 슬롯 생성
+      const slot = createSlot(file.name);
+      mapSlots.push(slot);
+      curMapId = slot.id;
+
+      // 상태 초기화
+      pdfDoc=doc; totalPgs=doc.numPages; curPg=1;
+      calibPts=[]; layers=[]; geoPDFData=null;
+      saveCalib();
+
+      await renderPg(1);
+      document.getElementById('empty-state').style.display='none';
+      document.getElementById('page-nav').classList.toggle('show',totalPgs>1);
+      updPgLbl();
+      updatePDFInfoBar(file.name);
+
+      // PDF blob 저장
+      await savePDFSlot(slot.id, buf, file.name);
+
+      // GeoPDF 자동 보정
+      calibPts=[]; saveCalib();
+      let geoOk=false;
+      try{ geoOk=await extractGeoPDFCoords(pdfDoc,cW,cH); }catch(ge){}
+
+      // 슬롯에 보정 결과 저장
+      slot.calibPts = calibPts.slice();
+      slot.geoPDFData = geoPDFData;
+      saveSlotsMeta();
+
+      renderMapSwitcher();
+      updateMapBadge();
+
+      if(geoOk) toast('✅ '+file.name.substring(0,20)+' — GPS 자동 보정됨');
+      else toast(T('pdf_ok')+' ('+totalPgs+'p) — 보정 버튼으로 GPS 설정하세요');
+
+    }catch(err){ toast(T('pdf_err')+': '+err.message); }
+    hideLoad();
+  };
+  fr.readAsArrayBuffer(file);
+}
+
+// ── 지도 삭제 ────────────────────────────────────────────────
+async function deleteMapSlot(slotId, e){
+  e&&e.stopPropagation();
+  const slot = mapSlots.find(s=>s.id===slotId);
+  if(!slot) return;
+  if(!confirm('"'+slot.name+'" 지도와 모든 트랙/메모를 삭제하시겠습니까?')) return;
+
+  await deletePDFSlot(slotId);
+  mapSlots = mapSlots.filter(s=>s.id!==slotId);
+
+  if(curMapId===slotId){
+    curMapId=null; pdfDoc=null; cW=0; cH=0;
+    calibPts=[]; layers=[]; geoPDFData=null;
+    document.getElementById('pdf-canvas').width=0;
+    document.getElementById('layer-svg').innerHTML='';
+    document.getElementById('gps-svg').innerHTML='';
+    document.getElementById('empty-state').style.display='';
+    document.getElementById('page-nav').classList.remove('show');
+    document.getElementById('pdf-map-info').style.display='none';
+    document.getElementById('map-area').style.top='50px';
+    if(mapSlots.length>0) switchToSlot(mapSlots[0].id);
+  }
+
+  saveSlotsMeta();
+  renderMapSwitcher();
+  updateMapBadge();
+  toast('지도 삭제됨');
+}
+
+// ── 지도 선택기 UI ────────────────────────────────────────────
+function toggleMapSwitcher(){
+  const sw = document.getElementById('map-switcher');
+  const ov = document.getElementById('map-switcher-overlay');
+  const isShow = sw.classList.contains('show');
+  sw.classList.toggle('show',!isShow);
+  ov.style.display = isShow?'none':'block';
+  if(!isShow) renderMapSwitcher();
+}
+
+function renderMapSwitcher(){
+  const sw = document.getElementById('map-switcher');
+  sw.innerHTML='';
+
+  mapSlots.forEach(slot=>{
+    const div=document.createElement('div');
+    div.className='map-slot'+(slot.id===curMapId?' active':'');
+    div.onclick=()=>{ toggleMapSwitcher(); switchToSlot(slot.id); };
+    div.innerHTML=
+      '<div class="map-slot-icon">🗺</div>'+
+      '<div class="map-slot-name">'+escHTML(slot.name)+'</div>'+
+      '<div class="map-slot-del" onclick="deleteMapSlot(\''+slot.id+'\',event)">×</div>';
+    sw.appendChild(div);
+  });
+
+  // 추가 버튼
+  if(mapSlots.length<MAX_SLOTS){
+    const add=document.createElement('div');
+    add.className='map-slot map-slot-add';
+    add.title='새 지도 추가';
+    add.innerHTML='＋';
+    add.onclick=()=>{ toggleMapSwitcher(); document.getElementById('pdf-input').click(); };
+    sw.appendChild(add);
+  }
+}
+
+function updateMapBadge(){
+  const b=document.getElementById('maps-badge');
+  if(b) b.textContent=mapSlots.length||'';
+}
+
+// ── PDF 버튼 클릭 핸들러 재정의 ──────────────────────────────
+function triggerPDF(){
+  toggleMapSwitcher();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 트랙 관리 (지도별 독립)
+// ═══════════════════════════════════════════════════════════════
+
+let trkCurrentColor = '#ff7814'; // 현재 선택 색상
+
+function selectTrackColor(el){
+  trkCurrentColor = el.dataset.color;
+  document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+// toggleTrack: see MultiMap engine
+
+
+function stopAndSaveTrack(){
+  if(!trackOn||trkPts.length<2){ toast('트랙 포인트 부족'); trackOn=false; document.getElementById('btn-track').classList.remove('on'); document.getElementById('track-recording-info').style.display='none'; hidePanel('track-panel'); return; }
+  const slot=curSlot();
+  if(!slot){ toast('지도를 먼저 불러오세요'); return; }
+  const track={
+    id:'trk_'+Date.now(),
+    name:new Date(trkStart).toLocaleString(),
+    color:trkCurrentColor,
+    visible:true,
+    pts:trkPts.slice(),
+    startTime:trkStart.toISOString(),
+    dist:calcDist()
+  };
+  slot.tracks.push(track);
+  saveSlotsMeta();
+  trackOn=false; trkPts=[];
+  document.getElementById('btn-track').classList.remove('on');
+  document.getElementById('track-recording-info').style.display='none';
+  drawGPS();
+  renderTrackList();
+  hidePanel('track-panel');
+  toast('✅ 트랙 저장됨 ('+Math.round(track.dist)+'m)');
+}
+
+function discardTrack(){
+  trackOn=false; trkPts=[];
+  document.getElementById('btn-track').classList.remove('on');
+  document.getElementById('track-recording-info').style.display='none';
+  hidePanel('track-panel');
+  toast('트랙 삭제됨');
+}
+
+function deleteTrack(trkId){
+  const slot=curSlot(); if(!slot) return;
+  slot.tracks=slot.tracks.filter(t=>t.id!==trkId);
+  saveSlotsMeta(); drawGPS(); renderTrackList();
+  toast('트랙 삭제됨');
+}
+
+function toggleTrackVisible(trkId){
+  const slot=curSlot(); if(!slot) return;
+  const t=slot.tracks.find(t=>t.id===trkId);
+  if(t){ t.visible=!t.visible; saveSlotsMeta(); drawGPS(); renderTrackList(); }
+}
+
+function renderTrackList(){
+  const body=document.getElementById('track-list-body'); if(!body) return;
+  const slot=curSlot();
+  const tracks=slot?.tracks||[];
+  if(!tracks.length){ body.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0">저장된 트랙 없음</div>'; return; }
+  body.innerHTML=tracks.slice().reverse().map(t=>`
+    <div class="track-item">
+      <div class="track-color-swatch" style="background:${t.color}" onclick="toggleTrackVisible('${t.id}')"></div>
+      <div class="track-item-info">
+        <div class="track-item-name">${escHTML(t.name)}</div>
+        <div class="track-item-meta">${Math.round(t.dist||0)}m · ${(t.pts||[]).length}pts</div>
+      </div>
+      <button class="track-vis-btn ${t.visible?'on':''}" onclick="toggleTrackVisible('${t.id}')">${t.visible?'👁':'🚫'}</button>
+      <button class="track-del-btn" onclick="deleteTrack('${t.id}')">🗑</button>
+    </div>
+  `).join('');
+
+  // GPX 내보내기
+  if(tracks.length){
+    body.innerHTML+=`<button class="btn-green" onclick="exportGPXAll()" style="width:100%;border:none;margin-top:6px">📤 GPX 내보내기</button>`;
+  }
+}
+
+function exportGPXAll(){
+  const slot=curSlot(); if(!slot) return;
+  const visTracks=slot.tracks.filter(t=>t.visible&&t.pts?.length>=2);
+  if(!visTracks.length){ toast(T('gpx_few')); return; }
+  const trksXml=visTracks.map(t=>`  <trk><name>${escHTML(t.name)}</name><trkseg>\n`+t.pts.map(p=>`    <trkpt lat="${p.lat}" lon="${p.lon}"><time>${p.time}</time></trkpt>`).join('\n')+`\n  </trkseg></trk>`).join('\n');
+  const gpx=`<?xml version="1.0"?>\n<gpx version="1.1" creator="PalmFarmMap">\n${trksXml}\n</gpx>`;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([gpx],{type:'application/gpx+xml'}));
+  a.download=(slot.name||'track')+'_'+new Date().toISOString().slice(0,10)+'.gpx';
+  a.click(); toast(T('gpx_ok'));
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 메모 시스템 (지도별 독립 + 드래그 핀)
+// ═══════════════════════════════════════════════════════════════
+
+// 메모 저장/불러오기 (슬롯 기반)
+function saveMemos(){
+  const slot=curSlot(); if(!slot) return;
+  // 메모는 슬롯 안에 있으므로 슬롯 메타 저장
+  saveSlotsMeta();
+}
+function loadMemos(){ /* 슬롯 로드 시 자동 포함 */ }
+
+function get_cur_memos(){ return curSlot()?.memos||[]; }
+
+// 메모 추가: 현재 GPS 위치에 핀 표시 후 드래그 → 메모 입력
+function openMemo(pre){
+  if(!cW){ toast(T('no_map')); return; }
+  const slot=curSlot();
+  if(!slot){ toast(T('no_map')); return; }
+
+  // 초기 핀 위치: GPS 위치 or 화면 중앙
+  let initPx=cW/2, initPy=cH/2;
+  if(curPos&&calibPts.length>=2){
+    const c=ll2c(curPos.lat,curPos.lon);
+    if(c){ initPx=c.px; initPy=c.py; }
+  }
+
+  // 임시 핀 생성
+  startPinDrag(initPx, initPy, null, pre||'');
+}
+
+// 핀 드래그 시작
+function startPinDrag(initPx, initPy, existingMemoId, prefill){
+  pinDragActive=true;
+  pinDragMemoId=existingMemoId;
+  pinDragX=initPx; pinDragY=initPy;
+
+  // 드래그 힌트 표시
+  document.getElementById('memo-drag-hint').classList.add('show');
+
+  // 임시 핀 SVG 추가
+  drawGPS(); // GPS 오버레이 갱신 (핀 포함)
+
+  // 입력 패널 표시
+  document.getElementById('memo-input').value=prefill||'';
+  showPanel('memo-panel');
+  setTimeout(()=>document.getElementById('memo-input').focus(),150);
+}
+
+// 메모 저장 (핀 위치 포함)
+function saveMemo(){
+  const txt=document.getElementById('memo-input').value.trim();
+  if(!txt){ toast(T('memo_empty_input')); return; }
+  const slot=curSlot();
+  if(!slot){ toast(T('no_map')); return; }
+
+  const now=new Date();
+
+  // 핀 위치의 위경도 역변환
+  let lat=0, lon=0;
+  if(calibPts.length>=2){
+    const a=calibPts[0], b=calibPts[1];
+    const dLon=(b.lon-a.lon), dLat=(b.lat-a.lat);
+    if(Math.abs(dLon)>1e-10&&Math.abs(dLat)>1e-10){
+      lon=a.lon+(pinDragX-a.px)*dLon/(b.px-a.px);
+      lat=a.lat+(pinDragY-a.py)*dLat/(b.py-a.py);
+    }
+  } else if(curPos){
+    lat=curPos.lat; lon=curPos.lon;
+  }
+
+  if(pinDragMemoId){
+    // 기존 메모 위치 업데이트
+    const m=slot.memos.find(m=>m.id===pinDragMemoId);
+    if(m){ m.pinX=pinDragX; m.pinY=pinDragY; m.lat=lat; m.lon=lon; m.text=txt; }
+  } else {
+    // 새 메모 생성
+    slot.memos.push({
+      id:'memo_'+Date.now(),
+      lat, lon, pinX:pinDragX, pinY:pinDragY,
+      text:txt,
+      date:now.toLocaleDateString(),
+      time:now.toLocaleTimeString(),
+      layerName:selFeat?.feat?.name||selFeat?.feat?.code||''
+    });
+  }
+
+  saveMemos();
+  pinDragActive=false; pinDragMemoId=null;
+  document.getElementById('memo-input').value='';
+  document.getElementById('memo-drag-hint').classList.remove('show');
+  hidePanel('memo-panel');
+  drawGPS();
+  toast(T('memo_saved'));
+}
+
+function memoFromPop(){
+  const f=selFeat?.feat;
+  closePop();
+  openMemo(f?'['+( f.name||f.code||'')+'] ':'');
+}
+
+function delMemo(id){
+  const slot=curSlot(); if(!slot) return;
+  slot.memos=slot.memos.filter(m=>m.id!==id);
+  saveMemos(); drawGPS(); renderMemoList();
+  toast(T('memo_del'));
+}
+
+// 메모 핀 탭 → 드래그 모드
+function tapMemoPinToEdit(memoId){
+  const slot=curSlot(); if(!slot) return;
+  const m=slot.memos.find(m=>m.id===memoId);
+  if(!m) return;
+  startPinDrag(m.pinX, m.pinY, memoId, m.text);
+}
+
+function openMemoList(){
+  renderMemoList();
+  document.getElementById('memo-list-panel').classList.add('show');
+}
+
+function renderMemoList(){
+  const body=document.getElementById('memo-list-body');
+  const memos=get_cur_memos();
+  if(!memos.length){ body.innerHTML='<div class="memo-empty">'+T('memo_none')+'</div>'; return; }
+  const grps={};
+  [...memos].reverse().forEach(m=>{ if(!grps[m.date])grps[m.date]=[]; grps[m.date].push(m); });
+  const dates=Object.keys(grps);
+  body.innerHTML=dates.map(date=>`
+    <div class="memo-date-group">
+      <div class="memo-date-hdr">📅 ${date} (${grps[date].length})</div>
+      ${grps[date].map(m=>`
+        <div class="memo-item" id="mi-${m.id}">
+          <div class="memo-body">
+            <div class="memo-meta">
+              <span class="memo-time">${m.time||''}</span>
+              ${m.layerName?'<span class="memo-layer-tag">'+escHTML(m.layerName)+'</span>':''}
+            </div>
+            ${m.lat?'<div class="memo-coords">'+m.lat.toFixed(5)+', '+m.lon.toFixed(5)+'</div>':''}
+            <div class="memo-text">${escHTML(m.text)}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <button class="memo-del" onclick="tapMemoPinToEdit('${m.id}')" title="위치수정">📍</button>
+            <button class="memo-del" onclick="delMemo('${m.id}')" title="삭제">🗑</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GPS 오버레이 재정의 (트랙 + 메모 핀 드래그 포함)
+// ═══════════════════════════════════════════════════════════════
+// drawGPS: see MultiMap engine
+
+
+// ── handleTap에서 드래그 핀 이동 지원 ────────────────────────
+// map-area touchmove로 핀 드래그
+document.addEventListener('DOMContentLoaded',()=>{
+  const mapArea=document.getElementById('map-area');
+  if(!mapArea) return;
+
+  let pinTouchId=null;
+  mapArea.addEventListener('touchstart',ev=>{
+    if(!pinDragActive||ev.touches.length!==1) return;
+    pinTouchId=ev.touches[0].identifier;
+  },{passive:true});
+
+  mapArea.addEventListener('touchmove',ev=>{
+    if(!pinDragActive) return;
+    const t=Array.from(ev.touches).find(t=>t.identifier===pinTouchId||ev.touches.length===1);
+    if(!t) return;
+    ev.preventDefault();
+    const r=mapArea.getBoundingClientRect();
+    pinDragX=(t.clientX-r.left-ox)/scale;
+    pinDragY=(t.clientY-r.top-oy)/scale;
+    drawGPS();
+  },{passive:false});
+});
+
+// ── 멀티맵 초기화 ────────────────────────────────────────────
+async function initMultiMap(){
+  loadSlotsMeta();
+  updateMapBadge();
+  renderMapSwitcher();
+
+  // 마지막 활성 지도 복원
+  const lastId = localStorage.getItem('palmmap_cur_slot');
+  if(lastId&&mapSlots.find(s=>s.id===lastId)){
+    await switchToSlot(lastId);
+  } else if(mapSlots.length>0){
+    await switchToSlot(mapSlots[0].id);
+  }
+}
+
+// 지도 전환 시 curMapId 저장
+const _origSwitchToSlot = switchToSlot;
+// (이미 위에 정의됨)
+
+
+/* ─── GPS 오버레이 렌더링 (멀티맵 + 트랙 + 드래그 핀) ─── */
+function drawGPS(){
+  const svg=document.getElementById('gps-svg'); if(!svg) return;
+  svg.innerHTML='';
+  const slot=curSlot();
+  const S=scale||1;
+
+  /* ── 저장된 트랙 ────────────────────────────────────────── */
+  if(slot && calibPts.length>=2){
+    (slot.tracks||[]).filter(t=>t.visible&&(t.pts||[]).length>=2).forEach(t=>{
+      const pts=t.pts.map(p=>ll2c(p.lat,p.lon)).filter(Boolean);
+      if(pts.length<2) return;
+      const pa=mkSVG('path');
+      pa.setAttribute('d','M'+pts.map(p=>p.px+','+p.py).join('L'));
+      pa.setAttribute('fill','none');
+      pa.setAttribute('stroke',t.color||'#ff7814');
+      pa.setAttribute('stroke-width',String(3/S));
+      pa.setAttribute('stroke-linecap','round');
+      pa.setAttribute('stroke-linejoin','round');
+      pa.setAttribute('opacity','0.9');
+      svg.appendChild(pa);
+    });
+  }
+
+  /* ── 현재 녹화 중 트랙 ──────────────────────────────────── */
+  if(trackOn && trkPts.length>=2 && calibPts.length>=2){
+    const pts=trkPts.map(p=>ll2c(p.lat,p.lon)).filter(Boolean);
+    if(pts.length>=2){
+      const pa=mkSVG('path');
+      pa.setAttribute('d','M'+pts.map(p=>p.px+','+p.py).join('L'));
+      pa.setAttribute('fill','none');
+      pa.setAttribute('stroke',trkCurrentColor||'#ff7814');
+      pa.setAttribute('stroke-width',String(3/S));
+      pa.setAttribute('stroke-linecap','round');
+      pa.setAttribute('stroke-dasharray',(8/S)+','+(4/S));
+      pa.setAttribute('opacity','0.95');
+      svg.appendChild(pa);
+    }
+    const ep=document.getElementById('trk-pts'); if(ep) ep.textContent=trkPts.length;
+    const ed=document.getElementById('trk-dist'); if(ed) ed.textContent=Math.round(calcDist())+'m';
+  }
+
+  /* ── 보정 마커 ───────────────────────────────────────────── */
+  calibPts.forEach((cp,i)=>{
+    const g=mkSVG('g');
+    const c=mkSVG('circle');
+    c.setAttribute('cx',String(cp.px)); c.setAttribute('cy',String(cp.py));
+    c.setAttribute('r',String(8/S)); c.setAttribute('class','calib-pin');
+    c.setAttribute('stroke-width',String(2/S));
+    const t=mkSVG('text');
+    t.setAttribute('x',String(cp.px)); t.setAttribute('y',String(cp.py));
+    t.setAttribute('class','calib-lbl');
+    t.setAttribute('font-size',String(8/S)); t.textContent=String(i+1);
+    g.appendChild(c); g.appendChild(t); svg.appendChild(g);
+  });
+
+  /* ── 메모 핀 ────────────────────────────────────────────── */
+  const memoList=slot?.memos||[];
+  memoList.forEach((m,i)=>{
+    let px=m.pinX, py=m.pinY;
+    if((px==null)&&m.lat&&calibPts.length>=2){
+      const c=ll2c(m.lat,m.lon); if(c){px=c.px;py=c.py;m.pinX=px;m.pinY=py;}
+    }
+    if(px==null){px=cW/2;py=cH/2;}
+    const pinR=11/S;
+    const g=mkSVG('g'); g.style.cursor='pointer';
+    g.setAttribute('data-memo-id',m.id);
+
+    // 핀 삼각형
+    const tri=mkSVG('polygon');
+    tri.setAttribute('points',(px-pinR*.5)+','+(py-pinR*.3)+' '+(px+pinR*.5)+','+(py-pinR*.3)+' '+px+','+(py+pinR*.5));
+    tri.setAttribute('fill','#ff7814');
+
+    // 핀 원
+    const circle=mkSVG('circle');
+    circle.setAttribute('cx',String(px)); circle.setAttribute('cy',String(py-pinR));
+    circle.setAttribute('r',String(pinR)); circle.setAttribute('fill','#ff7814');
+    circle.setAttribute('stroke','#fff'); circle.setAttribute('stroke-width',String(1.5/S));
+
+    // 번호
+    const num=mkSVG('text');
+    num.setAttribute('x',String(px)); num.setAttribute('y',String(py-pinR));
+    num.setAttribute('text-anchor','middle'); num.setAttribute('dominant-baseline','central');
+    num.setAttribute('font-size',String(7/S)); num.setAttribute('font-weight','700');
+    num.setAttribute('fill','#fff'); num.setAttribute('pointer-events','none');
+    num.textContent=String(i+1);
+
+    g.appendChild(tri); g.appendChild(circle); g.appendChild(num);
+
+    // 탭: 메모 보기
+    g.addEventListener('click',ev=>{
+      ev.stopPropagation();
+      toast('📍'+(i+1)+': '+m.text.substring(0,50));
+    });
+
+    // 터치 드래그: 핀 이동
+    g.addEventListener('touchstart',ev=>{
+      if(ev.touches.length!==1) return;
+      ev.stopPropagation();
+      const r=document.getElementById('map-area').getBoundingClientRect();
+      const startCX=ev.touches[0].clientX, startCY=ev.touches[0].clientY;
+      const startPx=m.pinX||px, startPy=m.pinY||py;
+      let moved=false;
+      function onMove(ev2){
+        if(ev2.touches.length!==1) return;
+        const dx=ev2.touches[0].clientX-startCX;
+        const dy=ev2.touches[0].clientY-startCY;
+        if(Math.hypot(dx,dy)>8){ moved=true; }
+        if(moved){
+          m.pinX=startPx+dx/S; m.pinY=startPy+dy/S;
+          if(calibPts.length>=2){
+            const a=calibPts[0],b=calibPts[1];
+            const dLon2=b.lon-a.lon, dLat2=b.lat-a.lat;
+            if(Math.abs(b.px-a.px)>0.01){
+              m.lon=a.lon+(m.pinX-a.px)*dLon2/(b.px-a.px);
+              m.lat=a.lat+(m.pinY-a.py)*dLat2/(b.py-a.py);
+            }
+          }
+          drawGPS();
+        }
+      }
+      function onEnd(){
+        document.removeEventListener('touchmove',onMove);
+        document.removeEventListener('touchend',onEnd);
+        if(moved){ saveMemos(); toast('📍 핀 위치 저장됨'); }
+        else{ toast('📍'+(i+1)+': '+m.text.substring(0,50)); }
+      }
+      document.addEventListener('touchmove',onMove,{passive:true});
+      document.addEventListener('touchend',onEnd);
+    },{passive:true});
+
+    svg.appendChild(g);
+  });
+
+  /* ── 새 메모 드래그 중인 임시 핀 ───────────────────────── */
+  if(pinDragActive){
+    const px3=pinDragX, py3=pinDragY, pinR2=12/S;
+    const g=mkSVG('g');
+    const tri=mkSVG('polygon');
+    tri.setAttribute('points',(px3-pinR2*.5)+','+(py3-pinR2*.3)+' '+(px3+pinR2*.5)+','+(py3-pinR2*.3)+' '+px3+','+(py3+pinR2*.5));
+    tri.setAttribute('fill','#ff4db8');
+    const circle=mkSVG('circle');
+    circle.setAttribute('cx',String(px3)); circle.setAttribute('cy',String(py3-pinR2));
+    circle.setAttribute('r',String(pinR2)); circle.setAttribute('fill','#ff4db8');
+    circle.setAttribute('stroke','#fff'); circle.setAttribute('stroke-width',String(1.5/S));
+    const lbl=mkSVG('text');
+    lbl.setAttribute('x',String(px3)); lbl.setAttribute('y',String(py3-pinR2));
+    lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('dominant-baseline','central');
+    lbl.setAttribute('font-size',String(9/S)); lbl.setAttribute('font-weight','700');
+    lbl.setAttribute('fill','#fff'); lbl.setAttribute('pointer-events','none');
+    lbl.textContent='✎';
+    g.appendChild(tri); g.appendChild(circle); g.appendChild(lbl);
+    svg.appendChild(g);
+  }
+
+  /* ── GPS 현재 위치 마커 ─────────────────────────────────── */
+  if(!curPos) return;
+  let px4=cW/2, py4=cH/2;
+  if(calibPts.length>=2){ const c=ll2c(curPos.lat,curPos.lon); if(c){px4=c.px;py4=c.py;} }
+
+  const CORE_PX=6, HALO_PX=11;
+  const coreR=CORE_PX/S, haloR=HALO_PX/S, strokeW=1.5/S;
+
+  let accR=30/S;
+  if(calibPts.length>=2&&cH>0){
+    const latRange=Math.abs(calibPts[1].lat-calibPts[0].lat);
+    const mPerPx=(latRange*111320)/cH;
+    if(mPerPx>0) accR=Math.min(60/S,Math.max(15/S,curPos.acc/mPerPx));
+  }
+
+  const ar=mkSVG('circle'); ar.setAttribute('cx',String(px4)); ar.setAttribute('cy',String(py4));
+  ar.setAttribute('r',String(accR)); ar.setAttribute('class','acc-ring'); ar.setAttribute('stroke-width',String(1/S));
+  svg.appendChild(ar);
+
+  const ha=mkSVG('circle'); ha.setAttribute('cx',String(px4)); ha.setAttribute('cy',String(py4));
+  ha.setAttribute('r',String(haloR*1.8)); ha.setAttribute('class','gps-pulse'); ha.setAttribute('stroke-width',String(1/S));
+  svg.appendChild(ha);
+
+  const ha2=mkSVG('circle'); ha2.setAttribute('cx',String(px4)); ha2.setAttribute('cy',String(py4));
+  ha2.setAttribute('r',String(haloR)); ha2.setAttribute('class','gps-halo');
+  svg.appendChild(ha2);
+
+  if(curPos.heading!=null&&!isNaN(curPos.heading)){
+    const rad=(curPos.heading-90)*Math.PI/180;
+    const aD=HALO_PX*1.4/S;
+    const poly=mkSVG('polygon');
+    poly.setAttribute('points',(px4+Math.cos(rad)*aD)+','+(py4+Math.sin(rad)*aD)+' '+(px4+Math.cos(rad-.45)*aD*.7)+','+(py4+Math.sin(rad-.45)*aD*.7)+' '+(px4+Math.cos(rad+.45)*aD*.7)+','+(py4+Math.sin(rad+.45)*aD*.7));
+    poly.setAttribute('fill','#ff4db8'); poly.setAttribute('opacity','.8');
+    svg.appendChild(poly);
+  }
+
+  const cd=mkSVG('circle'); cd.setAttribute('cx',String(px4)); cd.setAttribute('cy',String(py4));
+  cd.setAttribute('r',String(coreR)); cd.setAttribute('class','gps-core'); cd.setAttribute('stroke-width',String(strokeW));
+  svg.appendChild(cd);
+
+  const cs=haloR*.7, cstroke=0.8/S;
+  [[-cs,0],[cs,0],[0,-cs],[0,cs]].forEach(([dx,dy])=>{
+    const m2=cs*.25, line=mkSVG('line');
+    line.setAttribute('x1',String(px4+(dx>0?m2:dx<0?-m2:0)));
+    line.setAttribute('y1',String(py4+(dy>0?m2:dy<0?-m2:0)));
+    line.setAttribute('x2',String(px4+dx)); line.setAttribute('y2',String(py4+dy));
+    line.setAttribute('stroke','#ff4db8'); line.setAttribute('stroke-width',String(cstroke));
+    line.setAttribute('opacity','0.9');
+    svg.appendChild(line);
+  });
+}
+
 /* ─── INIT ─── */
-loadMemos();
 applyLang();
-drawGPS();
-// 저장된 PDF 자동 복원 (앱 시작 시)
-restoreSavedPDF();
+// 멀티 지도 슬롯 초기화 (기존 단일 지도 복원 대체)
+initMultiMap();
 </script>
 </body>
 </html>
