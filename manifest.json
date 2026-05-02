@@ -7,10 +7,10 @@
   "scope": "./",
   "display": "standalone",
   "display_override": [
-    "standalone",
-    "minimal-ui",
+    "tabbed",
     "window-controls-overlay",
-    "tabbed"
+    "standalone",
+    "minimal-ui"
   ],
   "orientation": "any",
   "background_color": "#0f1a0f",
@@ -31,7 +31,14 @@
       "id": "palm.farm.fieldmap"
     }
   ],
-  "scope_extensions": [],
+  "scope_extensions": [
+    {
+      "origin": "https://*.github.io"
+    },
+    {
+      "origin": "https://analysis94.github.io"
+    }
+  ],
   "icons": [
     {
       "src": "icon-192.png",
@@ -180,5 +187,6 @@
   ],
   "note_taking": {
     "new_note_url": "./index.html?action=new-memo"
-  }
+  },
+  "handle_links": "preferred"
 }
