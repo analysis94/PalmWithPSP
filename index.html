@@ -196,9 +196,11 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 
 /* SVG classes */
 .track-path{fill:none;stroke:var(--amber);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
-.acc-ring{fill:rgba(122,180,80,.1);stroke:rgba(122,180,80,.3);stroke-width:1}
-.gps-halo{fill:rgba(122,180,80,.22)}
-.gps-core{fill:var(--green2);stroke:#0f1a0f;stroke-width:2}
+/* GPS 마커 — 형광 분홍 (줌 불변 크기는 JS에서 scale 역변환으로 처리) */
+.acc-ring{fill:rgba(255,80,180,.08);stroke:rgba(255,80,180,.35);stroke-width:1}
+.gps-halo{fill:rgba(255,80,180,.18)}
+.gps-core{fill:#ff4db8;stroke:#fff;stroke-width:1.5}
+.gps-pulse{fill:none;stroke:#ff4db8;stroke-width:1.5;opacity:.6}
 .memo-pin{fill:var(--amber);stroke:#0f1a0f;stroke-width:2}
 .memo-num{fill:#0f1a0f;font-size:9px;font-weight:700;text-anchor:middle;dominant-baseline:central;pointer-events:none}
 .calib-pin{fill:#e8a84a;stroke:#0f1a0f;stroke-width:2}
@@ -458,10 +460,13 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
       </div>
       <button onclick="applyCornerCalib()" class="btn-amber" style="width:100%;border:none">📐 모서리 좌표로 보정</button>
       <div style="font-size:9px;color:var(--text3);margin-top:6px;line-height:1.5;font-family:var(--mono)">
-        💡 QGIS 확인값 (현재 지도):<br>
+        💡 QGIS 확인값 (Peta Tahun Tanam 2026 SKDE SGUE TM TBM):<br>
         NW: 0.01665°, 110.63431° | SE: -0.16959°, 110.89603°<br>
         CRS: EPSG:32749 (UTM Zone 49S) → 자동 변환됨
       </div>
+      <button onclick="applyQGISValues()" class="btn-green" style="width:100%;border:none;margin-top:8px">
+        🎯 QGIS 확인값으로 즉시 보정 (현재 지도용)
+      </button>
     </div>
   </div>
 
@@ -888,7 +893,11 @@ const TYPE_META = {
 const MA = document.getElementById('map-area');
 const MW = document.getElementById('map-wrap');
 
-function applyTx(){ MW.style.transform = `translate(${ox}px,${oy}px) scale(${scale})`; }
+function applyTx(){
+  MW.style.transform = `translate(${ox}px,${oy}px) scale(${scale})`;
+  // GPS 마커 크기를 scale에 맞게 재계산 (화면 고정 크기 유지)
+  if(curPos) drawGPS();
+}
 function clamp(){
   if(!cW) return;
   const aW=MA.clientWidth, aH=MA.clientHeight, sW=cW*scale, sH=cH*scale;
@@ -1146,19 +1155,51 @@ function isValidLatLon(lat, lon) {
 }
 
 // ── PDF 바이너리 → ASCII 텍스트 변환 ─────────────────────────
-async function getPDFRawText(pdfDoc, maxBytes = 600000) {
-  try {
-    const src = pdfDoc._transport?._params?.data
-             || pdfDoc._transport?._fullReader?._stream?.bytes;
-    if (!src) return null;
-    const bytes = new Uint8Array(src.buffer || src);
-    let text = '';
-    for (let i = 0; i < Math.min(bytes.length, maxBytes); i++) {
-      const c = bytes[i];
-      text += (c >= 32 && c < 127) ? String.fromCharCode(c) : ' ';
+async function getPDFRawText(pdfDoc, maxBytes = 800000) {
+  // PDF.js 버전에 따라 내부 구조가 다름 — 여러 경로 시도
+  const sources = [
+    () => pdfDoc._transport?._params?.data,
+    () => pdfDoc._transport?._fullReader?._stream?.bytes,
+    () => pdfDoc._transport?._fullReader?._stream?._rawData,
+    () => pdfDoc._pdfInfo?.data,
+    () => {
+      // PDF.js 3.x: messageHandler를 통한 raw data 접근
+      const mh = pdfDoc._transport?.messageHandler;
+      return mh?._comObj?._port?.onmessage?.data;
     }
-    return text;
-  } catch(e) { return null; }
+  ];
+
+  for (const getSrc of sources) {
+    try {
+      const src = getSrc();
+      if (!src) continue;
+      const bytes = new Uint8Array(src.buffer || src);
+      if (bytes.length < 100) continue;
+      let text = '';
+      for (let i = 0; i < Math.min(bytes.length, maxBytes); i++) {
+        const c = bytes[i];
+        text += (c >= 32 && c < 127) ? String.fromCharCode(c) : ' ';
+      }
+      if (text.includes('PDF') || text.includes('/Type')) {
+        console.log('[GeoPDF] Raw text obtained, length:', text.length);
+        return text;
+      }
+    } catch(e) { continue; }
+  }
+
+  // 마지막 수단: PDF.js의 getPage API로 페이지 annotation 확인
+  try {
+    const page = await pdfDoc.getPage(1);
+    const annotations = await page.getAnnotations();
+    const annotText = JSON.stringify(annotations);
+    if (annotText.length > 10) {
+      console.log('[GeoPDF] Using annotation data, length:', annotText.length);
+      return annotText;
+    }
+  } catch(e) {}
+
+  console.warn('[GeoPDF] Could not access PDF raw data');
+  return null;
 }
 
 // ── 전략 1: NEATLINE + 원점 + 픽셀크기 파싱 ─────────────────
@@ -1267,10 +1308,27 @@ async function extractGeoPDFCoords(pdfDocument, canvasW, canvasH) {
     if (result) { geoPDFData = { ...result, source: 'filename' }; }
   }
 
+  // ── 전략 4: 파일명 기반 폴백 ─────────────────────────────
+  // ArcMap GeoPDF 특성: 바이너리 접근 제한될 수 있음
+  // rawText 없어도 파일명으로 시도
+  if (!geoPDFData) {
+    result = parseFilename(loadPDFMeta()?.name || '');
+    if (result) { geoPDFData = { ...result, source: 'filename' }; }
+  }
+
   if (geoPDFData) {
+    console.log('[GeoPDF] Found:', geoPDFData.source, geoPDFData);
     showGeoPDFBanner(geoPDFData, canvasW, canvasH);
     applyGeoPDFToCalib(geoPDFData, canvasW, canvasH);
     return true;
+  }
+
+  console.warn('[GeoPDF] All strategies failed. rawText length:', rawText ? rawText.length : 0);
+  if (rawText) {
+    // 디버그: NEATLINE 있는지만 확인
+    const hasNL = rawText.includes('NEATLINE');
+    const hasGPTS = rawText.includes('GPTS');
+    console.warn('[GeoPDF] NEATLINE:', hasNL, 'GPTS:', hasGPTS);
   }
 
   // 실패 시 — 안내 배너 표시
@@ -1281,11 +1339,20 @@ async function extractGeoPDFCoords(pdfDocument, canvasW, canvasH) {
 // ── 보정 적용 ────────────────────────────────────────────────
 function applyGeoPDFToCalib(data, canvasW, canvasH) {
   calibPts = [
-    { px: 0,       py: 0,       lat: data.latNW, lon: data.lonNW },
-    { px: canvasW, py: canvasH, lat: data.latSE, lon: data.lonSE }
+    { px: 0,        py: 0,        lat: data.latNW, lon: data.lonNW },
+    { px: canvasW,  py: canvasH,  lat: data.latSE, lon: data.lonSE }
   ];
   saveCalib();
   drawGPS();
+  console.log('[Calib] Applied GeoPDF calibration:',
+    'NW('+data.latNW.toFixed(5)+','+data.lonNW.toFixed(5)+')',
+    'SE('+data.latSE.toFixed(5)+','+data.lonSE.toFixed(5)+')',
+    'canvas:'+canvasW+'x'+canvasH
+  );
+  // GPS가 켜져있으면 현재 위치로 뷰 이동
+  if (curPos) {
+    setTimeout(() => { try { centerGPS(); } catch(e) {} }, 400);
+  }
 }
 
 // ── ll2c: UTM 보정 포함 위경도 → 캔버스 픽셀 변환 ───────────
@@ -1350,6 +1417,23 @@ function applyCornerCalib() {
   applyGeoPDFToCalib(geoPDFData, cW, cH);
   showGeoPDFBanner(geoPDFData, cW, cH);
   toast('✅ 좌표 직접 입력 보정 완료!');
+  hidePanel('calib-panel');
+}
+
+// QGIS에서 확인한 정확한 값으로 즉시 보정 (현재 지도 전용)
+function applyQGISValues() {
+  if (!cW || !cH) { toast('먼저 PDF를 불러오세요.'); return; }
+  // QGIS 확인값: EPSG:32749 (UTM Zone 49S)
+  // Extent: 459307.96~488431.31 E, 9981255.69~10001839.83 N
+  // → WGS84: NW(0.01665, 110.63431) SE(-0.16959, 110.89603)
+  geoPDFData = {
+    latNW:  0.01665, lonNW: 110.63431,
+    latSE: -0.16959, lonSE: 110.89603,
+    source: 'QGIS-manual', utmZone: 49, isNorthern: false
+  };
+  applyGeoPDFToCalib(geoPDFData, cW, cH);
+  showGeoPDFBanner(geoPDFData, cW, cH);
+  toast('✅ QGIS 좌표 보정 완료! GPS가 정확한 위치에 표시됩니다.');
   hidePanel('calib-panel');
 }
 
@@ -1440,33 +1524,87 @@ function drawGPS(){
   if(calibPts.length>=2){ const c=ll2c(curPos.lat,curPos.lon); if(c){px=c.px;py=c.py;} }
   if(px===undefined){ px=cW/2; py=cH/2; }
 
-  // Accuracy ring
+  // ── 화면 고정 크기 계산 ──────────────────────────────────────
+  // SVG는 지도와 같은 scale transform을 받으므로,
+  // r = 화면픽셀 / scale  →  화면에서 항상 동일한 크기로 표시됨
+  const S = scale || 1;  // 현재 지도 확대 배율
+
+  // 목표 화면 크기 (CSS px 기준)
+  const CORE_PX  = 6;   // 중심 도트 반지름 (화면 6px)
+  const HALO_PX  = 11;  // 헤일로 반지름 (화면 11px)
+  const ARROW_PX = 16;  // 방향 화살표 거리 (화면 16px)
+
+  // 정확도 링: 실제 미터 거리를 픽셀로 (지도 스케일 반영)
+  // acc(m) / 픽셀당미터수 — 픽셀당 미터: (지도범위m) / (캔버스px)
+  let accR_px = 30 / S;  // 최소 화면 30px 보장
+  if(calibPts.length >= 2 && cW > 0){
+    const latRange = Math.abs(calibPts[1].lat - calibPts[0].lat);
+    const mPerPx = (latRange * 111320) / cH;  // 1픽셀당 미터
+    if(mPerPx > 0) accR_px = Math.min(60/S, Math.max(15/S, curPos.acc / mPerPx));
+  }
+
+  // SVG 좌표계 기준 반지름 (= 화면px / scale)
+  const coreR  = CORE_PX  / S;
+  const haloR  = HALO_PX  / S;
+  const arrowD = ARROW_PX / S;
+  const strokeW = 1.5 / S;  // stroke-width도 역변환
+
+  // ── 정확도 링 ────────────────────────────────────────────────
   const ar=mkSVG('circle');
   ar.setAttribute('cx',px); ar.setAttribute('cy',py);
-  ar.setAttribute('r',Math.min(80,Math.max(12,curPos.acc/2)));
-  ar.setAttribute('class','acc-ring'); svg.appendChild(ar);
+  ar.setAttribute('r', accR_px);
+  ar.setAttribute('class','acc-ring');
+  ar.setAttribute('stroke-width', 1/S);
+  svg.appendChild(ar);
 
-  // Halo
+  // ── 펄스 애니메이션 링 (큰 링) ──────────────────────────────
+  const pulse=mkSVG('circle');
+  pulse.setAttribute('cx',px); pulse.setAttribute('cy',py);
+  pulse.setAttribute('r', haloR*1.8);
+  pulse.setAttribute('class','gps-pulse');
+  pulse.setAttribute('stroke-width', 1/S);
+  svg.appendChild(pulse);
+
+  // ── 헤일로 (반투명 원) ───────────────────────────────────────
   const ha=mkSVG('circle');
   ha.setAttribute('cx',px); ha.setAttribute('cy',py);
-  ha.setAttribute('r','16'); ha.setAttribute('class','gps-halo'); svg.appendChild(ha);
+  ha.setAttribute('r', haloR);
+  ha.setAttribute('class','gps-halo');
+  svg.appendChild(ha);
 
-  // Heading arrow
+  // ── 방향 화살표 (heading) ────────────────────────────────────
   if(curPos.heading!=null && !isNaN(curPos.heading)){
-    const r=(curPos.heading-90)*Math.PI/180;
+    const rad=(curPos.heading-90)*Math.PI/180;
     const poly=mkSVG('polygon');
-    const ax=px+Math.cos(r)*21, ay=py+Math.sin(r)*21;
-    const a1x=px+Math.cos(r-.4)*12, a1y=py+Math.sin(r-.4)*12;
-    const a2x=px+Math.cos(r+.4)*12, a2y=py+Math.sin(r+.4)*12;
-    poly.setAttribute('points',ax+','+ay+' '+a1x+','+a1y+' '+a2x+','+a2y);
-    poly.setAttribute('fill','var(--green2)'); poly.setAttribute('opacity','.75');
+    const ax=px+Math.cos(rad)*arrowD*1.4, ay=py+Math.sin(rad)*arrowD*1.4;
+    const a1x=px+Math.cos(rad-.45)*arrowD*.8, a1y=py+Math.sin(rad-.45)*arrowD*.8;
+    const a2x=px+Math.cos(rad+.45)*arrowD*.8, a2y=py+Math.sin(rad+.45)*arrowD*.8;
+    poly.setAttribute('points', ax+','+ay+' '+a1x+','+a1y+' '+a2x+','+a2y);
+    poly.setAttribute('fill','#ff4db8'); poly.setAttribute('opacity','.8');
     svg.appendChild(poly);
   }
 
-  // Core dot
+  // ── 중심 도트 ────────────────────────────────────────────────
   const cd=mkSVG('circle');
   cd.setAttribute('cx',px); cd.setAttribute('cy',py);
-  cd.setAttribute('r','8'); cd.setAttribute('class','gps-core'); svg.appendChild(cd);
+  cd.setAttribute('r', coreR);
+  cd.setAttribute('class','gps-core');
+  cd.setAttribute('stroke-width', strokeW);
+  svg.appendChild(cd);
+
+  // ── 십자선 (정밀 위치 표시) ──────────────────────────────────
+  const crossSize = haloR * 0.7;
+  const crossStroke = 0.8 / S;
+  for(const [dx,dy] of [[-crossSize,0],[crossSize,0],[0,-crossSize],[0,crossSize]]){
+    const line=mkSVG('line');
+    const mid = crossSize * 0.25;
+    line.setAttribute('x1', px + (dx > 0 ? mid : dx < 0 ? -mid : 0));
+    line.setAttribute('y1', py + (dy > 0 ? mid : dy < 0 ? -mid : 0));
+    line.setAttribute('x2', px+dx); line.setAttribute('y2', py+dy);
+    line.setAttribute('stroke','#ff4db8'); line.setAttribute('stroke-width', crossStroke);
+    line.setAttribute('opacity','0.9');
+    svg.appendChild(line);
+  }
 }
 
 /* ─── TRACKING ─── */
@@ -1738,15 +1876,19 @@ function doPDF(file){
       if(totalPgs>1) document.getElementById('page-nav').classList.add('show');
       updPgLbl();
       // ── GeoPDF 자동 좌표 추출 ──────────────────────────────────
+      // ── GeoPDF 자동 좌표 추출 (이전 캐시 완전 초기화 후 시도) ──
+      calibPts = []; saveCalib(); // 이전 잘못된 보정 초기화
+      let geoOk = false;
       try {
-        const geoOk = await extractGeoPDFCoords(pdfDoc, cW, cH);
-        if (geoOk) {
-          toast('✅ GeoPDF 감지! GPS 자동 보정됨 — '+T('pdf_ok')+' ('+totalPgs+'p)');
-        } else {
-          toast(T('pdf_ok')+' ('+totalPgs+'p) — '+T('pdf_saved')+' | 보정 버튼으로 GPS 맞추세요');
-        }
+        geoOk = await extractGeoPDFCoords(pdfDoc, cW, cH);
       } catch(geoErr) {
-        toast(T('pdf_ok')+' ('+totalPgs+'p) — '+T('pdf_saved'));
+        console.warn('[GeoPDF] Extract error:', geoErr);
+      }
+      if (geoOk) {
+        toast('✅ GeoPDF 자동 보정! GPS가 정확한 위치에 표시됩니다.');
+      } else {
+        toast(T('pdf_ok')+' ('+totalPgs+'p) — 보정 버튼(📐)으로 GPS를 맞추세요');
+        showPanel('calib-panel'); // 보정 패널 자동 열기
       }
       // 저장
       await savePDFtoDB(buf, file.name);
@@ -1799,15 +1941,24 @@ async function restoreSavedPDF(){
     toast(T('pdf_restored')+' "'+( saved.name||meta.name)+'"');
     // 레이어 복원
     if(loadLayersFromStorage()){ renderLayerList(); drawLayerSVG(); }
-    // GPS 보정점 복원 (저장된 게 있으면 사용, 없으면 GeoPDF 재추출)
-    const hasCalib = loadCalibFromStorage();
-    if (!hasCalib) {
-      try {
-        const geoOk = await extractGeoPDFCoords(pdfDoc, cW, cH);
-        if (geoOk) toast('✅ GeoPDF 자동 보정 복원됨');
-      } catch(e) {}
+    // ── GPS 보정: GeoPDF 항상 우선 시도 → 실패 시 캐시 폴백 ──────
+    let geoOk = false;
+    try {
+      geoOk = await extractGeoPDFCoords(pdfDoc, cW, cH);
+    } catch(e) {
+      console.warn('[Calib] GeoPDF extract failed:', e);
+    }
+    if (geoOk) {
+      toast('✅ GeoPDF 자동 보정 적용됨');
     } else {
-      drawGPS();
+      // GeoPDF 실패 → 저장된 보정점 시도
+      const hasCalib = loadCalibFromStorage();
+      if (hasCalib) {
+        drawGPS();
+        toast('📐 저장된 보정점 복원됨');
+      } else {
+        toast('⚠️ GPS 보정 없음 — 보정 버튼을 눌러 설정하세요');
+      }
     }
   }catch(err){
     console.warn('PDF restore failed:', err);
