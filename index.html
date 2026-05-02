@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a2e1a">
+<title>Palm Farm Field Map</title>
+<style>
+:root{
+  --bg:#0f1a0f;--bg2:#162016;--bg3:#1e2d1e;--panel:#1a2a1a;
+  --border:rgba(120,180,80,.2);--border2:rgba(120,180,80,.45);
+  --green:#7ab450;--green2:#a3d46e;--gdim:rgba(122,180,80,.15);
+  --amber:#e8a84a;--red:#e05555;--blue:#5ab4e8;
+  --text:#d4e8c0;--text2:#8aaa70;--text3:#5a7a50;
+  --sans:system-ui,-apple-system,sans-serif;--mono:'Courier New',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden;touch-action:none;user-select:none}
+
+/* ── TOP BAR ── */
+#topbar{position:absolute;top:0;left:0;right:0;height:50px;background:var(--bg2);border-bottom:.5px solid var(--border);display:flex;align-items:center;padding:0 8px;gap:5px;z-index:100;flex-shrink:0}
+.logo{font-size:13px;font-weight:700;color:var(--green2);letter-spacing:.02em;white-space:nowrap}
+.logo em{color:var(--text3);font-style:normal;font-weight:400}
+#ts{flex:1}
+.tbtn{background:var(--bg3);border:.5px solid var(--border);color:var(--text2);font-size:11px;padding:5px 8px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap;font-family:var(--sans);transition:.15s;flex-shrink:0}
+.tbtn:active,.tbtn.on{border-color:var(--border2);color:var(--green2)}
+.tbtn svg{width:12px;height:12px;flex-shrink:0}
+
+/* ── MAP ── */
+#map-area{position:absolute;top:50px;left:0;right:0;bottom:74px;overflow:hidden;background:var(--bg);touch-action:none}
+#map-wrap{position:absolute;transform-origin:0 0;will-change:transform}
+#pdf-canvas{display:block;image-rendering:crisp-edges;image-rendering:-webkit-optimize-contrast}
+#layer-svg{position:absolute;top:0;left:0;overflow:visible;pointer-events:all}
+#gps-svg{position:absolute;top:0;left:0;overflow:visible;pointer-events:none}
+
+/* ── EMPTY STATE ── */
+#empty-state{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;pointer-events:none}
+.es-icon{width:60px;height:60px;border:.5px solid var(--border2);border-radius:14px;display:flex;align-items:center;justify-content:center;background:var(--bg3)}
+#empty-state h2{font-size:15px;color:var(--text2)}
+#empty-state p{font-size:12px;color:var(--text3);text-align:center;max-width:210px;line-height:1.6}
+.main-btn{pointer-events:all;background:var(--green);color:#0f1a0f;font-size:13px;font-weight:700;border:none;padding:11px 22px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:7px;font-family:var(--sans)}
+
+/* ── BOTTOM BAR ── */
+#bottombar{position:absolute;bottom:0;left:0;right:0;height:74px;background:var(--bg2);border-top:.5px solid var(--border);display:flex;align-items:center;padding:0 8px;gap:5px;z-index:100}
+#gps-pill{display:flex;align-items:center;gap:7px;background:var(--bg3);border:.5px solid var(--border);border-radius:8px;padding:6px 9px;flex:1;min-width:0;overflow:hidden}
+#gps-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:.3s}
+#gps-dot.on{background:var(--green);animation:pulse 2s infinite}
+#gps-dot.err{background:var(--red)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(122,180,80,.5)}50%{box-shadow:0 0 0 5px rgba(122,180,80,0)}}
+.pill-txt{min-width:0;flex:1}
+#gps-lbl{font-size:9px;color:var(--text3);font-family:var(--mono);letter-spacing:.04em}
+#gps-val{font-size:10px;color:var(--text);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#gps-acc-txt{font-size:9px;color:var(--text3);font-family:var(--mono);flex-shrink:0}
+.bbtn{background:var(--bg3);border:.5px solid var(--border);color:var(--text2);font-size:9px;padding:5px 5px;border-radius:7px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:42px;flex-shrink:0;font-family:var(--sans);transition:.15s}
+.bbtn svg{width:15px;height:15px}
+.bbtn:active,.bbtn.on{border-color:var(--green);color:var(--green2);background:var(--gdim)}
+
+/* ── ZOOM ── */
+#zoom-wrap{position:absolute;right:10px;bottom:84px;display:flex;flex-direction:column;gap:2px;z-index:90}
+.zbtn{width:32px;height:32px;background:var(--bg2);border:.5px solid var(--border);color:var(--text2);font-size:17px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+.zbtn:active{border-color:var(--border2);color:var(--green2)}
+#loc-btn{position:absolute;right:10px;bottom:170px;width:32px;height:32px;background:var(--bg2);border:.5px solid var(--border);color:var(--text2);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:90;transition:.15s}
+#loc-btn:active{border-color:var(--border2);color:var(--green2)}
+#loc-btn svg{width:15px;height:15px}
+
+/* ── PAGE NAV ── */
+#page-nav{position:absolute;left:50%;top:58px;transform:translateX(-50%);background:var(--bg2);border:.5px solid var(--border);border-radius:99px;padding:4px 12px;font-size:10px;font-family:var(--mono);color:var(--text3);z-index:90;display:none;gap:8px;align-items:center}
+#page-nav.show{display:flex}
+.pnav-btn{background:none;border:none;color:var(--text2);cursor:pointer;font-size:14px;padding:0 2px;line-height:1}
+
+/* ── LAYER POPUP ── */
+#layer-popup{position:absolute;left:0;right:0;bottom:74px;z-index:200;padding:0 10px 8px;display:none}
+#layer-popup.show{display:block;animation:slideup .2s cubic-bezier(.2,.8,.3,1)}
+@keyframes slideup{from{transform:translateY(20px);opacity:0}to{transform:none;opacity:1}}
+.lp-card{background:var(--panel);border:.5px solid var(--border2);border-radius:12px;overflow:hidden;box-shadow:0 -4px 24px rgba(0,0,0,.4)}
+.lp-head{display:flex;align-items:center;gap:8px;padding:11px 13px 8px;border-bottom:.5px solid var(--border)}
+.lp-badge{font-size:9px;font-weight:700;letter-spacing:.06em;padding:2px 8px;border-radius:99px;flex-shrink:0}
+.b-estate{background:rgba(122,180,80,.2);color:var(--green2);border:.5px solid rgba(122,180,80,.4)}
+.b-division{background:rgba(232,168,74,.2);color:var(--amber);border:.5px solid rgba(232,168,74,.4)}
+.b-block{background:rgba(90,180,232,.2);color:var(--blue);border:.5px solid rgba(90,180,232,.4)}
+.b-road{background:rgba(200,184,144,.2);color:#c8b890;border:.5px solid rgba(200,184,144,.4)}
+.b-other{background:rgba(160,160,160,.15);color:var(--text2);border:.5px solid var(--border)}
+.lp-name{font-size:15px;font-weight:700;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lp-close{width:26px;height:26px;border-radius:50%;background:var(--bg3);border:.5px solid var(--border);color:var(--text3);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1}
+.lp-body{padding:10px 13px 12px}
+.lp-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.lp-field{background:var(--bg3);border:.5px solid var(--border);border-radius:7px;padding:7px 9px}
+.lp-field.wide{grid-column:1/-1}
+.lp-fl{font-size:9px;color:var(--text3);font-family:var(--mono);letter-spacing:.03em;margin-bottom:2px}
+.lp-fv{font-size:12px;color:var(--text);font-weight:500}
+.lp-fv.mono{font-family:var(--mono);font-size:11px}
+.prog-bg{height:4px;background:var(--bg2);border-radius:2px;margin-top:5px}
+.prog-fg{height:4px;border-radius:2px;background:var(--green)}
+.sdot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.sdot-a{background:var(--green)}.sdot-i{background:var(--blue)}.sdot-r{background:var(--amber)}
+.lp-acts{display:flex;gap:6px}
+.lp-act{flex:1;padding:8px 6px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;gap:4px;font-family:var(--sans)}
+.la-memo{background:var(--amber);color:#111}
+.la-nav{background:var(--green);color:#0f1a0f}
+
+/* ── PANELS ── */
+.panel{position:absolute;left:10px;right:10px;background:var(--panel);border:.5px solid var(--border2);border-radius:12px;padding:13px;z-index:200;display:none}
+.panel.show{display:block;animation:slideup .2s ease}
+.panel-bot{bottom:84px}
+.panel-top{top:58px}
+.panel h3{font-size:13px;font-weight:600;color:var(--green2);margin-bottom:10px}
+.panel-close{float:right;background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;line-height:1;margin-top:-2px}
+/* GPS panel special */
+#gps-panel h3{color:var(--amber)}
+.gps-steps{display:flex;flex-direction:column;gap:7px;margin:10px 0}
+.gps-step{display:flex;align-items:flex-start;gap:9px;background:var(--bg3);border-radius:8px;padding:9px}
+.step-num{width:20px;height:20px;border-radius:50%;background:var(--amber);color:#111;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-txt{font-size:12px;color:var(--text2);line-height:1.5}
+.err-box{background:rgba(224,85,85,.1);border:.5px solid rgba(224,85,85,.3);border-radius:8px;padding:9px;font-size:12px;color:#f09090;line-height:1.6;margin-bottom:10px;display:none}
+.err-box.show{display:block}
+/* calib panel */
+#calib-panel h3{color:var(--amber)}
+
+/* ── FULL PANELS ── */
+.fpanel{position:absolute;top:50px;left:0;right:0;bottom:74px;background:var(--bg);z-index:150;overflow-y:auto;display:none;-webkit-overflow-scrolling:touch;padding:14px}
+.fpanel.show{display:block}
+.fpanel h2{font-size:15px;font-weight:600;color:var(--green2);margin-bottom:14px}
+.fp-close-btn{width:100%;background:var(--bg3);border:.5px solid var(--border);color:var(--text2);font-family:var(--sans);font-size:13px;padding:10px;border-radius:8px;cursor:pointer;margin-top:8px}
+
+/* ── MEMO LIST ── */
+.memo-date-group{margin-bottom:14px}
+.memo-date-hdr{font-size:10px;color:var(--text3);font-family:var(--mono);padding:5px 0 7px;border-bottom:.5px solid var(--border);margin-bottom:8px;letter-spacing:.05em}
+.memo-item{background:var(--panel);border:.5px solid var(--border);border-radius:9px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:flex-start;gap:9px}
+.memo-body{flex:1;min-width:0}
+.memo-meta{display:flex;align-items:center;gap:7px;margin-bottom:3px}
+.memo-time{font-size:9px;font-family:var(--mono);color:var(--text3)}
+.memo-layer-tag{font-size:9px;color:var(--amber);font-weight:700;background:rgba(232,168,74,.12);padding:1px 6px;border-radius:4px}
+.memo-coords{font-size:9px;font-family:var(--mono);color:var(--text3);margin-bottom:3px}
+.memo-text{font-size:13px;color:var(--text);line-height:1.5;word-break:break-word}
+.memo-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:17px;padding:2px 4px;flex-shrink:0;line-height:1;border-radius:4px}
+.memo-del:active{color:var(--red);background:rgba(224,85,85,.1)}
+.memo-empty{font-size:13px;color:var(--text3);padding:24px 0;text-align:center}
+
+/* ── LAYER MANAGER ── */
+.import-zone{border:1.5px dashed var(--border2);border-radius:10px;padding:18px;text-align:center;margin-bottom:14px;cursor:pointer;transition:.15s;-webkit-tap-highlight-color:transparent}
+.import-zone:active{border-color:var(--green);background:var(--gdim)}
+.import-zone svg{width:28px;height:28px;color:var(--text3)}
+.import-zone p{font-size:13px;color:var(--text2);margin-top:6px}
+.import-zone small{font-size:11px;color:var(--text3)}
+.layer-row{display:flex;align-items:center;gap:9px;background:var(--panel);border:.5px solid var(--border);border-radius:9px;padding:10px 12px;margin-bottom:6px}
+.layer-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.layer-info{flex:1;min-width:0}
+.layer-name{font-size:13px;color:var(--text);font-weight:500}
+.layer-cnt{font-size:10px;color:var(--text3);font-family:var(--mono)}
+.vis-tog{width:28px;height:16px;border-radius:8px;border:none;cursor:pointer;flex-shrink:0;transition:.2s;position:relative}
+.vis-tog::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:.2s}
+.vis-tog.on{background:var(--green)}.vis-tog.off{background:var(--bg3);border:.5px solid var(--border)}
+.vis-tog.on::after{left:14px}
+.demo-btn{width:100%;background:var(--bg3);border:.5px solid var(--border);color:var(--text2);font-family:var(--sans);font-size:13px;padding:10px;border-radius:8px;cursor:pointer;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:7px}
+.demo-btn:active{border-color:var(--border2);color:var(--green2)}
+
+/* ── LANG PICKER ── */
+#lang-picker{position:absolute;top:58px;right:8px;background:var(--panel);border:.5px solid var(--border2);border-radius:10px;padding:6px;z-index:300;display:none;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+#lang-picker.show{display:block}
+.lang-opt{display:flex;align-items:center;gap:9px;padding:9px 14px;border-radius:7px;cursor:pointer;font-size:13px;color:var(--text2);transition:.1s;-webkit-tap-highlight-color:transparent}
+.lang-opt:active,.lang-opt.sel{background:var(--gdim);color:var(--green2)}
+.lang-flag{font-size:18px}
+
+/* ── INSTALL PROMPT ── */
+#install-bar{position:absolute;top:58px;left:10px;right:10px;background:var(--panel);border:.5px solid var(--amber);border-radius:10px;padding:11px 13px;z-index:250;display:none;align-items:center;gap:10px}
+#install-bar.show{display:flex}
+.install-info{flex:1;font-size:12px;color:var(--text2);line-height:1.5}
+.install-info strong{display:block;color:var(--amber);font-size:12px;margin-bottom:2px}
+.install-do{background:var(--amber);color:#111;font-weight:700;font-size:11px;border:none;padding:8px 12px;border-radius:7px;cursor:pointer;white-space:nowrap;font-family:var(--sans)}
+.install-x{background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:2px;line-height:1}
+
+/* ── BUTTONS ── */
+.btn-row{display:flex;gap:7px;margin-top:10px}
+.btn-green{flex:1;background:var(--green);color:#0f1a0f;font-weight:700;font-size:12px;border:none;border-radius:8px;padding:10px;cursor:pointer;font-family:var(--sans)}
+.btn-amber{flex:1;background:var(--amber);color:#111;font-weight:700;font-size:12px;border:none;border-radius:8px;padding:10px;cursor:pointer;font-family:var(--sans)}
+.btn-grey{background:var(--bg3);color:var(--text3);font-size:12px;border:.5px solid var(--border);border-radius:8px;padding:10px 14px;cursor:pointer;font-family:var(--sans)}
+.btn-red{background:rgba(224,85,85,.12);color:var(--red);border:.5px solid rgba(224,85,85,.25);border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer;font-family:var(--sans)}
+.memo-txt-input{width:100%;background:var(--bg3);border:.5px solid var(--border);border-radius:7px;padding:9px 11px;font-family:var(--sans);font-size:13px;color:var(--text);outline:none;resize:none;height:72px;-webkit-appearance:none}
+.memo-txt-input:focus{border-color:var(--border2)}
+.memo-txt-input::placeholder{color:var(--text3)}
+
+/* ── TRACK STATS ── */
+.trk-row{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:.5px solid var(--border)}
+.trk-row span:first-child{color:var(--text3)}.trk-row span:last-child{font-family:var(--mono);color:var(--text)}
+
+/* SVG classes */
+.track-path{fill:none;stroke:var(--amber);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
+.acc-ring{fill:rgba(122,180,80,.1);stroke:rgba(122,180,80,.3);stroke-width:1}
+.gps-halo{fill:rgba(122,180,80,.22)}
+.gps-core{fill:var(--green2);stroke:#0f1a0f;stroke-width:2}
+.memo-pin{fill:var(--amber);stroke:#0f1a0f;stroke-width:2}
+.memo-num{fill:#0f1a0f;font-size:9px;font-weight:700;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.calib-pin{fill:#e8a84a;stroke:#0f1a0f;stroke-width:2}
+.calib-lbl{fill:#0f1a0f;font-size:8px;font-weight:700;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+
+/* ── TOAST / LOADING ── */
+#toast{position:absolute;left:50%;top:58px;transform:translateX(-50%);background:var(--bg3);border:.5px solid var(--border2);border-radius:99px;padding:7px 16px;font-size:12px;color:var(--green2);z-index:500;opacity:0;transition:opacity .25s;white-space:nowrap;pointer-events:none;font-family:var(--mono)}
+#toast.show{opacity:1}
+#loading{position:absolute;inset:0;background:rgba(15,26,15,.88);display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;z-index:600;font-size:13px;color:var(--text2);font-family:var(--mono)}
+#loading.show{display:flex}
+.spin{width:28px;height:28px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div class="logo">🌴 PALM<em> MAP</em></div>
+  <div id="ts"></div>
+  <button class="tbtn" onclick="triggerPDF()">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 11v2h12v-2M8 2v8M5 7l3 3 3-3"/></svg>
+    <span id="t-pdf">PDF</span>
+  </button>
+  <button class="tbtn" onclick="openLayerPanel()">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 5l6-3 6 3-6 3-6-3zM2 9l6 3 6-3M2 13l6 3 6-3"/></svg>
+    <span id="t-layers">레이어</span>
+  </button>
+  <button class="tbtn" onclick="showPanel('calib-panel')">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2"/></svg>
+    <span id="t-calib">보정</span>
+  </button>
+  <button class="tbtn" onclick="toggleLangPicker()" id="lang-btn">🌐</button>
+</div>
+
+<!-- MAP AREA -->
+<div id="map-area">
+  <div id="map-wrap">
+    <canvas id="pdf-canvas"></canvas>
+    <svg id="layer-svg"></svg>
+    <svg id="gps-svg"></svg>
+  </div>
+  <div id="empty-state">
+    <div class="es-icon">
+      <svg width="30" height="30" viewBox="0 0 30 30" fill="none" stroke="var(--text3)" stroke-width="1.5"><rect x="3" y="3" width="24" height="24" rx="3"/><path d="M8 11h14M8 15h9M8 19h11"/></svg>
+    </div>
+    <h2 id="t-es-h">지도 파일을 열어주세요</h2>
+    <p id="t-es-p">GIS에서 내보낸 팜 농장 PDF 지도를 선택하면 여기에 표시됩니다.</p>
+    <button class="main-btn" onclick="triggerPDF()">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 11v2h12v-2M8 2v8M5 7l3 3 3-3"/></svg>
+      <span id="t-es-btn">PDF 지도 열기</span>
+    </button>
+  </div>
+</div>
+
+<!-- ZOOM / LOC -->
+<div id="zoom-wrap">
+  <button class="zbtn" onclick="zoomBy(1.25)">+</button>
+  <button class="zbtn" onclick="zoomBy(1/1.25)">−</button>
+</div>
+<button id="loc-btn" onclick="centerGPS()" title="내 위치">
+  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="3"/><path d="M10 1v3M10 16v3M1 10h3M16 10h3"/></svg>
+</button>
+<div id="page-nav">
+  <button class="pnav-btn" onclick="changePg(-1)">‹</button>
+  <span id="page-lbl" style="font-size:11px;color:var(--text2)">1/1</span>
+  <button class="pnav-btn" onclick="changePg(1)">›</button>
+</div>
+
+<!-- BOTTOM BAR -->
+<div id="bottombar">
+  <div id="gps-pill">
+    <div id="gps-dot"></div>
+    <div class="pill-txt">
+      <div id="gps-lbl">GPS</div>
+      <div id="gps-val" id="t-no-loc">위치 없음</div>
+    </div>
+    <div id="gps-acc-txt">—</div>
+  </div>
+  <button class="bbtn" id="btn-gps" onclick="handleGPS()">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="3"/><path d="M10 1v3M10 16v3M1 10h3M16 10h3"/></svg>
+    <span id="t-gps-btn">GPS</span>
+  </button>
+  <button class="bbtn" id="btn-track" onclick="toggleTrack()">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 16L6 10L10 13L14 6L18 8"/></svg>
+    <span id="t-track-btn">트랙</span>
+  </button>
+  <button class="bbtn" onclick="openMemo('')">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="M7 10h6M7 13h4"/></svg>
+    <span id="t-memo-btn">메모</span>
+  </button>
+  <button class="bbtn" onclick="openMemoList()">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 5h12M4 10h12M4 15h8"/></svg>
+    <span id="t-list-btn">목록</span>
+  </button>
+</div>
+
+<!-- ══ GPS SETUP PANEL ══ -->
+<div class="panel panel-bot" id="gps-panel">
+  <button class="panel-close" onclick="hidePanel('gps-panel')">×</button>
+  <h3 id="t-gps-title">📡 GPS 설정 안내</h3>
+  <div class="err-box" id="gps-err-box"></div>
+  <div class="gps-steps">
+    <div class="gps-step"><div class="step-num">1</div><div class="step-txt" id="t-gs1">브라우저에서 위치 권한을 <strong>허용</strong>하세요</div></div>
+    <div class="gps-step"><div class="step-num">2</div><div class="step-txt" id="t-gs2">설정 → Chrome → 위치: <strong>앱 사용 중 허용</strong></div></div>
+    <div class="gps-step"><div class="step-num">3</div><div class="step-txt" id="t-gs3">실외에서 GPS 신호가 더 빠르게 잡힙니다 (±3~10m)</div></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn-green" onclick="startGPS()" id="t-gps-start">GPS 시작</button>
+    <button class="btn-grey" onclick="hidePanel('gps-panel')" id="t-cancel">취소</button>
+  </div>
+</div>
+
+<!-- ══ CALIB PANEL ══ -->
+<div class="panel panel-top" id="calib-panel">
+  <button class="panel-close" onclick="hidePanel('calib-panel')">×</button>
+  <h3 id="t-calib-title" style="color:var(--amber)">📐 GPS 좌표 보정</h3>
+  <p style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:10px" id="t-calib-desc">현장에서 위치를 알고 있는 기준점 2곳을 지도에서 탭하여 GPS와 지도를 정렬하세요.</p>
+  <div class="gps-steps">
+    <div class="gps-step"><div class="step-num">1</div><div class="step-txt" id="t-cs1">GPS를 켜고 기준점 위치에 서주세요</div></div>
+    <div class="gps-step"><div class="step-num">2</div><div class="step-txt" id="t-cs2">지도에서 해당 위치를 탭하면 GPS 좌표 자동 기록</div></div>
+    <div class="gps-step"><div class="step-num">3</div><div class="step-txt" id="t-cs3">2개 이상 기준점 등록 후 보정 완료</div></div>
+  </div>
+  <div id="calib-status" style="font-size:11px;color:var(--text3);font-family:var(--mono);margin:8px 0">기준점 0/2</div>
+  <div class="btn-row">
+    <button class="btn-amber" onclick="startCalib()" id="t-calib-start">보정 시작</button>
+    <button class="btn-grey" onclick="hidePanel('calib-panel')" id="t-cancel2">취소</button>
+  </div>
+</div>
+
+<!-- ══ MEMO ADD PANEL ══ -->
+<div class="panel panel-bot" id="memo-panel">
+  <button class="panel-close" onclick="hidePanel('memo-panel')">×</button>
+  <h3 id="t-memo-title">📍 위치 메모 추가</h3>
+  <textarea class="memo-txt-input" id="memo-input" id="t-memo-ph" placeholder="이 위치에 대한 메모를 입력하세요..."></textarea>
+  <div class="btn-row" style="margin-top:8px">
+    <button class="btn-green" onclick="saveMemo()" id="t-save">저장</button>
+    <button class="btn-grey" onclick="hidePanel('memo-panel')" id="t-cancel3">취소</button>
+  </div>
+</div>
+
+<!-- ══ TRACK PANEL ══ -->
+<div class="panel panel-bot" id="track-panel">
+  <button class="panel-close" onclick="hidePanel('track-panel')">×</button>
+  <h3 id="t-track-title">🛣️ 트래킹 정보</h3>
+  <div class="trk-row"><span id="t-tpts">포인트 수</span><span id="trk-pts">0</span></div>
+  <div class="trk-row"><span id="t-tdist">거리</span><span id="trk-dist">0 m</span></div>
+  <div class="trk-row"><span id="t-tstart">시작 시간</span><span id="trk-start">—</span></div>
+  <div class="btn-row" style="margin-top:10px">
+    <button class="btn-green" onclick="exportGPX()" id="t-gpx">GPX 내보내기</button>
+    <button class="btn-red" onclick="clearTrack()" id="t-clr">초기화</button>
+    <button class="btn-grey" onclick="hidePanel('track-panel')" id="t-tclose">닫기</button>
+  </div>
+</div>
+
+<!-- ══ LAYER POPUP ══ -->
+<div id="layer-popup">
+  <div class="lp-card">
+    <div class="lp-head">
+      <span class="lp-badge" id="lp-badge">BLOCK</span>
+      <span class="lp-name" id="lp-name">—</span>
+      <button class="lp-close" onclick="closePop()">×</button>
+    </div>
+    <div class="lp-body">
+      <div class="lp-grid" id="lp-grid"></div>
+      <div class="lp-acts">
+        <button class="lp-act la-memo" onclick="memoFromPop()">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6M5 11h4"/></svg>
+          <span id="t-lp-m">메모</span>
+        </button>
+        <button class="lp-act la-nav" onclick="navFeat()">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2L14 8L8 14M2 8h12"/></svg>
+          <span id="t-lp-n">이동</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MEMO LIST FULL PANEL ══ -->
+<div class="fpanel" id="memo-list-panel">
+  <h2 id="t-mlist">📋 메모 목록</h2>
+  <div id="memo-list-body"></div>
+  <button class="fp-close-btn" onclick="document.getElementById('memo-list-panel').classList.remove('show')" id="t-mclose">닫기</button>
+</div>
+
+<!-- ══ LAYER MANAGER FULL PANEL ══ -->
+<div class="fpanel" id="layer-panel">
+  <h2 id="t-lmgr">레이어 관리</h2>
+  <div class="import-zone" onclick="triggerGeo()">
+    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 24V10l10-6 10 6v14l-10 6-10-6z"/><path d="M16 4v22M6 10l10 6 10-6"/></svg>
+    <p id="t-import">GeoJSON / CSV 불러오기</p>
+    <small id="t-import-s">Block, Division, Estate, 도로 레이어</small>
+  </div>
+  <div id="layer-list-body"></div>
+  <button class="demo-btn" onclick="loadDemo()">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6M8 5v6"/></svg>
+    <span id="t-demo">샘플 레이어 불러오기 (데모)</span>
+  </button>
+  <button class="fp-close-btn" onclick="document.getElementById('layer-panel').classList.remove('show')" id="t-lclose">닫기</button>
+</div>
+
+<!-- ══ LANG PICKER ══ -->
+<div id="lang-picker">
+  <div class="lang-opt" id="lo-ko" onclick="setLang('ko')"><span class="lang-flag">🇰🇷</span> 한국어</div>
+  <div class="lang-opt" id="lo-en" onclick="setLang('en')"><span class="lang-flag">🇬🇧</span> English</div>
+  <div class="lang-opt" id="lo-id" onclick="setLang('id')"><span class="lang-flag">🇮🇩</span> Bahasa Indonesia</div>
+</div>
+
+<!-- ══ INSTALL PROMPT ══ -->
+<div id="install-bar">
+  <div class="install-info">
+    <strong id="t-inst-title">앱 설치 (홈 화면 추가)</strong>
+    <span id="t-inst-desc">오프라인에서도 GPS 포함 모든 기능을 사용할 수 있습니다</span>
+  </div>
+  <button class="install-do" onclick="doInstall()" id="t-inst-btn">설치</button>
+  <button class="install-x" onclick="dismissInstall()">×</button>
+</div>
+
+<div id="loading"><div class="spin"></div><span id="loading-txt">...</span></div>
+<div id="toast"></div>
+
+<input type="file" id="pdf-input" accept=".pdf,application/pdf" style="display:none" onchange="loadPDF(this)">
+<input type="file" id="geo-input" accept=".geojson,.json,.csv" style="display:none" onchange="loadGeo(this)">
+
+<!-- ══════════════════════════════════════════════════════════
+     SERVICE WORKER (inline blob) — enables offline + PWA install
+═══════════════════════════════════════════════════════════ -->
+<script>
+(function(){
+  if(!('serviceWorker' in navigator)) return;
+  const sw = `
+const CACHE = 'palmmap-v4';
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(ks =>
+    Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))
+  ));
+  self.clients.claim();
+});
+self.addEventListener('fetch', e => {
+  if (e.request.url.startsWith('blob:') || e.request.method !== 'GET') return;
+  e.respondWith(
+    caches.open(CACHE).then(cache =>
+      cache.match(e.request).then(hit => {
+        if (hit) return hit;
+        return fetch(e.request).then(res => {
+          if (res && res.ok) cache.put(e.request, res.clone());
+          return res;
+        }).catch(() => hit);
+      })
+    )
+  );
+});
+`;
+  const blob = new Blob([sw], {type:'application/javascript'});
+  const url  = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(url)
+    .then(() => URL.revokeObjectURL(url))
+    .catch(() => {});
+})();
+
+// PWA install prompt
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-bar').classList.add('show');
+});
+function doInstall() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt = null;
+  dismissInstall();
+}
+function dismissInstall() {
+  document.getElementById('install-bar').classList.remove('show');
+}
+
+// PWA manifest inline
+const mfest = {
+  name: 'Palm Farm Field Map',
+  short_name: 'PalmMap',
+  start_url: location.href,
+  display: 'standalone',
+  background_color: '#0f1a0f',
+  theme_color: '#1a2e1a',
+  icons: [{
+    src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect width='96' height='96' rx='20' fill='%231a2a1a'/><text x='48' y='68' font-size='58' text-anchor='middle'>🌴</text></svg>",
+    sizes: '96x96', type: 'image/svg+xml'
+  }]
+};
+const mBlob = new Blob([JSON.stringify(mfest)], {type:'application/manifest+json'});
+const mLink = document.createElement('link');
+mLink.rel = 'manifest'; mLink.href = URL.createObjectURL(mBlob);
+document.head.appendChild(mLink);
+</script>
+
+<!-- ══════════════════════════════════════════════════════════
+     MAIN APP SCRIPT
+═══════════════════════════════════════════════════════════ -->
+<script>
+/* ─── TRANSLATIONS ─── */
+const LANG_DATA = {
+ko: {
+  pdf:'PDF', layers:'레이어', calib:'보정',
+  es_h:'지도 파일을 열어주세요', es_p:'GIS에서 내보낸 팜 농장 PDF 지도를 선택하면 여기에 표시됩니다.', es_btn:'PDF 지도 열기',
+  gps_btn:'GPS', track_btn:'트랙', memo_btn:'메모', list_btn:'목록',
+  gps_title:'📡 GPS 설정 안내',
+  gs1:'브라우저에서 위치 권한을 <strong>허용</strong>하세요',
+  gs2:'설정 → Chrome → 위치: <strong>앱 사용 중 허용</strong>',
+  gs3:'실외에서 GPS 신호가 더 빠르게 잡힙니다 (±3~10m)',
+  gps_start:'GPS 시작',
+  calib_title:'📐 GPS 좌표 보정',
+  calib_desc:'현장에서 위치를 알고 있는 기준점 2곳을 지도에서 탭하여 GPS와 지도를 정렬하세요.',
+  cs1:'GPS를 켜고 기준점 위치에 서주세요',
+  cs2:'지도에서 해당 위치를 탭하면 GPS 좌표 자동 기록',
+  cs3:'2개 이상 기준점 등록 후 보정 완료',
+  calib_start:'보정 시작',
+  memo_title:'📍 위치 메모 추가', memo_ph:'이 위치에 대한 메모를 입력하세요...\n예) Block B12 수확 필요, 도로 파손',
+  save:'저장', cancel:'취소', close:'닫기',
+  track_title:'🛣️ 트래킹 정보', tpts:'포인트 수', tdist:'거리', tstart:'시작 시간',
+  gpx:'GPX 내보내기', clr:'초기화',
+  mlist:'📋 메모 목록', lmgr:'레이어 관리',
+  import:'GeoJSON / CSV 불러오기', import_s:'Block, Division, Estate, 도로 레이어',
+  demo:'샘플 레이어 불러오기 (데모)',
+  lp_memo:'메모', lp_nav:'이동',
+  inst_title:'앱 설치 (홈 화면 추가)', inst_desc:'오프라인에서도 GPS 포함 모든 기능을 사용할 수 있습니다', inst_btn:'설치',
+  // messages
+  gps_active:'GPS 활성', gps_none:'위치 없음',
+  no_gps:'GPS 위치 없음', no_calib:'먼저 GPS 보정을 해주세요', no_map:'먼저 PDF 지도를 불러오세요',
+  need_gps:'먼저 GPS를 켜주세요',
+  calib_tap:'지도에서 기준점을 탭하세요', calib_done:'보정 완료! GPS가 지도에 표시됩니다.',
+  calib_pt:'기준점', calib_reg:'등록됨', calib_status:'기준점',
+  memo_saved:'메모 저장됨', memo_del:'메모 삭제됨', memo_empty_input:'메모 내용을 입력하세요', memo_none:'저장된 메모가 없습니다.',
+  track_on:'트래킹 시작', track_off:'트래킹 정지', track_clr:'트랙 초기화됨',
+  gpx_ok:'GPX 다운로드 시작', gpx_few:'트랙 포인트 부족',
+  pdf_ok:'PDF 로드 완료', pdf_err:'PDF 오류',
+  demo_ok:'샘플 레이어 로드 완료 — 구역을 탭해보세요!',
+  perm_denied:'위치 권한이 거부됐습니다. 브라우저 설정에서 위치 허용을 활성화해 주세요.',
+  gps_unav:'이 기기는 GPS를 지원하지 않습니다.',
+  gps_timeout:'GPS 신호를 찾지 못했습니다. 실외에서 시도하거나 잠시 후 다시 시도해주세요.',
+  lbl_code:'코드', lbl_area:'면적', lbl_yr:'심은 연도', lbl_trees:'수목 수',
+  lbl_status:'상태', lbl_div:'Division', lbl_est:'Estate', lbl_notes:'비고',
+  lbl_mat:'성숙도', lbl_rtype:'도로 유형', lbl_rlen:'길이',
+  st_a:'생산중', st_i:'미성숙', st_r:'재식 예정',
+  rt_m:'주도로', rt_c:'집하도로', rt_f:'현장도로',
+  ly_est:'ESTATE', ly_div:'DIVISION', ly_blk:'BLOCK', ly_road:'ROAD', ly_oth:'기타',
+  load_pdf:'PDF 불러오는 중...', load_gps:'GPS 연결 중...', load_layer:'레이어 불러오는 중...',
+},
+en: {
+  pdf:'PDF', layers:'Layers', calib:'Calibrate',
+  es_h:'Open a map file', es_p:'Select a GIS-exported PDF map to display it here.', es_btn:'Open PDF Map',
+  gps_btn:'GPS', track_btn:'Track', memo_btn:'Memo', list_btn:'List',
+  gps_title:'📡 GPS Setup Guide',
+  gs1:'Allow location permission in your <strong>browser</strong>',
+  gs2:'Settings → Chrome → Location: <strong>Allow while using app</strong>',
+  gs3:'Use outdoors for best signal accuracy (±3–10m)',
+  gps_start:'Start GPS',
+  calib_title:'📐 GPS Calibration',
+  calib_desc:'Tap 2 known reference points on the map to align GPS coordinates with the PDF.',
+  cs1:'Turn on GPS and stand at a known reference location',
+  cs2:'Tap that location on the map — GPS coords auto-recorded',
+  cs3:'After 2+ points, calibration is applied',
+  calib_start:'Start Calibration',
+  memo_title:'📍 Add Location Memo', memo_ph:'Enter memo for this location...\ne.g. Block B12 needs harvesting',
+  save:'Save', cancel:'Cancel', close:'Close',
+  track_title:'🛣️ Tracking Info', tpts:'Points', tdist:'Distance', tstart:'Start Time',
+  gpx:'Export GPX', clr:'Clear',
+  mlist:'📋 Memo List', lmgr:'Layer Manager',
+  import:'Import GeoJSON / CSV', import_s:'Block, Division, Estate, Road layers',
+  demo:'Load Sample Layers (Demo)',
+  lp_memo:'Memo', lp_nav:'Go',
+  inst_title:'Install App (Add to Home)', inst_desc:'Use offline including GPS with all features', inst_btn:'Install',
+  gps_active:'GPS Active', gps_none:'No Location',
+  no_gps:'No GPS location', no_calib:'Please calibrate GPS first', no_map:'Please load a PDF map first',
+  need_gps:'Please turn on GPS first',
+  calib_tap:'Tap a reference point on the map', calib_done:'Calibration done! GPS shown on map.',
+  calib_pt:'Point', calib_reg:'registered', calib_status:'Point',
+  memo_saved:'Memo saved', memo_del:'Memo deleted', memo_empty_input:'Please enter memo text', memo_none:'No memos saved.',
+  track_on:'Tracking started', track_off:'Tracking stopped', track_clr:'Track cleared',
+  gpx_ok:'GPX download started', gpx_few:'Not enough track points',
+  pdf_ok:'PDF loaded', pdf_err:'PDF error',
+  demo_ok:'Sample layers loaded — tap any zone!',
+  perm_denied:'Location permission denied. Please enable location in browser settings.',
+  gps_unav:'This device does not support GPS.',
+  gps_timeout:'GPS signal not found. Try outdoors or wait a moment.',
+  lbl_code:'Code', lbl_area:'Area', lbl_yr:'Planting Year', lbl_trees:'Trees',
+  lbl_status:'Status', lbl_div:'Division', lbl_est:'Estate', lbl_notes:'Notes',
+  lbl_mat:'Maturity', lbl_rtype:'Road Type', lbl_rlen:'Length',
+  st_a:'Productive', st_i:'Immature', st_r:'Replant',
+  rt_m:'Main Road', rt_c:'Collection Road', rt_f:'Field Road',
+  ly_est:'ESTATE', ly_div:'DIVISION', ly_blk:'BLOCK', ly_road:'ROAD', ly_oth:'OTHER',
+  load_pdf:'Loading PDF...', load_gps:'Connecting GPS...', load_layer:'Loading layers...',
+},
+id: {
+  pdf:'PDF', layers:'Layer', calib:'Kalibrasi',
+  es_h:'Buka file peta', es_p:'Pilih peta PDF perkebunan kelapa sawit yang diekspor dari GIS.', es_btn:'Buka Peta PDF',
+  gps_btn:'GPS', track_btn:'Lacak', memo_btn:'Memo', list_btn:'Daftar',
+  gps_title:'📡 Panduan GPS',
+  gs1:'Izinkan akses lokasi di <strong>browser</strong> Anda',
+  gs2:'Pengaturan → Chrome → Lokasi: <strong>Izinkan saat menggunakan aplikasi</strong>',
+  gs3:'Gunakan di luar ruangan untuk akurasi terbaik (±3–10m)',
+  gps_start:'Mulai GPS',
+  calib_title:'📐 Kalibrasi GPS',
+  calib_desc:'Ketuk 2 titik referensi yang diketahui di peta untuk menyelaraskan GPS dengan PDF.',
+  cs1:'Aktifkan GPS dan berdiri di titik referensi yang diketahui',
+  cs2:'Ketuk lokasi itu di peta — koordinat GPS dicatat otomatis',
+  cs3:'Setelah 2+ titik, kalibrasi diterapkan',
+  calib_start:'Mulai Kalibrasi',
+  memo_title:'📍 Tambah Memo Lokasi', memo_ph:'Masukkan memo untuk lokasi ini...\ncth. Blok B12 perlu dipanen',
+  save:'Simpan', cancel:'Batal', close:'Tutup',
+  track_title:'🛣️ Info Pelacakan', tpts:'Titik', tdist:'Jarak', tstart:'Waktu Mulai',
+  gpx:'Ekspor GPX', clr:'Reset',
+  mlist:'📋 Daftar Memo', lmgr:'Kelola Layer',
+  import:'Impor GeoJSON / CSV', import_s:'Layer Blok, Divisi, Estate, Jalan',
+  demo:'Muat Layer Contoh (Demo)',
+  lp_memo:'Memo', lp_nav:'Pergi',
+  inst_title:'Pasang Aplikasi (Tambah ke Layar Utama)', inst_desc:'Gunakan offline termasuk GPS dengan semua fitur', inst_btn:'Pasang',
+  gps_active:'GPS Aktif', gps_none:'Tanpa Lokasi',
+  no_gps:'Tidak ada lokasi GPS', no_calib:'Lakukan kalibrasi GPS terlebih dahulu', no_map:'Muat peta PDF terlebih dahulu',
+  need_gps:'Aktifkan GPS terlebih dahulu',
+  calib_tap:'Ketuk titik referensi di peta', calib_done:'Kalibrasi selesai! GPS ditampilkan di peta.',
+  calib_pt:'Titik', calib_reg:'terdaftar', calib_status:'Titik',
+  memo_saved:'Memo tersimpan', memo_del:'Memo dihapus', memo_empty_input:'Masukkan teks memo', memo_none:'Belum ada memo.',
+  track_on:'Pelacakan dimulai', track_off:'Pelacakan dihentikan', track_clr:'Lacak direset',
+  gpx_ok:'Ekspor GPX dimulai', gpx_few:'Poin lacak tidak cukup',
+  pdf_ok:'PDF berhasil dimuat', pdf_err:'Error PDF',
+  demo_ok:'Layer contoh dimuat — ketuk zona mana saja!',
+  perm_denied:'Izin lokasi ditolak. Aktifkan lokasi di pengaturan browser.',
+  gps_unav:'Perangkat ini tidak mendukung GPS.',
+  gps_timeout:'Sinyal GPS tidak ditemukan. Coba di luar ruangan.',
+  lbl_code:'Kode', lbl_area:'Luas', lbl_yr:'Thn Tanam', lbl_trees:'Pohon',
+  lbl_status:'Status', lbl_div:'Divisi', lbl_est:'Estate', lbl_notes:'Catatan',
+  lbl_mat:'Kematangan', lbl_rtype:'Jenis Jalan', lbl_rlen:'Panjang',
+  st_a:'Produksi', st_i:'Belum Matang', st_r:'Replanting',
+  rt_m:'Jalan Utama', rt_c:'Jalan Koleksi', rt_f:'Jalan Lapangan',
+  ly_est:'ESTATE', ly_div:'DIVISI', ly_blk:'BLOK', ly_road:'JALAN', ly_oth:'LAINNYA',
+  load_pdf:'Memuat PDF...', load_gps:'Menghubungkan GPS...', load_layer:'Memuat layer...',
+}
+};
+
+let curLang = localStorage.getItem('palmmap_lang') || 'ko';
+function T(k){ return LANG_DATA[curLang][k] || LANG_DATA.ko[k] || k; }
+
+const LANG_IDS = {
+  't-pdf':'pdf','t-layers':'layers','t-calib':'calib',
+  't-es-h':'es_h','t-es-p':'es_p','t-es-btn':'es_btn',
+  't-gps-btn':'gps_btn','t-track-btn':'track_btn','t-memo-btn':'memo_btn','t-list-btn':'list_btn',
+  't-gps-title':'gps_title','t-gs1':'gs1','t-gs2':'gs2','t-gs3':'gs3','t-gps-start':'gps_start',
+  't-calib-title':'calib_title','t-calib-desc':'calib_desc','t-cs1':'cs1','t-cs2':'cs2','t-cs3':'cs3','t-calib-start':'calib_start',
+  't-memo-title':'memo_title',
+  't-save':'save','t-cancel':'cancel','t-cancel2':'cancel','t-cancel3':'cancel','t-close':'close',
+  't-track-title':'track_title','t-tpts':'tpts','t-tdist':'tdist','t-tstart':'tstart','t-gpx':'gpx','t-clr':'clr','t-tclose':'close',
+  't-mlist':'mlist','t-mclose':'close','t-lmgr':'lmgr','t-lclose':'close',
+  't-import':'import','t-import-s':'import_s','t-demo':'demo',
+  't-lp-m':'lp_memo','t-lp-n':'lp_nav',
+  't-inst-title':'inst_title','t-inst-desc':'inst_desc','t-inst-btn':'inst_btn',
+};
+
+function applyLang() {
+  Object.entries(LANG_IDS).forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = T(key);
+  });
+  document.getElementById('memo-input').placeholder = T('memo_ph');
+  if (!gpsOn) {
+    document.getElementById('gps-lbl').textContent = 'GPS';
+    document.getElementById('gps-val').textContent = T('gps_none');
+  }
+  ['ko','en','id'].forEach(l => {
+    const el = document.getElementById('lo-'+l);
+    if (el) el.classList.toggle('sel', l === curLang);
+  });
+}
+
+function setLang(l) {
+  curLang = l;
+  localStorage.setItem('palmmap_lang', l);
+  applyLang();
+  document.getElementById('lang-picker').classList.remove('show');
+}
+
+function toggleLangPicker() {
+  const p = document.getElementById('lang-picker');
+  p.classList.toggle('show');
+}
+
+/* ─── STATE ─── */
+let pdfDoc=null, curPg=1, totalPgs=1;
+let scale=1, ox=0, oy=0, cW=0, cH=0;
+const DPR = Math.min(window.devicePixelRatio||1, 2);
+let dragging=false, dsx=0, dsy=0, lastPinch=null;
+let gpsOn=false, watchId=null, curPos=null;
+let trackOn=false, trkPts=[], trkStart=null;
+let memos=[];
+let calibDrawMode=false, calibPts=[];
+let layers=[], selFeat=null;
+
+const TYPE_META = {
+  estate:  {stroke:'rgba(122,180,80,.85)',  fill:'rgba(122,180,80,.12)',  lw:2.5, ls:14, badgeCls:'b-estate',  lKey:'ly_est'},
+  division:{stroke:'rgba(232,168,74,.85)',  fill:'rgba(232,168,74,.10)',  lw:2,   ls:12, badgeCls:'b-division',lKey:'ly_div'},
+  block:   {stroke:'rgba(90,180,232,.85)',  fill:'rgba(90,180,232,.10)', lw:1.5, ls:10, badgeCls:'b-block',   lKey:'ly_blk'},
+  road:    {stroke:'rgba(200,184,144,.9)',  fill:'none',                  lw:2.5, ls:10, badgeCls:'b-road',   lKey:'ly_road'},
+  other:   {stroke:'rgba(160,160,160,.7)', fill:'rgba(160,160,160,.08)', lw:1,   ls:10, badgeCls:'b-other',  lKey:'ly_oth'},
+};
+
+/* ─── PAN/ZOOM ─── */
+const MA = document.getElementById('map-area');
+const MW = document.getElementById('map-wrap');
+
+function applyTx(){ MW.style.transform = `translate(${ox}px,${oy}px) scale(${scale})`; }
+function clamp(){
+  if(!cW) return;
+  const aW=MA.clientWidth, aH=MA.clientHeight, sW=cW*scale, sH=cH*scale;
+  ox = Math.max(Math.min(0, aW-sW), Math.min(0, ox));
+  oy = Math.max(Math.min(0, aH-sH), Math.min(0, oy));
+}
+
+MA.addEventListener('mousedown', e => {
+  if(e.button) return;
+  dragging=true; dsx=e.clientX-ox; dsy=e.clientY-oy;
+  MA.style.cursor='grabbing';
+});
+window.addEventListener('mousemove', e => {
+  if(!dragging) return;
+  ox=e.clientX-dsx; oy=e.clientY-dsy; clamp(); applyTx();
+});
+window.addEventListener('mouseup', () => { dragging=false; MA.style.cursor=''; });
+MA.addEventListener('wheel', e => {
+  e.preventDefault();
+  const r=MA.getBoundingClientRect();
+  zoomAt(e.clientX-r.left, e.clientY-r.top, e.deltaY<0?1.12:1/1.12);
+}, {passive:false});
+
+MA.addEventListener('touchstart', e => {
+  if(e.touches.length===1){
+    dragging=true; dsx=e.touches[0].clientX-ox; dsy=e.touches[0].clientY-oy;
+  } else if(e.touches.length===2){
+    dragging=false; lastPinch=pinchD(e);
+  }
+}, {passive:true});
+
+MA.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if(e.touches.length===1 && dragging){
+    ox=e.touches[0].clientX-dsx; oy=e.touches[0].clientY-dsy; clamp(); applyTx();
+  } else if(e.touches.length===2 && lastPinch){
+    const d=pinchD(e), f=d/lastPinch;
+    const r=MA.getBoundingClientRect();
+    const cx=(e.touches[0].clientX+e.touches[1].clientX)/2-r.left;
+    const cy=(e.touches[0].clientY+e.touches[1].clientY)/2-r.top;
+    zoomAt(cx,cy,f); lastPinch=d;
+  }
+}, {passive:false});
+
+MA.addEventListener('touchend', e => { if(!e.touches.length){ dragging=false; lastPinch=null; }});
+
+function pinchD(e){ return Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY); }
+function zoomAt(cx,cy,f){ const ns=Math.max(.2,Math.min(10,scale*f)),r=ns/scale; ox=cx-r*(cx-ox); oy=cy-r*(cy-oy); scale=ns; clamp(); applyTx(); }
+function zoomBy(f){ zoomAt(MA.clientWidth/2, MA.clientHeight/2, f); }
+
+/* ─── TAP DETECTION ─── */
+let tapT=0, tapX=0, tapY=0, tapMoved=false;
+MA.addEventListener('touchstart', e => {
+  if(e.touches.length===1){ tapT=Date.now(); tapX=e.touches[0].clientX; tapY=e.touches[0].clientY; tapMoved=false; }
+}, {passive:true});
+MA.addEventListener('touchmove', e => { if(e.touches.length===1&&Math.hypot(e.touches[0].clientX-tapX,e.touches[0].clientY-tapY)>8) tapMoved=true; }, {passive:true});
+MA.addEventListener('touchend', e => {
+  if(!tapMoved && Date.now()-tapT < 300 && e.changedTouches.length===1)
+    handleTap(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+});
+MA.addEventListener('click', e => { handleTap(e.clientX, e.clientY); });
+
+function handleTap(cx, cy){
+  const r = MA.getBoundingClientRect();
+  const px = (cx-r.left-ox)/scale, py = (cy-r.top-oy)/scale;
+  document.getElementById('lang-picker').classList.remove('show');
+
+  if(calibDrawMode){
+    if(!curPos){ toast(T('no_gps')); return; }
+    calibPts.push({px, py, lat:curPos.lat, lon:curPos.lon});
+    const status = T('calib_pt')+' '+calibPts.length+'/2 '+T('calib_reg');
+    document.getElementById('calib-status').textContent = status;
+    toast(T('calib_pt')+' '+calibPts.length+' '+T('calib_reg'));
+    if(calibPts.length >= 2){ calibDrawMode=false; toast(T('calib_done')); }
+    drawGPS(); return;
+  }
+
+  const hit = hitTest(px, py);
+  if(hit) showPop(hit); else closePop();
+}
+
+/* ─── GPS ─── 
+   KEY FIX: getCurrentPosition first for immediate fix,
+   then watchPosition for continuous updates.
+   Both use identical high-accuracy options.
+   Error codes handled individually with clear messages.
+*/
+function handleGPS(){ if(gpsOn) stopGPS(); else showPanel('gps-panel'); }
+
+function startGPS(){
+  hidePanel('gps-panel');
+  document.getElementById('gps-err-box').classList.remove('show');
+
+  if(!('geolocation' in navigator)){
+    showGPSErr(T('gps_unav')); return;
+  }
+
+  showLoad(T('load_gps'));
+
+  const opts = { enableHighAccuracy:true, maximumAge:5000, timeout:20000 };
+  const optsWatch = { enableHighAccuracy:true, maximumAge:3000, timeout:30000 };
+
+  // Step 1: get immediate fix
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+      hideLoad();
+      onGPSPos(pos);
+      // Step 2: start continuous watch
+      watchId = navigator.geolocation.watchPosition(onGPSPos, onGPSErr, optsWatch);
+      setGPSActive(true);
+    },
+    function(err){
+      hideLoad();
+      // Try watchPosition as fallback (some devices work differently)
+      if(err.code === 3){ // TIMEOUT — try watch anyway
+        watchId = navigator.geolocation.watchPosition(
+          function(pos){ onGPSPos(pos); setGPSActive(true); },
+          onGPSErr, optsWatch
+        );
+        // Give it 5 seconds, show loading
+        showLoad(T('load_gps'));
+        setTimeout(() => { if(!curPos) hideLoad(); }, 5000);
+      } else {
+        onGPSErr(err);
+      }
+    },
+    opts
+  );
+}
+
+function setGPSActive(on){
+  gpsOn = on;
+  document.getElementById('btn-gps').classList.toggle('on', on);
+  document.getElementById('gps-dot').className = on ? 'on' : '';
+  document.getElementById('gps-lbl').textContent = on ? T('gps_active') : 'GPS';
+  if(!on){ document.getElementById('gps-val').textContent = T('gps_none'); document.getElementById('gps-acc-txt').textContent='—'; }
+}
+
+function stopGPS(){
+  if(watchId !== null){ navigator.geolocation.clearWatch(watchId); watchId=null; }
+  curPos=null; setGPSActive(false); drawGPS();
+}
+
+function onGPSPos(p){
+  hideLoad();
+  const{latitude:lat, longitude:lon, accuracy:acc, heading}=p.coords;
+  curPos={lat,lon,acc,heading};
+  document.getElementById('gps-val').textContent=lat.toFixed(5)+', '+lon.toFixed(5);
+  document.getElementById('gps-acc-txt').textContent='±'+Math.round(acc)+'m';
+  document.getElementById('gps-lbl').textContent = T('gps_active');
+  document.getElementById('gps-dot').className = 'on';
+  if(!gpsOn) setGPSActive(true);
+  if(trackOn) trkPts.push({lat,lon,time:new Date().toISOString()});
+  drawGPS();
+  // auto-detect block
+  if(calibPts.length>=2){
+    const c=ll2c(lat,lon);
+    if(c){ const h=hitTest(c.px,c.py); if(h) document.getElementById('gps-lbl').textContent=h.feat.name||h.feat.code||T('gps_active'); }
+  }
+}
+
+function onGPSErr(err){
+  hideLoad(); gpsOn=false; watchId=null;
+  document.getElementById('btn-gps').classList.remove('on');
+  document.getElementById('gps-dot').className='err';
+  let msg;
+  switch(err.code){
+    case 1: msg=T('perm_denied'); break;
+    case 2: msg=T('gps_unav'); break;
+    case 3: msg=T('gps_timeout'); break;
+    default: msg='GPS: '+err.message;
+  }
+  showGPSErr(msg);
+}
+
+function showGPSErr(msg){
+  const b=document.getElementById('gps-err-box');
+  b.textContent=msg; b.classList.add('show');
+  showPanel('gps-panel');
+}
+
+/* ─── CALIBRATION ─── */
+function ll2c(lat,lon){
+  if(calibPts.length<2) return null;
+  const[a,b]=calibPts, dLat=b.lat-a.lat, dLon=b.lon-a.lon;
+  if(Math.abs(dLat)<1e-10||Math.abs(dLon)<1e-10) return null;
+  return{ px:a.px+(lon-a.lon)*(b.px-a.px)/dLon, py:a.py+(lat-a.lat)*(b.py-a.py)/dLat };
+}
+
+function startCalib(){
+  if(!gpsOn){ toast(T('need_gps')); return; }
+  calibDrawMode=true; calibPts=[];
+  document.getElementById('calib-status').textContent = T('calib_pt')+' 0/2';
+  hidePanel('calib-panel');
+  toast(T('calib_tap'));
+}
+
+function centerGPS(){
+  if(!curPos){ toast(T('no_gps')); return; }
+  if(calibPts.length<2){ toast(T('no_calib')); return; }
+  const c=ll2c(curPos.lat,curPos.lon); if(!c) return;
+  ox=MA.clientWidth/2-c.px*scale; oy=MA.clientHeight/2-c.py*scale;
+  clamp(); applyTx();
+}
+
+/* ─── GPS SVG OVERLAY ─── */
+function mkSVG(tag){ return document.createElementNS('http://www.w3.org/2000/svg',tag); }
+
+function drawGPS(){
+  const svg=document.getElementById('gps-svg'); svg.innerHTML='';
+
+  // Track path
+  if(trkPts.length>=2 && calibPts.length>=2){
+    const pts=trkPts.map(p=>ll2c(p.lat,p.lon)).filter(Boolean);
+    if(pts.length>=2){
+      const pa=mkSVG('path');
+      pa.setAttribute('d','M'+pts.map(p=>p.px+','+p.py).join('L'));
+      pa.setAttribute('class','track-path'); svg.appendChild(pa);
+    }
+  }
+
+  // Calibration markers
+  calibPts.forEach((cp,i)=>{
+    const g=mkSVG('g');
+    const c=mkSVG('circle');
+    c.setAttribute('cx',cp.px); c.setAttribute('cy',cp.py);
+    c.setAttribute('r','8'); c.setAttribute('class','calib-pin');
+    const t=mkSVG('text');
+    t.setAttribute('x',cp.px); t.setAttribute('y',cp.py);
+    t.setAttribute('class','calib-lbl'); t.textContent=i+1;
+    g.appendChild(c); g.appendChild(t); svg.appendChild(g);
+  });
+
+  // Memo pins
+  memos.forEach((m,i)=>{
+    let px=m.px, py=m.py;
+    if(calibPts.length>=2 && m.lat){ const c=ll2c(m.lat,m.lon); if(c){px=c.px;py=c.py;} }
+    const g=mkSVG('g'); g.style.cursor='pointer';
+    const c=mkSVG('circle');
+    c.setAttribute('cx',px); c.setAttribute('cy',py);
+    c.setAttribute('r','11'); c.setAttribute('class','memo-pin');
+    const t=mkSVG('text');
+    t.setAttribute('x',px); t.setAttribute('y',py);
+    t.setAttribute('class','memo-num'); t.textContent=i+1;
+    g.appendChild(c); g.appendChild(t);
+    g.addEventListener('click', e=>{ e.stopPropagation(); toast((i+1)+': '+m.text.substring(0,50)); });
+    svg.appendChild(g);
+  });
+
+  if(!curPos) return;
+  let px, py;
+  if(calibPts.length>=2){ const c=ll2c(curPos.lat,curPos.lon); if(c){px=c.px;py=c.py;} }
+  if(px===undefined){ px=cW/2; py=cH/2; }
+
+  // Accuracy ring
+  const ar=mkSVG('circle');
+  ar.setAttribute('cx',px); ar.setAttribute('cy',py);
+  ar.setAttribute('r',Math.min(80,Math.max(12,curPos.acc/2)));
+  ar.setAttribute('class','acc-ring'); svg.appendChild(ar);
+
+  // Halo
+  const ha=mkSVG('circle');
+  ha.setAttribute('cx',px); ha.setAttribute('cy',py);
+  ha.setAttribute('r','16'); ha.setAttribute('class','gps-halo'); svg.appendChild(ha);
+
+  // Heading arrow
+  if(curPos.heading!=null && !isNaN(curPos.heading)){
+    const r=(curPos.heading-90)*Math.PI/180;
+    const poly=mkSVG('polygon');
+    const ax=px+Math.cos(r)*21, ay=py+Math.sin(r)*21;
+    const a1x=px+Math.cos(r-.4)*12, a1y=py+Math.sin(r-.4)*12;
+    const a2x=px+Math.cos(r+.4)*12, a2y=py+Math.sin(r+.4)*12;
+    poly.setAttribute('points',ax+','+ay+' '+a1x+','+a1y+' '+a2x+','+a2y);
+    poly.setAttribute('fill','var(--green2)'); poly.setAttribute('opacity','.75');
+    svg.appendChild(poly);
+  }
+
+  // Core dot
+  const cd=mkSVG('circle');
+  cd.setAttribute('cx',px); cd.setAttribute('cy',py);
+  cd.setAttribute('r','8'); cd.setAttribute('class','gps-core'); svg.appendChild(cd);
+}
+
+/* ─── TRACKING ─── */
+function toggleTrack(){
+  if(!trackOn){
+    if(!gpsOn){ toast(T('need_gps')); return; }
+    trackOn=true; trkStart=new Date(); trkPts=[];
+    document.getElementById('btn-track').classList.add('on');
+    toast(T('track_on'));
+  } else {
+    trackOn=false;
+    document.getElementById('btn-track').classList.remove('on');
+    updTrackStats(); showPanel('track-panel');
+    toast(T('track_off'));
+  }
+}
+
+function updTrackStats(){
+  document.getElementById('trk-pts').textContent=trkPts.length;
+  document.getElementById('trk-dist').textContent=calcDist()+' m';
+  document.getElementById('trk-start').textContent=trkStart?trkStart.toLocaleTimeString():'—';
+}
+
+function calcDist(){
+  let d=0;
+  for(let i=1;i<trkPts.length;i++){
+    const a=trkPts[i-1],b=trkPts[i],R=6371000;
+    const dLat=(b.lat-a.lat)*Math.PI/180, dLon=(b.lon-a.lon)*Math.PI/180;
+    const x=Math.sin(dLat/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLon/2)**2;
+    d+=R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+  }
+  return Math.round(d);
+}
+
+function exportGPX(){
+  if(trkPts.length<2){ toast(T('gpx_few')); return; }
+  const pts=trkPts.map(p=>'    <trkpt lat="'+p.lat+'" lon="'+p.lon+'"><time>'+p.time+'</time></trkpt>').join('\n');
+  const gpx='<?xml version="1.0"?>\n<gpx version="1.1" creator="PalmFarmMap">\n  <trk><name>Palm Farm Track</name><trkseg>\n'+pts+'\n  </trkseg></trk>\n</gpx>';
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([gpx],{type:'application/gpx+xml'}));
+  a.download='track_'+new Date().toISOString().slice(0,10)+'.gpx';
+  a.click(); hidePanel('track-panel'); toast(T('gpx_ok'));
+}
+
+function clearTrack(){ trkPts=[]; trkStart=null; drawGPS(); hidePanel('track-panel'); toast(T('track_clr')); }
+
+/* ─── MEMOS ─── */
+function loadMemos(){ try{ memos=JSON.parse(localStorage.getItem('palmmap_memos')||'[]'); }catch(e){ memos=[]; } }
+function saveMemos(){ localStorage.setItem('palmmap_memos', JSON.stringify(memos)); }
+
+function openMemo(pre){
+  document.getElementById('memo-input').value=pre;
+  showPanel('memo-panel');
+  setTimeout(()=>document.getElementById('memo-input').focus(),150);
+}
+
+function saveMemo(){
+  const txt=document.getElementById('memo-input').value.trim();
+  if(!txt){ toast(T('memo_empty_input')); return; }
+  const now=new Date();
+  memos.push({
+    id:Date.now(),
+    lat: curPos?curPos.lat:0, lon: curPos?curPos.lon:0,
+    px:cW/2, py:cH/2,
+    text: txt,
+    date: now.toLocaleDateString(),
+    time: now.toLocaleTimeString(),
+    layerName: selFeat?.feat?.name || selFeat?.feat?.code || ''
+  });
+  saveMemos();
+  document.getElementById('memo-input').value='';
+  hidePanel('memo-panel');
+  drawGPS(); toast(T('memo_saved'));
+}
+
+function memoFromPop(){
+  const f=selFeat?.feat;
+  closePop();
+  openMemo(f ? '['+( f.name||f.code||'')+'] ' : '');
+}
+
+function openMemoList(){
+  renderMemoList();
+  document.getElementById('memo-list-panel').classList.add('show');
+}
+
+function renderMemoList(){
+  const body=document.getElementById('memo-list-body');
+  if(!memos.length){
+    body.innerHTML='<div class="memo-empty">'+T('memo_none')+'</div>'; return;
+  }
+  // Group by date, newest first
+  const grps={};
+  [...memos].reverse().forEach(m=>{ if(!grps[m.date])grps[m.date]=[]; grps[m.date].push(m); });
+  const dates=Object.keys(grps); // already in reverse order due to reverse() above
+
+  body.innerHTML=dates.map(date=>`
+    <div class="memo-date-group">
+      <div class="memo-date-hdr">📅 ${date} &nbsp; (${grps[date].length})</div>
+      ${grps[date].map(m=>`
+        <div class="memo-item" id="mi-${m.id}">
+          <div class="memo-body">
+            <div class="memo-meta">
+              <span class="memo-time">${m.time||''}</span>
+              ${m.layerName?'<span class="memo-layer-tag">'+escHTML(m.layerName)+'</span>':''}
+            </div>
+            ${m.lat?'<div class="memo-coords">'+m.lat.toFixed(5)+', '+m.lon.toFixed(5)+'</div>':''}
+            <div class="memo-text">${escHTML(m.text)}</div>
+          </div>
+          <button class="memo-del" onclick="delMemo(${m.id})" title="삭제">🗑</button>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function delMemo(id){
+  memos=memos.filter(m=>m.id!==id);
+  saveMemos(); drawGPS(); renderMemoList();
+  toast(T('memo_del'));
+}
+
+function escHTML(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ─── PDF ─── */
+function triggerPDF(){ document.getElementById('pdf-input').click(); }
+
+function loadPDF(input){
+  const file=input.files[0]; if(!file) return;
+  showLoad(T('load_pdf'));
+  // Load PDF.js if not already loaded
+  if(window.pdfjsLib){ doPDF(file); }
+  else{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload=()=>{
+      pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      doPDF(file);
+    };
+    s.onerror=()=>{ hideLoad(); toast(T('pdf_err')+' (offline — PDF.js needed)'); };
+    document.head.appendChild(s);
+  }
+  input.value='';
+}
+
+function doPDF(file){
+  const fr=new FileReader();
+  fr.onload=async e=>{
+    try{
+      pdfDoc=await pdfjsLib.getDocument({data:e.target.result}).promise;
+      totalPgs=pdfDoc.numPages; curPg=1;
+      await renderPg(1);
+      document.getElementById('empty-state').style.display='none';
+      if(totalPgs>1) document.getElementById('page-nav').classList.add('show');
+      updPgLbl();
+      toast(T('pdf_ok')+' ('+totalPgs+'p)');
+    } catch(err){ toast(T('pdf_err')+': '+err.message); }
+    hideLoad();
+  };
+  fr.readAsArrayBuffer(file);
+}
+
+async function renderPg(n){
+  const page=await pdfDoc.getPage(n);
+  const vp=page.getViewport({scale:2*DPR});
+  const canvas=document.getElementById('pdf-canvas');
+  canvas.width=vp.width; canvas.height=vp.height;
+  canvas.style.width=(vp.width/DPR)+'px'; canvas.style.height=(vp.height/DPR)+'px';
+  cW=vp.width/DPR; cH=vp.height/DPR;
+  syncSVGSize();
+  await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
+  const aW=MA.clientWidth, aH=MA.clientHeight;
+  scale=Math.min(aW/cW, aH/cH)*.95;
+  ox=(aW-cW*scale)/2; oy=(aH-cH*scale)/2;
+  applyTx(); drawLayerSVG(); drawGPS();
+}
+
+function syncSVGSize(){
+  ['layer-svg','gps-svg'].forEach(id=>{
+    const s=document.getElementById(id);
+    s.setAttribute('width',cW); s.setAttribute('height',cH);
+    s.style.width=cW+'px'; s.style.height=cH+'px';
+  });
+}
+
+function changePg(d){ const n=curPg+d; if(n<1||n>totalPgs) return; curPg=n; showLoad(T('load_pdf')); renderPg(n).then(hideLoad); updPgLbl(); }
+function updPgLbl(){ document.getElementById('page-lbl').textContent=curPg+'/'+totalPgs; }
+
+/* ─── HIT TEST ─── */
+function hitTest(px,py){
+  for(let i=layers.length-1;i>=0;i--){
+    const l=layers[i]; if(!l.visible) continue;
+    for(const f of l.features){
+      const poly=f.polygon||[];
+      if(l.type==='road'){ if(poly.length>=2&&lineHit(poly,px,py,8)) return{layer:l,feat:f}; }
+      else{ if(poly.length>=3&&pip(poly,px,py)) return{layer:l,feat:f}; }
+    }
+  }
+  return null;
+}
+
+function pip(poly,px,py){
+  let inside=false;
+  for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+    const xi=poly[i].px,yi=poly[i].py,xj=poly[j].px,yj=poly[j].py;
+    if(((yi>py)!==(yj>py))&&px<(xj-xi)*(py-yi)/(yj-yi)+xi) inside=!inside;
+  }
+  return inside;
+}
+
+function lineHit(pts,px,py,tol){
+  for(let i=1;i<pts.length;i++){
+    const ax=pts[i-1].px,ay=pts[i-1].py,bx=pts[i].px,by=pts[i].py;
+    const dx=bx-ax,dy=by-ay,l2=dx*dx+dy*dy;
+    if(!l2) continue;
+    const t=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/l2));
+    if(Math.hypot(px-ax-t*dx,py-ay-t*dy)<=tol) return true;
+  }
+  return false;
+}
+
+/* ─── LAYER POPUP ─── */
+function showPop(hit){
+  selFeat=hit;
+  const{layer,feat}=hit;
+  const m=TYPE_META[layer.type]||TYPE_META.other;
+  document.getElementById('lp-badge').textContent=T(m.lKey);
+  document.getElementById('lp-badge').className='lp-badge '+m.badgeCls;
+  document.getElementById('lp-name').textContent=feat.name||feat.code||'—';
+  document.getElementById('lp-grid').innerHTML=buildFields(layer.type,feat).map(f=>
+    `<div class="lp-field${f.wide?' wide':''}">
+      <div class="lp-fl">${f.l}</div>
+      <div class="lp-fv${f.mono?' mono':''}">${f.v}</div>
+      ${f.extra||''}
+    </div>`
+  ).join('');
+  document.getElementById('layer-popup').classList.add('show');
+}
+
+function buildFields(type,feat){
+  const yr=parseInt(feat.year)||null;
+  const age=yr?(new Date().getFullYear()-yr)+(curLang==='en'?' yr':'년차'):'—';
+  const mat=yr?Math.min(100,Math.max(0,Math.round((new Date().getFullYear()-yr-2)/20*100))):0;
+  const stMap={
+    active:`<span class="sdot sdot-a"></span>${T('st_a')}`,
+    immature:`<span class="sdot sdot-i"></span>${T('st_i')}`,
+    replant:`<span class="sdot sdot-r"></span>${T('st_r')}`
+  };
+  const rtMap={main:T('rt_m'),collection:T('rt_c'),field:T('rt_f')};
+
+  if(type==='block') return [
+    {l:T('lbl_code'),v:feat.code||'—',mono:true},
+    {l:T('lbl_div'),v:feat.division||'—'},
+    {l:T('lbl_est'),v:feat.estate||'—'},
+    {l:T('lbl_area'),v:feat.area?feat.area+' Ha':'—',mono:true},
+    {l:T('lbl_trees'),v:feat.trees?feat.trees+(curLang==='en'?' trees':'그루'):'—',mono:true},
+    {l:T('lbl_yr'),v:yr?yr+' ('+age+')':'—',mono:true},
+    {l:T('lbl_status'),v:stMap[feat.status||'active']||'—'},
+    {l:T('lbl_mat'),v:'',wide:true,extra:`<div class="prog-bg"><div class="prog-fg" style="width:${mat}%"></div></div><div style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-top:4px">${mat}%</div>`},
+    ...(feat.notes?[{l:T('lbl_notes'),v:escHTML(feat.notes),wide:true}]:[])
+  ];
+  if(type==='division') return [
+    {l:T('lbl_code'),v:feat.code||'—',mono:true},
+    {l:T('lbl_est'),v:feat.estate||'—'},
+    {l:T('lbl_area'),v:feat.area?feat.area+' Ha':'—',mono:true},
+    {l:T('lbl_status'),v:stMap[feat.status||'active']||'—'},
+    ...(feat.notes?[{l:T('lbl_notes'),v:escHTML(feat.notes),wide:true}]:[])
+  ];
+  if(type==='estate') return [
+    {l:T('lbl_code'),v:feat.code||'—',mono:true},
+    {l:T('lbl_area'),v:feat.area?feat.area+' Ha':'—',mono:true},
+    {l:T('lbl_yr'),v:feat.year||'—',mono:true},
+    ...(feat.notes?[{l:T('lbl_notes'),v:escHTML(feat.notes),wide:true}]:[])
+  ];
+  if(type==='road') return [
+    {l:T('lbl_code'),v:feat.code||'—',mono:true},
+    {l:T('lbl_rtype'),v:rtMap[feat.roadType||'main']||'—'},
+    {l:T('lbl_rlen'),v:feat.roadLen?feat.roadLen+' m':'—',mono:true},
+    ...(feat.notes?[{l:T('lbl_notes'),v:escHTML(feat.notes),wide:true}]:[])
+  ];
+  return [
+    {l:T('lbl_code'),v:feat.code||'—',mono:true},
+    ...(feat.area?[{l:T('lbl_area'),v:feat.area+' Ha',mono:true}]:[]),
+    ...(feat.notes?[{l:T('lbl_notes'),v:escHTML(feat.notes),wide:true}]:[])
+  ];
+}
+
+function closePop(){ document.getElementById('layer-popup').classList.remove('show'); selFeat=null; }
+function navFeat(){
+  const poly=selFeat?.feat?.polygon||[]; if(!poly.length) return;
+  const cx=poly.reduce((s,p)=>s+p.px,0)/poly.length;
+  const cy=poly.reduce((s,p)=>s+p.py,0)/poly.length;
+  ox=MA.clientWidth/2-cx*scale; oy=MA.clientHeight/2-cy*scale;
+  clamp(); applyTx(); closePop();
+}
+
+/* ─── LAYER SVG RENDER ─── */
+function drawLayerSVG(){
+  const svg=document.getElementById('layer-svg'); svg.innerHTML='';
+  if(!cW) return;
+  ['estate','division','block','road','other'].forEach(type=>{
+    layers.filter(l=>l.type===type&&l.visible).forEach(layer=>{
+      const m=TYPE_META[type];
+      layer.features.forEach(feat=>{
+        const poly=feat.polygon||[]; if(poly.length<2) return;
+        const g=mkSVG('g'); g.style.cursor='pointer';
+        if(type==='road'){
+          const pl=mkSVG('polyline');
+          pl.setAttribute('points',poly.map(p=>p.px+','+p.py).join(' '));
+          pl.setAttribute('fill','none'); pl.setAttribute('stroke',m.stroke);
+          pl.setAttribute('stroke-width',feat.roadType==='main'?3:feat.roadType==='collection'?2:1.5);
+          pl.setAttribute('stroke-linecap','round'); pl.setAttribute('stroke-linejoin','round');
+          g.appendChild(pl);
+          if(feat.name){ const mid=poly[Math.floor(poly.length/2)]; g.appendChild(svgTxt(feat.name,mid.px,mid.py-7,m.ls,m.stroke)); }
+        } else {
+          const pg=mkSVG('polygon');
+          pg.setAttribute('points',poly.map(p=>p.px+','+p.py).join(' '));
+          pg.setAttribute('fill',m.fill); pg.setAttribute('stroke',m.stroke);
+          pg.setAttribute('stroke-width',m.lw); pg.setAttribute('stroke-linejoin','round');
+          g.appendChild(pg);
+          const cx=poly.reduce((s,p)=>s+p.px,0)/poly.length;
+          const cy=poly.reduce((s,p)=>s+p.py,0)/poly.length;
+          if(feat.name) g.appendChild(svgTxt(feat.name,cx,cy,m.ls,m.stroke));
+          if(feat.code&&feat.code!==feat.name) g.appendChild(svgTxt(feat.code,cx,cy+m.ls*1.1,m.ls*.82,m.stroke.replace(/[\d.]+\)$/,'0.6)')));
+        }
+        g.addEventListener('click',e=>{ e.stopPropagation(); showPop({layer,feat}); });
+        svg.appendChild(g);
+      });
+    });
+  });
+}
+
+function svgTxt(txt,x,y,size,fill){
+  const t=mkSVG('text');
+  t.setAttribute('x',x); t.setAttribute('y',y);
+  t.setAttribute('text-anchor','middle'); t.setAttribute('dominant-baseline','central');
+  t.setAttribute('font-size',size); t.setAttribute('font-weight','700');
+  t.setAttribute('fill',fill); t.setAttribute('paint-order','stroke');
+  t.setAttribute('stroke','rgba(15,26,15,.9)'); t.setAttribute('stroke-width','3');
+  t.setAttribute('stroke-linejoin','round'); t.setAttribute('pointer-events','none');
+  t.textContent=txt; return t;
+}
+
+/* ─── LAYER MANAGER ─── */
+function openLayerPanel(){
+  renderLayerList();
+  document.getElementById('layer-panel').classList.add('show');
+}
+
+function renderLayerList(){
+  const body=document.getElementById('layer-list-body');
+  if(!layers.length){
+    body.innerHTML='<p style="font-size:12px;color:var(--text3);padding:8px 0">'+T('memo_none')+'</p>'; return;
+  }
+  body.innerHTML=layers.map((l,i)=>{
+    const m=TYPE_META[l.type]||TYPE_META.other;
+    return `<div class="layer-row">
+      <div class="layer-dot" style="background:${m.stroke}"></div>
+      <div class="layer-info">
+        <div class="layer-name">${escHTML(l.name)}</div>
+        <div class="layer-cnt">${T(m.lKey)} · ${l.features.length}</div>
+      </div>
+      <button class="vis-tog ${l.visible?'on':'off'}" onclick="toggleVis(${i},event)"></button>
+    </div>`;
+  }).join('');
+}
+
+function toggleVis(i,e){ e.stopPropagation(); layers[i].visible=!layers[i].visible; renderLayerList(); drawLayerSVG(); }
+
+function triggerGeo(){ document.getElementById('geo-input').click(); }
+
+function loadGeo(input){
+  const file=input.files[0]; if(!file) return;
+  showLoad(T('load_layer'));
+  const fr=new FileReader();
+  fr.onload=e=>{
+    try{
+      if(file.name.endsWith('.csv')) importCSV(e.target.result,file.name);
+      else importGeoJSON(JSON.parse(e.target.result),file.name);
+    } catch(err){ toast('Error: '+err.message); }
+    hideLoad(); renderLayerList(); drawLayerSVG();
+  };
+  fr.readAsText(file); input.value='';
+}
+
+function importGeoJSON(gj,fname){
+  if(!gj.features?.length) return;
+  const type=guessType(gj.features[0].properties||{},fname);
+  const feats=gj.features.map(f=>{
+    const p=f.properties||{};
+    return{
+      name:p.NAME||p.name||p.BLOCK||p.DIVISION||p.ESTATE||p.block_name||'',
+      code:p.CODE||p.code||p.BLOCK_CODE||p.ID||'',
+      area:p.AREA_HA||p.area||p.HA||'',year:p.YEAR||p.PLANT_YEAR||p.year||'',
+      trees:p.TREES||p.NUM_TREES||'',status:p.STATUS||p.status||'active',
+      division:p.DIVISION||p.division||'',estate:p.ESTATE||p.estate||'',
+      notes:p.NOTES||p.notes||p.REMARK||'',
+      roadType:p.ROAD_TYPE||p.road_type||'main',roadLen:p.LENGTH||p.length||'',
+      polygon:geomToCanvas(f.geometry)
+    };
+  }).filter(f=>f.polygon.length>0);
+  layers.push({id:Date.now(),name:fname.replace(/\.[^.]+$/,''),type,visible:true,features:feats});
+}
+
+function importCSV(text,fname){
+  const lines=text.trim().split('\n');
+  const hdrs=lines[0].split(',').map(h=>h.trim().replace(/"/g,''));
+  const feats=lines.slice(1).map(line=>{
+    const vals=line.split(',').map(v=>v.trim().replace(/"/g,''));
+    const row={}; hdrs.forEach((h,i)=>row[h]=vals[i]||'');
+    return{name:row.NAME||row.name||row.BLOCK||row.block||row.DIVISION||row.division||'',
+      code:row.CODE||row.code||row.ID||'',area:row.AREA_HA||row.area||'',year:row.YEAR||row.year||'',
+      trees:row.TREES||'',status:row.STATUS||row.status||'active',
+      division:row.DIVISION||row.division||'',estate:row.ESTATE||row.estate||'',
+      notes:row.NOTES||row.notes||'',polygon:[]};
+  }).filter(f=>f.name||f.code);
+  layers.push({id:Date.now(),name:fname.replace(/\.[^.]+$/,''),type:guessType(feats[0]||{},fname),visible:true,features:feats});
+}
+
+function guessType(p,f){
+  const s=(JSON.stringify(p)+f).toLowerCase();
+  if(s.includes('estate')) return'estate';
+  if(s.includes('division')||s.includes('divisi')) return'division';
+  if(s.includes('road')||s.includes('jalan')) return'road';
+  return'block';
+}
+
+function geomToCanvas(geom){
+  if(!geom) return[];
+  let ring=[];
+  if(geom.type==='Polygon') ring=geom.coordinates[0]||[];
+  else if(geom.type==='MultiPolygon') ring=(geom.coordinates[0]||[[]])[0]||[];
+  else if(geom.type==='LineString') ring=geom.coordinates;
+  if(calibPts.length>=2) return ring.map(([lon,lat])=>ll2c(lat,lon)||{px:0,py:0}).filter(p=>p.px||p.py);
+  return ring.map(([x,y])=>({px:x,py:y}));
+}
+
+/* ─── DEMO LAYERS ─── */
+function loadDemo(){
+  if(!cW){ toast(T('no_map')); return; }
+  layers=[];
+  const W=cW, H=cH;
+
+  layers.push({id:1,name:'Estate A',type:'estate',visible:true,features:[{
+    name:'Estate A',code:'EST-A',area:'2,450',year:'2005',notes:'서부 칼리만탄 팜 농장',
+    polygon:[{px:W*.04,py:H*.04},{px:W*.96,py:H*.04},{px:W*.96,py:H*.96},{px:W*.04,py:H*.96}]
+  }]});
+
+  layers.push({id:2,name:'Divisions',type:'division',visible:true,features:[
+    {name:'Division 1',code:'D-1',area:'580',estate:'EST-A',status:'active',polygon:[{px:W*.04,py:H*.04},{px:W*.5,py:H*.04},{px:W*.5,py:H*.5},{px:W*.04,py:H*.5}]},
+    {name:'Division 2',code:'D-2',area:'620',estate:'EST-A',status:'active',polygon:[{px:W*.5,py:H*.04},{px:W*.96,py:H*.04},{px:W*.96,py:H*.5},{px:W*.5,py:H*.5}]},
+    {name:'Division 3',code:'D-3',area:'590',estate:'EST-A',status:'active',polygon:[{px:W*.04,py:H*.5},{px:W*.5,py:H*.5},{px:W*.5,py:H*.96},{px:W*.04,py:H*.96}]},
+    {name:'Division 4',code:'D-4',area:'660',estate:'EST-A',status:'active',polygon:[{px:W*.5,py:H*.5},{px:W*.96,py:H*.5},{px:W*.96,py:H*.96},{px:W*.5,py:H*.96}]},
+  ]});
+
+  const bw=(W*.46)/3, bh=(H*.46)/3;
+  const bNames=['B-01','B-02','B-03','B-04','B-05','B-06','B-07','B-08','B-09'];
+  const bYrs=[2010,2012,2008,2015,2011,2007,2018,2013,2009];
+  const bSt=['active','active','active','immature','active','replant','immature','active','replant'];
+  const bTr=[148,152,146,138,150,141,135,149,143];
+  const blks=[];
+  for(let r=0;r<3;r++) for(let c=0;c<3;c++){
+    const i=r*3+c, x1=W*.04+c*bw+3, y1=H*.04+r*bh+3;
+    blks.push({name:bNames[i],code:'BLK-0'+(i+1),area:(bw*bh/900).toFixed(1),year:bYrs[i],trees:bTr[i],status:bSt[i],division:'D-1',estate:'EST-A',polygon:[{px:x1,py:y1},{px:x1+bw-6,py:y1},{px:x1+bw-6,py:y1+bh-6},{px:x1,py:y1+bh-6}]});
+  }
+  for(let r=0;r<3;r++) for(let c=0;c<3;c++){
+    const i=r*3+c, n=i+9, x1=W*.5+c*bw+3, y1=H*.04+r*bh+3;
+    blks.push({name:'B-'+(n+1<10?'0':'')+(n+1),code:'BLK-'+(n+1),area:(bw*bh/900).toFixed(1),year:2010+i%6,trees:140+i*3,status:['active','active','immature'][i%3],division:'D-2',estate:'EST-A',polygon:[{px:x1,py:y1},{px:x1+bw-6,py:y1},{px:x1+bw-6,py:y1+bh-6},{px:x1,py:y1+bh-6}]});
+  }
+  layers.push({id:3,name:'Blocks',type:'block',visible:true,features:blks});
+
+  layers.push({id:4,name:'Roads',type:'road',visible:true,features:[
+    {name:'Main Road N-S',code:'RD-M1',roadType:'main',roadLen:'2400',polygon:[{px:W*.5,py:H*.02},{px:W*.5,py:H*.98}]},
+    {name:'Main Road E-W',code:'RD-M2',roadType:'main',roadLen:'2200',polygon:[{px:W*.02,py:H*.5},{px:W*.98,py:H*.5}]},
+    {name:'Coll. Road A',code:'RD-C1',roadType:'collection',roadLen:'800',polygon:[{px:W*.04,py:H*.27},{px:W*.5,py:H*.27}]},
+    {name:'Coll. Road B',code:'RD-C2',roadType:'collection',roadLen:'800',polygon:[{px:W*.5,py:H*.27},{px:W*.96,py:H*.27}]},
+    {name:'Coll. Road C',code:'RD-C3',roadType:'collection',roadLen:'800',polygon:[{px:W*.04,py:H*.73},{px:W*.5,py:H*.73}]},
+    {name:'Coll. Road D',code:'RD-C4',roadType:'collection',roadLen:'800',polygon:[{px:W*.5,py:H*.73},{px:W*.96,py:H*.73}]},
+  ]});
+
+  renderLayerList(); drawLayerSVG();
+  toast(T('demo_ok'));
+  document.getElementById('layer-panel').classList.remove('show');
+}
+
+/* ─── PANEL UTILS ─── */
+function showPanel(id){ document.getElementById(id).classList.add('show'); }
+function hidePanel(id){ document.getElementById(id).classList.remove('show'); }
+
+/* ─── TOAST / LOADING ─── */
+let toastTmr;
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastTmr); toastTmr=setTimeout(()=>el.classList.remove('show'),3000);
+}
+function showLoad(msg){ document.getElementById('loading-txt').textContent=msg; document.getElementById('loading').classList.add('show'); }
+function hideLoad(){ document.getElementById('loading').classList.remove('show'); }
+
+/* ─── INIT ─── */
+loadMemos();
+applyLang();
+drawGPS();
+</script>
+</body>
+</html>
