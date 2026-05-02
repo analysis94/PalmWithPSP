@@ -211,6 +211,82 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 #loading.show{display:flex}
 .spin{width:28px;height:28px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:sp .8s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
+/* ══════════════════════════════════════════════════════
+   가로 모드 (Landscape) 최적화
+   - 상단/하단 바 높이 축소
+   - 버튼 텍스트 숨김 (아이콘만 표시)
+   - 지도 영역 최대화
+══════════════════════════════════════════════════════ */
+@media (orientation: landscape) and (max-height: 500px) {
+
+  /* 상단 바: 50px → 36px */
+  #topbar { height: 36px; padding: 0 6px; gap: 4px; }
+  .logo   { font-size: 12px; }
+  .tbtn   { padding: 3px 6px; font-size: 10px; }
+  .tbtn svg { width: 11px; height: 11px; }
+
+  /* 하단 바: 74px → 46px (버튼 가로 배치) */
+  #bottombar { height: 46px; padding: 0 6px; gap: 4px; }
+  #gps-pill  { padding: 4px 7px; }
+  #gps-lbl   { display: none; }  /* "GPS" 라벨 숨김 */
+  #gps-val   { font-size: 9px; }
+  #gps-acc-txt { font-size: 8px; }
+
+  /* 버튼 텍스트 숨김 — 아이콘만 */
+  .bbtn      { min-width: 36px; padding: 4px 4px; font-size: 0; gap: 0; }
+  .bbtn svg  { width: 16px; height: 16px; }
+  .bbtn span { display: none; }   /* 텍스트 레이블 숨김 */
+
+  /* 지도 영역 재조정 */
+  #map-area  { top: 36px; bottom: 46px; }
+  #pdf-map-info { top: 36px; }
+  #page-nav  { top: 44px; }
+
+  /* 줌/위치 버튼 위치 재조정 */
+  #zoom-wrap { bottom: 56px; }
+  #loc-btn   { bottom: 130px; }
+
+  /* 플로팅 패널 가로모드 최적화 */
+  .panel-bot { bottom: 50px; max-height: calc(100vh - 90px); overflow-y: auto; }
+  .panel-top { top: 40px; }
+  #layer-popup { bottom: 46px; }
+}
+
+/* ══════════════════════════════════════════════════════
+   전체화면(Fullscreen) 모드
+══════════════════════════════════════════════════════ */
+:fullscreen #topbar,
+:-webkit-full-screen #topbar { background: var(--bg2); }
+
+/* ══════════════════════════════════════════════════════
+   Safe Area (노치/홈바 대응 — iPhone X 이상, 안드로이드 컷아웃)
+══════════════════════════════════════════════════════ */
+@supports (padding: env(safe-area-inset-top)) {
+  #topbar {
+    padding-left:  max(8px, env(safe-area-inset-left));
+    padding-right: max(8px, env(safe-area-inset-right));
+  }
+  #bottombar {
+    padding-left:   max(8px, env(safe-area-inset-left));
+    padding-right:  max(8px, env(safe-area-inset-right));
+    padding-bottom: env(safe-area-inset-bottom);
+    height: calc(74px + env(safe-area-inset-bottom));
+  }
+  @media (orientation: landscape) and (max-height: 500px) {
+    #bottombar {
+      height: calc(46px + env(safe-area-inset-bottom));
+    }
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   전체화면 버튼 (상단 바 오른쪽)
+══════════════════════════════════════════════════════ */
+#fs-btn { background:var(--bg3);border:.5px solid var(--border);color:var(--text2);
+  font-size:13px;width:30px;height:30px;border-radius:6px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s; }
+#fs-btn:active { border-color:var(--border2);color:var(--green2); }
+
 </style>
 </head>
 <body>
@@ -232,6 +308,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     <span id="t-calib">보정</span>
   </button>
   <button class="tbtn" onclick="toggleLangPicker()" id="lang-btn">🌐</button>
+  <button id="fs-btn" onclick="toggleFullscreen()" title="전체화면">⛶</button>
 </div>
 
 <!-- MAP AREA -->
@@ -313,20 +390,92 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 </div>
 
 <!-- ══ CALIB PANEL ══ -->
-<div class="panel panel-top" id="calib-panel">
+<div class="panel panel-top" id="calib-panel" style="max-height:80vh;overflow-y:auto">
   <button class="panel-close" onclick="hidePanel('calib-panel')">×</button>
   <h3 id="t-calib-title" style="color:var(--amber)">📐 GPS 좌표 보정</h3>
-  <p style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:10px" id="t-calib-desc">현장에서 위치를 알고 있는 기준점 2곳을 지도에서 탭하여 GPS와 지도를 정렬하세요.</p>
-  <div class="gps-steps">
-    <div class="gps-step"><div class="step-num">1</div><div class="step-txt" id="t-cs1">GPS를 켜고 기준점 위치에 서주세요</div></div>
-    <div class="gps-step"><div class="step-num">2</div><div class="step-txt" id="t-cs2">지도에서 해당 위치를 탭하면 GPS 좌표 자동 기록</div></div>
-    <div class="gps-step"><div class="step-num">3</div><div class="step-txt" id="t-cs3">2개 이상 기준점 등록 후 보정 완료</div></div>
+
+  <!-- GeoPDF 자동 감지 결과 배너 -->
+  <div id="geopdf-banner" style="display:none;background:rgba(122,180,80,.15);border:.5px solid rgba(122,180,80,.4);border-radius:8px;padding:10px 12px;margin-bottom:10px">
+    <div style="font-size:11px;font-weight:700;color:var(--green2);margin-bottom:4px">✅ GeoPDF 좌표 자동 감지됨</div>
+    <div id="geopdf-info" style="font-size:10px;color:var(--text2);font-family:var(--mono);line-height:1.6"></div>
+    <button onclick="applyGeoPDFCalib()" class="btn-green" style="width:100%;margin-top:8px;border:none">🎯 자동 보정 적용</button>
   </div>
-  <div id="calib-status" style="font-size:11px;color:var(--text3);font-family:var(--mono);margin:8px 0">기준점 0/2</div>
-  <div class="btn-row">
-    <button class="btn-amber" onclick="startCalib()" id="t-calib-start">보정 시작</button>
-    <button class="btn-grey" onclick="hidePanel('calib-panel')" id="t-cancel2">취소</button>
+
+  <!-- 탭 전환 -->
+  <div style="display:flex;gap:4px;margin-bottom:10px">
+    <button id="calib-tab-auto" onclick="switchCalibTab('auto')"
+      style="flex:1;padding:6px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;
+             background:var(--amber);color:#111;border:none">
+      🤖 자동 (GeoPDF)
+    </button>
+    <button id="calib-tab-manual" onclick="switchCalibTab('manual')"
+      style="flex:1;padding:6px;border-radius:6px;font-size:11px;cursor:pointer;
+             background:var(--bg3);color:var(--text2);border:.5px solid var(--border)">
+      👆 수동 (2점 탭)
+    </button>
   </div>
+
+  <!-- 자동 탭 내용 -->
+  <div id="calib-auto-content">
+    <div class="gps-steps">
+      <div class="gps-step">
+        <div class="step-num" style="background:var(--green)">1</div>
+        <div class="step-txt">PDF를 불러오면 GeoPDF 좌표를 <strong>자동으로 검색</strong>합니다</div>
+      </div>
+      <div class="gps-step">
+        <div class="step-num" style="background:var(--green)">2</div>
+        <div class="step-txt">감지되면 위의 배너가 나타납니다 → <strong>"자동 보정 적용"</strong> 탭</div>
+      </div>
+      <div class="gps-step">
+        <div class="step-num" style="background:var(--green)">3</div>
+        <div class="step-txt">감지 안 되면 <strong>수동 탭</strong>으로 전환하거나 좌표를 직접 입력하세요</div>
+      </div>
+    </div>
+    <!-- 수동 좌표 직접 입력 -->
+    <div style="margin-top:10px;background:var(--bg3);border:.5px solid var(--border);border-radius:8px;padding:10px">
+      <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:8px">📌 좌표 직접 입력 (지도 모서리 위경도 아는 경우)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+        <div>
+          <div style="font-size:9px;color:var(--text3);margin-bottom:3px">좌상단 위도 (Lat NW)</div>
+          <input id="ci-lat-nw" type="number" step="0.00001" placeholder="-0.050"
+            style="width:100%;background:var(--bg2);border:.5px solid var(--border);color:var(--text);font-size:11px;padding:5px 7px;border-radius:5px;outline:none;font-family:var(--mono)">
+        </div>
+        <div>
+          <div style="font-size:9px;color:var(--text3);margin-bottom:3px">좌상단 경도 (Lon NW)</div>
+          <input id="ci-lon-nw" type="number" step="0.00001" placeholder="110.680"
+            style="width:100%;background:var(--bg2);border:.5px solid var(--border);color:var(--text);font-size:11px;padding:5px 7px;border-radius:5px;outline:none;font-family:var(--mono)">
+        </div>
+        <div>
+          <div style="font-size:9px;color:var(--text3);margin-bottom:3px">우하단 위도 (Lat SE)</div>
+          <input id="ci-lat-se" type="number" step="0.00001" placeholder="-0.200"
+            style="width:100%;background:var(--bg2);border:.5px solid var(--border);color:var(--text);font-size:11px;padding:5px 7px;border-radius:5px;outline:none;font-family:var(--mono)">
+        </div>
+        <div>
+          <div style="font-size:9px;color:var(--text3);margin-bottom:3px">우하단 경도 (Lon SE)</div>
+          <input id="ci-lon-se" type="number" step="0.00001" placeholder="110.820"
+            style="width:100%;background:var(--bg2);border:.5px solid var(--border);color:var(--text);font-size:11px;padding:5px 7px;border-radius:5px;outline:none;font-family:var(--mono)">
+        </div>
+      </div>
+      <button onclick="applyCornerCalib()" class="btn-amber" style="width:100%;border:none">📐 모서리 좌표로 보정</button>
+    </div>
+  </div>
+
+  <!-- 수동 탭 내용 -->
+  <div id="calib-manual-content" style="display:none">
+    <p style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:10px" id="t-calib-desc">현장에서 위치를 알고 있는 기준점 2곳을 지도에서 탭하여 GPS와 지도를 정렬하세요.</p>
+    <div class="gps-steps">
+      <div class="gps-step"><div class="step-num">1</div><div class="step-txt" id="t-cs1">GPS를 켜고 기준점 위치에 서주세요</div></div>
+      <div class="gps-step"><div class="step-num">2</div><div class="step-txt" id="t-cs2">지도에서 해당 위치를 탭하면 GPS 좌표 자동 기록</div></div>
+      <div class="gps-step"><div class="step-num">3</div><div class="step-txt" id="t-cs3">2개 이상 기준점 등록 후 보정 완료</div></div>
+    </div>
+    <div id="calib-status" style="font-size:11px;color:var(--text3);font-family:var(--mono);margin:8px 0">기준점 0/2</div>
+    <div class="btn-row">
+      <button class="btn-amber" onclick="startCalib()" id="t-calib-start">보정 시작</button>
+      <button class="btn-grey" onclick="hidePanel('calib-panel')" id="t-cancel2">취소</button>
+    </div>
+  </div>
+
+  <button class="btn-grey" onclick="hidePanel('calib-panel')" style="width:100%;margin-top:10px" id="t-cancel2b">닫기</button>
 </div>
 
 <!-- ══ MEMO ADD PANEL ══ -->
@@ -916,6 +1065,408 @@ function showGPSErr(msg){
   showPanel('gps-panel');
 }
 
+
+/* ═══════════════════════════════════════════════════════════════
+   GeoPDF 자동 좌표 추출 엔진
+   ─────────────────────────────────────────────────────────────
+   지원 형식:
+   1. USGS GeoPDF  — LGIDict (LGIDict/CTM + Neatline)
+   2. OGC GeoPDF   — Viewport dictionary (ISO 32000-2)
+   3. PDF Metadata — XMP/DocInfo 에서 BBOX 추출
+   4. 파일명 파싱  — 좌표가 파일명에 포함된 경우
+   ─────────────────────────────────────────────────────────────
+   결과: geoPDFData = { latNW, lonNW, latSE, lonSE, source }
+         calibPts   = [ {px,py,lat,lon}, {px,py,lat,lon} ]
+═══════════════════════════════════════════════════════════════ */
+
+let geoPDFData = null;  // { latNW, lonNW, latSE, lonSE, source, proj }
+
+// ── 메인 진입점: PDF 로드 후 호출 ─────────────────────────────
+async function extractGeoPDFCoords(pdfDocument, canvasW, canvasH) {
+  geoPDFData = null;
+  
+  let result = null;
+
+  // 방법 1: PDF.js metadata API (Viewport / LGIDict 포함)
+  result = await tryExtractFromMetadata(pdfDocument);
+  if (result) { geoPDFData = {...result, source:'metadata'}; }
+
+  // 방법 2: PDF 원본 바이너리에서 LGIDict 파싱
+  if (!geoPDFData) {
+    result = await tryExtractLGIDict(pdfDocument);
+    if (result) { geoPDFData = {...result, source:'LGIDict'}; }
+  }
+
+  // 방법 3: PDF 원본 바이너리에서 Viewport 파싱
+  if (!geoPDFData) {
+    result = await tryExtractViewport(pdfDocument);
+    if (result) { geoPDFData = {...result, source:'Viewport'}; }
+  }
+
+  // 방법 4: 파일명에서 좌표 추출
+  if (!geoPDFData) {
+    result = tryExtractFromFilename(loadPDFMeta()?.name || '');
+    if (result) { geoPDFData = {...result, source:'filename'}; }
+  }
+
+  if (geoPDFData) {
+    showGeoPDFBanner(geoPDFData, canvasW, canvasH);
+    // 자동 즉시 적용 (사용자 확인 없이)
+    applyGeoPDFToCalib(geoPDFData, canvasW, canvasH);
+    return true;
+  }
+  return false;
+}
+
+// ── 방법 1: PDF.js metadata API ───────────────────────────────
+async function tryExtractFromMetadata(pdfDoc) {
+  try {
+    const metadata = await pdfDoc.getMetadata();
+    const info = metadata?.info || {};
+    
+    // XMP metadata에서 bbox 찾기
+    const xmp = metadata?.metadata?.getRaw?.() || '';
+    const bboxMatch = xmp.match(/BBOX[^>]*>([\d.\-,\s]+)</i) ||
+                      xmp.match(/coordinates[^>]*>([\d.\-,\s]+)</i);
+    if (bboxMatch) {
+      const nums = bboxMatch[1].split(/[\s,]+/).map(Number).filter(n => !isNaN(n));
+      if (nums.length >= 4) {
+        // [minLon, minLat, maxLon, maxLat] 또는 [minLat, minLon, maxLat, maxLon]
+        return parseBBoxNums(nums);
+      }
+    }
+
+    // PDF info dictionary에서 좌표 키 찾기
+    const coordKeys = ['Coordinates', 'BoundingBox', 'BBOX', 'GeoBB'];
+    for (const key of coordKeys) {
+      if (info[key]) {
+        const nums = String(info[key]).split(/[\s,;]+/).map(Number).filter(n=>!isNaN(n));
+        if (nums.length >= 4) return parseBBoxNums(nums);
+      }
+    }
+  } catch(e) {}
+  return null;
+}
+
+// ── 방법 2: LGIDict 바이너리 파싱 ─────────────────────────────
+async function tryExtractLGIDict(pdfDoc) {
+  try {
+    // PDF.js 내부 API로 페이지 딕셔너리 접근
+    const page = await pdfDoc.getPage(1);
+    
+    // PDF.js 3.x internal refs
+    const pageRef = page.ref;
+    const pageDict = await pdfDoc._transport.messageHandler.sendWithPromise(
+      'GetPage', {pageIndex: 0}
+    ).catch(() => null);
+    
+    // PDF 원본 스트림에서 LGIDict 텍스트 파싱 시도
+    const rawText = await getRawPDFText(pdfDoc);
+    if (rawText) {
+      return parseLGIDictFromText(rawText) || parseViewportFromText(rawText);
+    }
+  } catch(e) {}
+  return null;
+}
+
+// ── PDF 원본 바이너리를 텍스트로 읽기 ─────────────────────────
+async function getRawPDFText(pdfDoc) {
+  try {
+    // pdfDoc._transport 내부 데이터 접근
+    const transport = pdfDoc._transport;
+    if (!transport) return null;
+    
+    // PDF.js 데이터 버퍼 접근 (버전에 따라 다름)
+    const data = transport._params?.data ||
+                 transport.messageHandler?._comObj?._port?.data;
+    if (!data) return null;
+    
+    // 바이너리를 텍스트로 변환 (ASCII 부분만)
+    const bytes = new Uint8Array(data.buffer || data);
+    let text = '';
+    for (let i = 0; i < Math.min(bytes.length, 500000); i++) {
+      const c = bytes[i];
+      text += (c >= 32 && c < 127) ? String.fromCharCode(c) : ' ';
+    }
+    return text;
+  } catch(e) { return null; }
+}
+
+// ── LGIDict 파싱 (USGS GeoPDF 형식) ──────────────────────────
+function parseLGIDictFromText(text) {
+  try {
+    // /LGIDict 딕셔너리 찾기
+    const lgiIdx = text.indexOf('/LGIDict');
+    if (lgiIdx === -1) return null;
+
+    const lgiSection = text.substring(lgiIdx, lgiIdx + 3000);
+    
+    // /Neatline (경계 좌표) 추출
+    const neatMatch = lgiSection.match(/\/Neatline\s*\[([\d\s.\-]+)\]/);
+    if (!neatMatch) return null;
+    
+    const neatNums = neatMatch[1].trim().split(/\s+/).map(Number);
+    // Neatline은 PDF 포인트 단위의 폴리곤 [x1,y1, x2,y2, ...]
+    
+    // /CTM (좌표 변환 행렬) 추출
+    const ctmMatch = lgiSection.match(/\/CTM\s*\[([\d\s.\-e]+)\]/);
+    if (!ctmMatch) return null;
+    
+    const ctm = ctmMatch[1].trim().split(/\s+/).map(Number);
+    // CTM: [a, b, c, d, e, f] — PDF→지리좌표 변환
+    // geo_x = a*px + c*py + e
+    // geo_y = b*px + d*py + f
+    
+    if (ctm.length < 6) return null;
+    const [a, b, c, d, e, f] = ctm;
+
+    // Projection 확인
+    const projMatch = lgiSection.match(/\/Projection\s*<<([^>]+)>>/);
+    const projType = projMatch?.[1].match(/\/ProjectionType\s+(\d+)/)?.[1];
+    
+    // Neatline의 4모서리로 위경도 계산
+    // 보통 [x0,y0, x1,y0, x1,y1, x0,y1] 순서
+    if (neatNums.length >= 8) {
+      const x0=neatNums[0], y0=neatNums[1];
+      const x1=neatNums[2], y1=neatNums[3]; // 또는 다른 순서
+      const xMax=Math.max(...neatNums.filter((_,i)=>i%2===0));
+      const yMax=Math.max(...neatNums.filter((_,i)=>i%2===1));
+      const xMin=Math.min(...neatNums.filter((_,i)=>i%2===0));
+      const yMin=Math.min(...neatNums.filter((_,i)=>i%2===1));
+      
+      // PDF 포인트 → 지리좌표 (CTM 적용)
+      const geoNW = pdfPtToGeo(xMin, yMax, ctm);
+      const geoSE = pdfPtToGeo(xMax, yMin, ctm);
+      
+      if (isValidLatLon(geoNW.lat, geoNW.lon) && isValidLatLon(geoSE.lat, geoSE.lon)) {
+        return { latNW:geoNW.lat, lonNW:geoNW.lon, latSE:geoSE.lat, lonSE:geoSE.lon };
+      }
+    }
+    return null;
+  } catch(e) { return null; }
+}
+
+// ── Viewport 딕셔너리 파싱 (OGC GeoPDF / ISO 32000) ──────────
+async function tryExtractViewport(pdfDoc) {
+  try {
+    const rawText = await getRawPDFText(pdfDoc);
+    if (!rawText) return null;
+    return parseViewportFromText(rawText);
+  } catch(e) { return null; }
+}
+
+function parseViewportFromText(text) {
+  try {
+    // /Viewport 딕셔너리 찾기
+    const vpIdx = text.indexOf('/Viewport');
+    if (vpIdx === -1) return null;
+    
+    const vpSection = text.substring(vpIdx, vpIdx + 2000);
+    
+    // /BBox 추출 (PDF 페이지 내 영역)
+    const bboxMatch = vpSection.match(/\/BBox\s*\[([\d\s.\-]+)\]/);
+    
+    // /Measure 딕셔너리에서 지리좌표 추출
+    const measureIdx = vpSection.indexOf('/Measure');
+    if (measureIdx === -1) return null;
+    
+    const measureSection = vpSection.substring(measureIdx, measureIdx + 1000);
+    
+    // /GPTS (지리좌표 포인트들) 파싱
+    const gptsMatch = measureSection.match(/\/GPTS\s*\[([\d\s.\-]+)\]/);
+    if (!gptsMatch) return null;
+    
+    const gpts = gptsMatch[1].trim().split(/\s+/).map(Number);
+    // GPTS 형식: [lat1,lon1, lat2,lon2, lat3,lon3, lat4,lon4]
+    // 순서: SW, NW, NE, SE (또는 다를 수 있음)
+    
+    if (gpts.length >= 8) {
+      const lats = [gpts[0], gpts[2], gpts[4], gpts[6]];
+      const lons = [gpts[1], gpts[3], gpts[5], gpts[7]];
+      
+      const latNW = Math.max(...lats);
+      const latSE = Math.min(...lats);
+      const lonNW = Math.min(...lons);
+      const lonSE = Math.max(...lons);
+      
+      if (isValidLatLon(latNW, lonNW) && isValidLatLon(latSE, lonSE)) {
+        return { latNW, lonNW, latSE, lonSE };
+      }
+    }
+    return null;
+  } catch(e) { return null; }
+}
+
+// ── CTM을 사용한 좌표 변환 ────────────────────────────────────
+function pdfPtToGeo(px, py, ctm) {
+  const [a,b,c,d,e,f] = ctm;
+  // CTM이 도 단위면 직접 사용, 미터 단위면 변환 필요
+  const rawLon = a*px + c*py + e;
+  const rawLat = b*px + d*py + f;
+  
+  // 미터 단위(투영좌표) → 위경도 변환 시도
+  if (Math.abs(rawLon) > 360 || Math.abs(rawLat) > 90) {
+    return meterToLatLon(rawLon, rawLat);
+  }
+  return { lat: rawLat, lon: rawLon };
+}
+
+// ── 투영 좌표 → 위경도 (WGS84 근사 역변환) ───────────────────
+function meterToLatLon(x, y) {
+  // Web Mercator (EPSG:3857) → WGS84
+  const lon = x / 20037508.34 * 180;
+  const lat = Math.atan(Math.exp(y / 20037508.34 * Math.PI)) * 360 / Math.PI - 90;
+  
+  if (isValidLatLon(lat, lon)) return { lat, lon };
+  
+  // UTM Zone 49N (인도네시아 칼리만탄 서부) 근사 역변환
+  // Zone 49N: 108°E ~ 114°E
+  const utmZone = 49;
+  const lonUTM = (x / 111320) + (utmZone * 6 - 183);
+  const latUTM = y / 110540;
+  
+  if (isValidLatLon(latUTM, lonUTM)) return { lat: latUTM, lon: lonUTM };
+  
+  return { lat: y, lon: x }; // 그대로 반환
+}
+
+// ── 방법 4: 파일명에서 좌표 파싱 ─────────────────────────────
+function tryExtractFromFilename(filename) {
+  if (!filename) return null;
+  
+  // 패턴들:
+  // map_N0.050_E110.680_S0.200_E110.820.pdf
+  // -0.108_110.745_map.pdf
+  // bbox_110.680_-0.200_110.820_-0.050.pdf
+  
+  const nums = filename.match(/-?\d+\.?\d*/g);
+  if (!nums || nums.length < 4) return null;
+  
+  const floats = nums.map(Number).filter(n => !isNaN(n));
+  
+  // 위경도로 보이는 값들만 필터
+  const lats = floats.filter(n => n >= -90 && n <= 90 && n !== 0);
+  const lons = floats.filter(n => (n >= 95 && n <= 141)); // 인도네시아 경도 범위
+  
+  if (lats.length >= 2 && lons.length >= 2) {
+    return {
+      latNW: Math.max(...lats),
+      lonNW: Math.min(...lons),
+      latSE: Math.min(...lats),
+      lonSE: Math.max(...lons)
+    };
+  }
+  return null;
+}
+
+// ── 유틸 함수들 ───────────────────────────────────────────────
+function isValidLatLon(lat, lon) {
+  return !isNaN(lat) && !isNaN(lon) &&
+         lat >= -90 && lat <= 90 &&
+         lon >= -180 && lon <= 180 &&
+         !(lat === 0 && lon === 0);
+}
+
+function parseBBoxNums(nums) {
+  // [minLon, minLat, maxLon, maxLat] 또는 [minLat, minLon, maxLat, maxLon]
+  // 위도는 -90~90, 경도는 -180~180
+  let [a, b, c, d] = nums;
+  
+  // 어느 게 위도이고 어느 게 경도인지 판단
+  const isLatFirst = Math.abs(a) <= 90 && Math.abs(b) <= 180 && Math.abs(b) > 90;
+  
+  if (isLatFirst) {
+    // [minLat, minLon, maxLat, maxLon]
+    return { latNW: Math.max(a,c), lonNW: Math.min(b,d), latSE: Math.min(a,c), lonSE: Math.max(b,d) };
+  } else {
+    // [minLon, minLat, maxLon, maxLat]
+    return { latNW: Math.max(b,d), lonNW: Math.min(a,c), latSE: Math.min(b,d), lonSE: Math.max(a,c) };
+  }
+}
+
+// ── GeoPDF 좌표를 calibPts에 적용 ────────────────────────────
+function applyGeoPDFToCalib(data, canvasW, canvasH) {
+  // 지도 4모서리의 픽셀 좌표와 위경도를 calibPts로 설정
+  // NW 모서리: px=0, py=0
+  // SE 모서리: px=canvasW, py=canvasH
+  calibPts = [
+    { px: 0,       py: 0,        lat: data.latNW, lon: data.lonNW },
+    { px: canvasW, py: canvasH,  lat: data.latSE, lon: data.lonSE }
+  ];
+  saveCalib();
+  drawGPS();
+  
+  // 보정 탭 자동으로 열어 결과 보여주기
+  setTimeout(() => {
+    if (pdfDoc) {
+      toast('✅ GPS 보정 완료! 지도와 GPS가 자동 정렬됐습니다.');
+    }
+  }, 500);
+}
+
+// ── UI: GeoPDF 감지 배너 표시 ─────────────────────────────────
+function showGeoPDFBanner(data, canvasW, canvasH) {
+  const banner = document.getElementById('geopdf-banner');
+  const info   = document.getElementById('geopdf-info');
+  if (!banner || !info) return;
+  
+  info.innerHTML =
+    `출처: ${data.source}<br>` +
+    `NW: ${data.latNW.toFixed(5)}°, ${data.lonNW.toFixed(5)}°<br>` +
+    `SE: ${data.latSE.toFixed(5)}°, ${data.lonSE.toFixed(5)}°`;
+  
+  banner.style.display = 'block';
+}
+
+// ── UI: 자동 보정 적용 버튼 핸들러 ───────────────────────────
+function applyGeoPDFCalib() {
+  if (!geoPDFData || !cW || !cH) {
+    toast('GeoPDF 좌표 데이터가 없습니다. PDF를 다시 불러오세요.');
+    return;
+  }
+  applyGeoPDFToCalib(geoPDFData, cW, cH);
+  toast('✅ 자동 보정 적용됨! GPS 위치가 지도에 표시됩니다.');
+  hidePanel('calib-panel');
+}
+
+// ── UI: 모서리 좌표 직접 입력으로 보정 ───────────────────────
+function applyCornerCalib() {
+  const latNW = parseFloat(document.getElementById('ci-lat-nw').value);
+  const lonNW = parseFloat(document.getElementById('ci-lon-nw').value);
+  const latSE = parseFloat(document.getElementById('ci-lat-se').value);
+  const lonSE = parseFloat(document.getElementById('ci-lon-se').value);
+  
+  if (!isValidLatLon(latNW, lonNW) || !isValidLatLon(latSE, lonSE)) {
+    toast('올바른 위경도 값을 입력해 주세요.');
+    return;
+  }
+  if (!cW || !cH) { toast('먼저 PDF 지도를 불러오세요.'); return; }
+  
+  geoPDFData = { latNW, lonNW, latSE, lonSE, source:'manual-input' };
+  applyGeoPDFToCalib(geoPDFData, cW, cH);
+  showGeoPDFBanner(geoPDFData, cW, cH);
+  toast('✅ 모서리 좌표 보정 완료!');
+  hidePanel('calib-panel');
+}
+
+// ── UI: 탭 전환 ───────────────────────────────────────────────
+function switchCalibTab(tab) {
+  const autoBtn  = document.getElementById('calib-tab-auto');
+  const manBtn   = document.getElementById('calib-tab-manual');
+  const autoCont = document.getElementById('calib-auto-content');
+  const manCont  = document.getElementById('calib-manual-content');
+  
+  if (tab === 'auto') {
+    autoBtn.style.background = 'var(--amber)'; autoBtn.style.color = '#111';
+    manBtn.style.background  = 'var(--bg3)';  manBtn.style.color  = 'var(--text2)';
+    autoCont.style.display = 'block'; manCont.style.display = 'none';
+  } else {
+    manBtn.style.background  = 'var(--amber)'; manBtn.style.color = '#111';
+    autoBtn.style.background = 'var(--bg3)';  autoBtn.style.color = 'var(--text2)';
+    manCont.style.display = 'block'; autoCont.style.display = 'none';
+  }
+}
+
 /* ─── CALIBRATION ─── */
 function ll2c(lat,lon){
   if(calibPts.length<2) return null;
@@ -1286,11 +1837,21 @@ function doPDF(file){
       document.getElementById('empty-state').style.display='none';
       if(totalPgs>1) document.getElementById('page-nav').classList.add('show');
       updPgLbl();
+      // ── GeoPDF 자동 좌표 추출 ──────────────────────────────────
+      try {
+        const geoOk = await extractGeoPDFCoords(pdfDoc, cW, cH);
+        if (geoOk) {
+          toast('✅ GeoPDF 감지! GPS 자동 보정됨 — '+T('pdf_ok')+' ('+totalPgs+'p)');
+        } else {
+          toast(T('pdf_ok')+' ('+totalPgs+'p) — '+T('pdf_saved')+' | 보정 버튼으로 GPS 맞추세요');
+        }
+      } catch(geoErr) {
+        toast(T('pdf_ok')+' ('+totalPgs+'p) — '+T('pdf_saved'));
+      }
       // 저장
       await savePDFtoDB(buf, file.name);
       savePDFMeta(file.name);
       updatePDFInfoBar(file.name);
-      toast(T('pdf_ok')+' ('+totalPgs+'p) — '+T('pdf_saved'));
     } catch(err){ toast(T('pdf_err')+': '+err.message); }
     hideLoad();
   };
@@ -1338,8 +1899,16 @@ async function restoreSavedPDF(){
     toast(T('pdf_restored')+' "'+( saved.name||meta.name)+'"');
     // 레이어 복원
     if(loadLayersFromStorage()){ renderLayerList(); drawLayerSVG(); }
-    // GPS 보정점 복원
-    loadCalibFromStorage(); drawGPS();
+    // GPS 보정점 복원 (저장된 게 있으면 사용, 없으면 GeoPDF 재추출)
+    const hasCalib = loadCalibFromStorage();
+    if (!hasCalib) {
+      try {
+        const geoOk = await extractGeoPDFCoords(pdfDoc, cW, cH);
+        if (geoOk) toast('✅ GeoPDF 자동 보정 복원됨');
+      } catch(e) {}
+    } else {
+      drawGPS();
+    }
   }catch(err){
     console.warn('PDF restore failed:', err);
     clearPDFMeta();
@@ -1708,6 +2277,60 @@ function toast(msg){
 }
 function showLoad(msg){ document.getElementById('loading-txt').textContent=msg; document.getElementById('loading').classList.add('show'); }
 function hideLoad(){ document.getElementById('loading').classList.remove('show'); }
+
+
+/* ─── 전체화면 / 화면 잠금 ─── */
+function toggleFullscreen(){
+  const el = document.documentElement;
+  const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  
+  if (!isFs) {
+    // 전체화면 진입
+    const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
+    if (req) {
+      req.call(el).then(() => {
+        document.getElementById('fs-btn').textContent = '⛶';
+        // 화면 방향 잠금 시도 (지원 기기만)
+        screen.orientation?.lock?.('any').catch(() => {});
+      }).catch(() => {
+        // 전체화면 실패 시 — 브라우저 UI 숨김 스크롤 트릭
+        window.scrollTo(0, 1);
+      });
+    } else {
+      window.scrollTo(0, 1);
+    }
+  } else {
+    // 전체화면 해제
+    const exit = document.exitFullscreen || document.webkitExitFullscreen;
+    if (exit) exit.call(document);
+    document.getElementById('fs-btn').textContent = '⛶';
+  }
+}
+
+// 전체화면 변경 감지
+document.addEventListener('fullscreenchange',     updateFsBtn);
+document.addEventListener('webkitfullscreenchange', updateFsBtn);
+function updateFsBtn(){
+  const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  const btn = document.getElementById('fs-btn');
+  if (btn) btn.textContent = isFs ? '✕' : '⛶';
+}
+
+// 가로/세로 모드 전환 감지 → 지도 재조정
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => {
+    if (pdfDoc) {
+      // 지도 영역 크기 변경에 맞춰 뷰 재조정
+      clamp(); applyTx();
+      syncSVGSize && syncSVGSize();
+    }
+  }, 300);
+});
+
+// resize 이벤트 대응
+window.addEventListener('resize', () => {
+  if (pdfDoc) { clamp(); applyTx(); }
+});
 
 /* ─── INIT ─── */
 loadMemos();
