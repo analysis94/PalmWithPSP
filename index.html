@@ -42,7 +42,8 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 #map-wrap{position:absolute;transform-origin:0 0;will-change:transform}
 #pdf-canvas{display:block;image-rendering:crisp-edges;image-rendering:-webkit-optimize-contrast}
 #layer-svg{position:absolute;top:0;left:0;overflow:visible;pointer-events:all}
-#gps-svg{position:absolute;top:0;left:0;overflow:visible;pointer-events:none}
+/* gps-svg: map-wrap 안, 캔버스와 동일 좌표계 (transform 자동 적용) */
+#gps-svg{position:absolute;top:0;left:0;overflow:visible;pointer-events:none;}
 
 /* ── EMPTY STATE ── */
 #empty-state{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;pointer-events:none}
@@ -60,6 +61,38 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(122,180,80,.5)}50%{box-shadow:0 0 0 5px rgba(122,180,80,0)}}
 .pill-txt{min-width:0;flex:1}
 #gps-lbl{font-size:9px;color:var(--text3);font-family:var(--mono);letter-spacing:.04em}
+/* 핀 이동 모드: 패널 최소화 */
+#memo-panel.pin-move-mode {
+  height: 52px !important;
+  overflow: hidden;
+  border-top: 2px solid var(--green);
+}
+#pin-move-bar {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: var(--bg2);
+  border-top: 2px solid var(--green);
+  position: absolute;
+  bottom: 74px;
+  left: 0; right: 0;
+  z-index: 160;
+}
+#pin-move-bar.show { display: flex; }
+/* GPS 원거리 배너 (B+D 전략) */
+#gps-far-banner{
+  display:none;position:absolute;bottom:54px;left:50%;transform:translateX(-50%);
+  background:rgba(18,18,22,.88);border:.5px solid #ff4db8;border-radius:10px;
+  padding:8px 14px;z-index:200;pointer-events:none;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  min-width:220px;max-width:88vw;text-align:center;
+}
+#gps-far-banner .far-title{font-size:11px;font-weight:700;color:#ff4db8;margin-bottom:3px}
+#gps-far-banner .far-coords{font-size:10px;color:var(--text2);font-family:var(--mono)}
+#gps-far-banner .far-dist{font-size:12px;font-weight:700;color:#fff;margin-top:3px}
+/* 지도 경계 방향 화살표 (지도 범위 밖 GPS용) */
+.gps-border-arrow{pointer-events:none}
 #gps-val{font-size:10px;color:var(--text);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #gps-acc-txt{font-size:9px;color:var(--text3);font-family:var(--mono);flex-shrink:0}
 .bbtn{background:var(--bg3);border:.5px solid var(--border);color:var(--text2);font-size:9px;padding:5px 5px;border-radius:7px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:42px;flex-shrink:0;font-family:var(--sans);transition:.15s}
@@ -290,14 +323,13 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 #fs-btn:active { border-color:var(--border2);color:var(--green2); }
 
 /* ══ 지도 슬롯 선택기 ══ */
-#map-switcher{position:absolute;top:50px;left:0;right:0;background:var(--bg2);border-bottom:.5px solid var(--border);z-index:110;display:none;padding:6px 8px;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+#map-switcher{position:absolute;top:50px;left:0;right:0;background:var(--bg2);border-bottom:.5px solid var(--border);z-index:110;display:none;padding:6px 8px;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;box-shadow:0 4px 16px rgba(0,0,0,.5)}
 #map-switcher.show{display:flex;gap:6px;align-items:center}
 .map-slot{display:inline-flex;flex-direction:column;align-items:center;min-width:72px;max-width:90px;background:var(--bg3);border:.5px solid var(--border);border-radius:8px;padding:6px 6px 4px;cursor:pointer;position:relative;flex-shrink:0;transition:.15s}
 .map-slot:active,.map-slot.active{border-color:var(--green);background:var(--gdim)}
 .map-slot-icon{font-size:20px;line-height:1}
 .map-slot-name{font-size:9px;color:var(--text2);font-family:var(--mono);margin-top:3px;width:100%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.map-slot-del{position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:var(--red);color:#fff;font-size:10px;display:none;align-items:center;justify-content:center;cursor:pointer;line-height:1;border:1.5px solid var(--bg)}
-.map-slot:hover .map-slot-del{display:flex}
+.map-slot-del{position:absolute;top:-5px;right:-5px;width:18px;height:18px;border-radius:50%;background:var(--red);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;line-height:1;border:2px solid var(--bg2);font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.4)}
 .map-slot-add{border-style:dashed;color:var(--text3);font-size:22px;line-height:1;padding:10px 14px}
 .map-slot-add:active{border-color:var(--green2);color:var(--green2)}
 #btn-maps{position:relative}
@@ -355,12 +387,31 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
   <!-- JS로 동적 렌더링 -->
 </div>
 
-<div id="map-switcher-overlay" onclick="toggleMapSwitcher()" style="display:none;position:absolute;inset:0;z-index:105;background:rgba(0,0,0,.3)"></div>
-
 <!-- 메모 핀 드래그 안내 -->
 <div id="memo-drag-hint">📍 핀을 손가락으로 드래그해서 위치 조정 → 탭으로 메모 작성</div>
 
+<!-- 핀 이동 모드 안내 바 -->
+<div id="pin-move-bar">
+  <div style="font-size:12px;color:var(--green);font-weight:700">✋ 드래그로 핀 이동</div>
+  <div style="display:flex;gap:8px">
+    <button onclick="confirmPinMove()"
+      style="background:var(--green);color:#fff;border:none;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">
+      확인
+    </button>
+    <button onclick="cancelPinMove()"
+      style="background:var(--bg3);color:var(--text2);border:.5px solid var(--border);border-radius:7px;padding:6px 12px;font-size:12px;cursor:pointer">
+      취소
+    </button>
+  </div>
+</div>
+
 <div id="map-area">
+  <!-- GPS 원거리 배너 (B+D 전략) -->
+  <div id="gps-far-banner">
+    <div class="far-title">📍 GPS 위치 — 이 지도 범위 밖</div>
+    <div class="far-coords" id="gps-far-coords">—</div>
+    <div class="far-dist" id="gps-far-dist">—</div>
+  </div>
   <div id="map-wrap">
     <canvas id="pdf-canvas"></canvas>
     <svg id="layer-svg"></svg>
@@ -372,7 +423,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     </div>
     <h2 id="t-es-h">지도 파일을 열어주세요</h2>
     <p id="t-es-p">GIS에서 내보낸 팜 농장 PDF 지도를 선택하면 여기에 표시됩니다.</p>
-    <button class="main-btn" onclick="triggerPDF()">
+    <button class="main-btn" onclick="document.getElementById('pdf-input').click()">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 11v2h12v-2M8 2v8M5 7l3 3 3-3"/></svg>
       <span id="t-es-btn">PDF 지도 열기</span>
     </button>
@@ -536,12 +587,30 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 
 <!-- ══ MEMO ADD PANEL ══ -->
 <div class="panel panel-bot" id="memo-panel">
-  <button class="panel-close" onclick="hidePanel('memo-panel')">×</button>
+  <button class="panel-close" onclick="cancelMemo()">×</button>
   <h3 id="t-memo-title">📍 위치 메모 추가</h3>
-  <textarea class="memo-txt-input" id="memo-input" id="t-memo-ph" placeholder="이 위치에 대한 메모를 입력하세요..."></textarea>
+
+  <!-- 핀 스타일 + 위치 이동 -->
+  <div style="display:flex;gap:6px;margin-bottom:10px;align-items:center">
+    <span style="font-size:10px;color:var(--text3);white-space:nowrap">핀:</span>
+    <button id="pin-style-pin" onclick="setMemoPinStyle('pin')"
+      style="flex:1;padding:5px 6px;border-radius:6px;font-size:10px;cursor:pointer;border:.5px solid var(--border);background:var(--amber);color:#111;font-weight:700">
+      📍 핀
+    </button>
+    <button id="pin-style-num" onclick="setMemoPinStyle('number')"
+      style="flex:1;padding:5px 6px;border-radius:6px;font-size:10px;cursor:pointer;border:.5px solid var(--border);background:var(--bg3);color:var(--text2)">
+      🔢 번호
+    </button>
+    <button onclick="enterPinMoveMode()"
+      style="flex:2;padding:5px 8px;border-radius:6px;font-size:10px;cursor:pointer;border:.5px solid var(--green);background:var(--bg3);color:var(--green);font-weight:700">
+      ✋ 핀 이동
+    </button>
+  </div>
+
+  <textarea class="memo-txt-input" id="memo-input" placeholder="이 위치에 대한 메모를 입력하세요..."></textarea>
   <div class="btn-row" style="margin-top:8px">
     <button class="btn-green" onclick="saveMemo()" id="t-save">저장</button>
-    <button class="btn-grey" onclick="hidePanel('memo-panel')" id="t-cancel3">취소</button>
+    <button class="btn-grey" onclick="cancelMemo()" id="t-cancel3">취소</button>
   </div>
 </div>
 
@@ -607,7 +676,19 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 
 <!-- ══ MEMO LIST FULL PANEL ══ -->
 <div class="fpanel" id="memo-list-panel">
-  <h2 id="t-mlist">📋 메모 목록</h2>
+  <!-- 헤더 행 -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <h2 id="t-mlist" style="margin:0">📋 메모 목록</h2>
+    <button onclick="exportMemosTXT()"
+      style="display:flex;align-items:center;gap:5px;background:var(--green);color:#fff;
+             border:none;border-radius:8px;padding:7px 12px;font-size:12px;
+             font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M2 11v2h12v-2M8 2v8M5 7l3 3 3-3"/>
+      </svg>
+      TXT 저장
+    </button>
+  </div>
   <div id="memo-list-body"></div>
   <button class="fp-close-btn" onclick="document.getElementById('memo-list-panel').classList.remove('show')" id="t-mclose">닫기</button>
 </div>
@@ -649,6 +730,106 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 <div id="pdf-map-info" style="display:none;position:absolute;top:50px;left:0;right:0;background:rgba(22,32,22,.94);border-bottom:.5px solid var(--border);padding:4px 10px;z-index:95;align-items:center;gap:8px"><span id="pdf-map-name" style="font-size:11px;color:var(--text2);font-family:var(--mono);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span><button onclick="showPDFMenu()" style="background:none;border:.5px solid var(--border);color:var(--text3);font-size:10px;padding:2px 8px;border-radius:4px;cursor:pointer;white-space:nowrap" id="t-pdf-change-btn">지도 변경</button></div>
 <!-- PDF 지도 관리 메뉴 -->
 <div class="panel panel-top" id="pdf-menu-panel"><button class="panel-close" onclick="hidePanel('pdf-menu-panel')">×</button><h3 id="t-pdf-menu-title" style="color:var(--green2)">🗺 지도 관리</h3><div id="pdf-menu-info" style="background:var(--bg3);border:.5px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px"><div style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-bottom:4px">현재 저장된 지도</div><div id="pdf-menu-fname" style="font-size:13px;color:var(--text);word-break:break-all"></div><div id="pdf-menu-fdate" style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px"></div></div><button class="btn-green" onclick="replacePDF()" style="width:100%;margin-bottom:8px;border:none" id="t-pdf-change">새 지도 불러오기</button><button class="btn-red" onclick="clearPDF()" style="width:100%;margin-bottom:8px" id="t-pdf-delete">🗑 지도 삭제</button><button class="btn-grey" onclick="hidePanel('pdf-menu-panel')" style="width:100%" id="t-pdf-menu-close">닫기</button></div>
+<!-- ══ UTM Zone 설정 모달 ══ -->
+<div id="utm-zone-modal" style="display:none;position:absolute;inset:0;z-index:750;background:rgba(0,0,0,.8);align-items:center;justify-content:center">
+  <div style="background:var(--panel);border:.5px solid var(--border2);border-radius:14px;padding:20px 18px;margin:16px;max-width:360px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,.6)">
+
+    <div style="font-size:15px;font-weight:700;color:var(--amber);margin-bottom:4px">🌐 UTM Zone 설정</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:14px" id="utm-modal-filename"></div>
+
+    <!-- Zone 번호 -->
+    <div style="margin-bottom:12px">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:6px;font-weight:600">UTM Zone 번호</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="utm-zone-input" type="number" min="1" max="60" value="49"
+          style="width:80px;background:var(--bg2);border:.5px solid var(--amber);color:var(--text);font-size:16px;font-weight:700;padding:8px 10px;border-radius:8px;outline:none;font-family:var(--mono);text-align:center">
+        <div style="font-size:11px;color:var(--text3)">
+          1~60 범위<br>
+          <span style="color:var(--text2)">인도네시아: 46~54</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 남/북반구 -->
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:6px;font-weight:600">반구</div>
+      <div style="display:flex;gap:8px">
+        <label style="flex:1;display:flex;align-items:center;gap:8px;cursor:pointer;background:var(--bg3);border:.5px solid var(--border);border-radius:8px;padding:10px 12px">
+          <input type="radio" name="utm-hemi" value="S" checked style="accent-color:var(--amber)">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--text)">남반구 (S)</div>
+            <div style="font-size:10px;color:var(--text3)">인도네시아·칼리만탄</div>
+          </div>
+        </label>
+        <label style="flex:1;display:flex;align-items:center;gap:8px;cursor:pointer;background:var(--bg3);border:.5px solid var(--border);border-radius:8px;padding:10px 12px">
+          <input type="radio" name="utm-hemi" value="N" style="accent-color:var(--amber)">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--text)">북반구 (N)</div>
+            <div style="font-size:10px;color:var(--text3)">적도 이북 지역</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- 참고 정보 -->
+    <div style="background:var(--bg3);border:.5px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:10px;color:var(--text3);line-height:1.8;font-family:var(--mono)">
+      <div style="color:var(--text2);font-weight:700;margin-bottom:4px">📍 인도네시아 주요 Zone</div>
+      Zone 46: 수마트라 서부 (90~96°E)<br>
+      Zone 47: 수마트라·칼리만탄 서부 (96~102°E)<br>
+      Zone 48: 수마트라·칼리만탄 중서부 (102~108°E)<br>
+      <span style="color:var(--green2)">Zone 49: 칼리만탄 서/중부 (108~114°E) ← TBSM(49S)/PAM(49N)</span><br>
+      Zone 50: 칼리만탄 동부·술라웨시 서부 (114~120°E)<br>
+      Zone 51: 술라웨시·말루쿠 (120~126°E)<br>
+      Zone 52~54: 파푸아 (126~144°E)
+    </div>
+
+    <!-- 버튼 -->
+    <div style="display:flex;gap:8px">
+      <button onclick="confirmUTMZone()" style="flex:1;background:var(--amber);color:#111;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:700;cursor:pointer">✅ 이 Zone으로 보정</button>
+      <button onclick="skipUTMZone()" style="flex:1;background:var(--bg3);color:var(--text2);border:.5px solid var(--border);border-radius:8px;padding:11px;font-size:12px;cursor:pointer">자동 감지</button>
+    </div>
+    <div style="text-align:center;margin-top:8px">
+      <button onclick="cancelUTMZone()" style="background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;text-decoration:underline">취소 (지도 닫기)</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 지도 삭제 확인 모달 ══ -->
+<div id="map-del-modal" style="display:none;position:absolute;inset:0;z-index:700;background:rgba(0,0,0,.75);align-items:center;justify-content:center">
+  <div style="background:var(--panel);border:.5px solid var(--border2);border-radius:14px;padding:20px 18px;margin:16px;max-width:340px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,.6)">
+    <div style="font-size:16px;font-weight:700;color:var(--red);margin-bottom:6px">🗑 지도 삭제</div>
+    <div id="map-del-name" style="font-size:13px;color:var(--text);margin-bottom:14px;font-family:var(--mono);background:var(--bg3);border-radius:6px;padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+
+    <!-- 트랙/메모 현황 -->
+    <div id="map-del-stats" style="font-size:11px;color:var(--text2);background:var(--bg3);border:.5px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:14px;line-height:2"></div>
+
+    <!-- 선택지 -->
+    <div style="font-size:12px;color:var(--text2);margin-bottom:10px">삭제 범위를 선택하세요:</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
+      <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;background:var(--bg3);border:.5px solid var(--border);border-radius:8px;padding:10px 12px">
+        <input type="radio" name="del-scope" value="all" checked style="margin-top:2px;accent-color:var(--red)">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--red)">지도 + 트랙 + 메모 모두 삭제</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">이 지도의 모든 데이터를 완전히 제거합니다</div>
+        </div>
+      </label>
+      <label id="del-keep-data-label" style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;background:var(--bg3);border:.5px solid var(--border);border-radius:8px;padding:10px 12px">
+        <input type="radio" name="del-scope" value="pdf-only" style="margin-top:2px;accent-color:var(--amber)">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--amber)">지도 PDF만 삭제 (트랙·메모 보존)</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">PDF를 제거하되 트랙과 메모 데이터는 유지합니다.<br>나중에 같은 지도를 다시 불러오면 복원됩니다.</div>
+        </div>
+      </label>
+    </div>
+
+    <!-- 버튼 -->
+    <div style="display:flex;gap:8px">
+      <button onclick="confirmDeleteSlot()" style="flex:1;background:var(--red);color:#fff;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:700;cursor:pointer">삭제</button>
+      <button onclick="cancelDeleteSlot()" style="flex:1;background:var(--bg3);color:var(--text2);border:.5px solid var(--border);border-radius:8px;padding:11px;font-size:13px;cursor:pointer">취소</button>
+    </div>
+  </div>
+</div>
+
 <div id="loading"><div class="spin"></div><span id="loading-txt">...</span></div>
 <div id="toast"></div>
 
@@ -963,6 +1144,9 @@ function get_tracks(){ return curSlot()?.tracks||[]; }
 /* ─── 메모 핀 드래그 상태 ─── */
 let pinDragActive=false, pinDragMemoId=null;
 let pinDragX=0, pinDragY=0;
+// 메모 핀 스타일 설정 ('pin'=핀모양, 'number'=번호)
+let memoPinStyle = localStorage.getItem('palmmap_pin_style') || 'pin';
+function setMemoPinStyle(s){ memoPinStyle=s; localStorage.setItem('palmmap_pin_style',s); drawGPS(); }
 
 const TYPE_META = {
   estate:  {stroke:'rgba(122,180,80,.85)',  fill:'rgba(122,180,80,.12)',  lw:2.5, ls:14, badgeCls:'b-estate',  lKey:'ly_est'},
@@ -984,8 +1168,17 @@ function applyTx(){
 function clamp(){
   if(!cW) return;
   const aW=MA.clientWidth, aH=MA.clientHeight, sW=cW*scale, sH=cH*scale;
-  ox = Math.max(Math.min(0, aW-sW), Math.min(0, ox));
-  oy = Math.max(Math.min(0, aH-sH), Math.min(0, oy));
+  // 지도가 화면보다 작으면 중앙 정렬 (여백 허용)
+  if(sW <= aW){
+    ox = (aW - sW) / 2;
+  } else {
+    ox = Math.max(aW-sW, Math.min(0, ox));
+  }
+  if(sH <= aH){
+    oy = (aH - sH) / 2;
+  } else {
+    oy = Math.max(aH-sH, Math.min(0, oy));
+  }
 }
 
 MA.addEventListener('mousedown', e => {
@@ -1164,24 +1357,24 @@ function showGPSErr(msg){
 
 
 /* ═══════════════════════════════════════════════════════════════
-   GeoPDF 자동 좌표 추출 엔진 v3
+   GeoPDF 자동 좌표 추출 엔진 v4
    ─────────────────────────────────────────────────────────────
-   ArcMap GeoPDF (EPSG:32749 UTM Zone 49S) 전용 최적화
-   
-   파싱 전략 (우선순위 순):
-   1. pdfDoc.getMetadata().info  → NEATLINE, EPSGCode, OriginX/Y 등
-      (PDF /Info 딕셔너리 — PDF.js 공개 API, 항상 접근 가능)
-   2. pdfDoc.getMetadata().metadata → XMP XML 파싱
-      (GEO:NEATLINE, pdf:NEATLINE 태그)
-   3. Page Viewport → PDF.js 내부 변환 행렬
-   4. 파일명에서 좌표 추출
-   5. 실패 → QGIS 확인값 자동 적용 (Fallback)
+   모든 UTM Zone 지원 (Zone 1~60, 남/북반구)
+   인도네시아 전역: Zone 46~54
+
+   파싱 우선순위:
+   1. info['EPSGCode']          → Zone 즉시 확정 (가장 정확)
+   2. info['WKT'] 파싱         → UTM_Zone_NNS 또는 Central_Meridian
+   3. XMP/스트림에서 WKT 파싱  → 위와 동일
+   4. NEATLINE + Zone 자동추정 → Easting으로 후보 Zone 시도
+   5. QGIS Fallback            → 알려진 지도만 (파일명으로 판단)
+   6. 사용자 수동 입력 안내
    ─────────────────────────────────────────────────────────────
 ═══════════════════════════════════════════════════════════════ */
 
 let geoPDFData = null;
 
-// ── UTM → WGS84 (완전 구현) ───────────────────────────────────
+// ── UTM → WGS84 변환 (완전 구현, 모든 Zone) ──────────────────
 function utmToLatLon(easting, northing, zoneNumber, isNorthern) {
   const k0=0.9996, a=6378137.0, e2=0.00669438, ep2=e2/(1-e2);
   if (!isNorthern) northing -= 10000000.0;
@@ -1197,7 +1390,7 @@ function utmToLatLon(easting, northing, zoneNumber, isNorthern) {
   const sin1=Math.sin(phi1), cos1=Math.cos(phi1), tan1=Math.tan(phi1);
   const N1 = a/Math.sqrt(1-e2*sin1*sin1);
   const T1=tan1*tan1, C1=ep2*cos1*cos1;
-  const R1 = a*(1-e2)/Math.pow(1-e2*sin1*sin1, 1.5);
+  const R1 = a*(1-e2)/Math.pow(1-e2*sin1*sin1,1.5);
   const D = x/(N1*k0);
   const latRad = phi1 - (N1*tan1/R1)*(
       D*D/2
@@ -1209,54 +1402,6 @@ function utmToLatLon(easting, northing, zoneNumber, isNorthern) {
   return { lat: latRad*180/Math.PI, lon: lonOrigin+lonRad*180/Math.PI };
 }
 
-// ── NEATLINE 문자열 파싱 → UTM bbox 추출 ─────────────────────
-function parseNeatlineStr(str) {
-  if (!str) return null;
-  // "POLYGON ((E N, E N, ...))" 또는 "E N,E N,..."
-  const nums = str.match(/-?\d+\.?\d*/g);
-  if (!nums || nums.length < 8) return null;
-  const floats = nums.map(Number);
-  // 좌표쌍: [E,N, E,N, ...]
-  const eastings  = floats.filter((_,i) => i%2===0);
-  const northings = floats.filter((_,i) => i%2===1);
-  const E_min=Math.min(...eastings), E_max=Math.max(...eastings);
-  const N_min=Math.min(...northings), N_max=Math.max(...northings);
-  // UTM 범위 유효성 (UTM Easting: 100000~900000)
-  if (E_min<100000||E_max>900000) return null;
-  // Northing: 남반구면 >9000000
-  return { E_min, E_max, N_min, N_max };
-}
-
-// ── UTM bbox → WGS84 calibPts ────────────────────────────────
-function utmBboxToWGS84(bbox, zoneNumber, isNorthern) {
-  const nw = utmToLatLon(bbox.E_min, bbox.N_max, zoneNumber, isNorthern);
-  const se = utmToLatLon(bbox.E_max, bbox.N_min, zoneNumber, isNorthern);
-  if (!isValidLatLon(nw.lat,nw.lon)||!isValidLatLon(se.lat,se.lon)) return null;
-  return { latNW:nw.lat, lonNW:nw.lon, latSE:se.lat, lonSE:se.lon };
-}
-
-// ── EPSG 코드에서 UTM Zone/반구 추출 ─────────────────────────
-function parseEPSG(epsgVal) {
-  const code = parseInt(String(epsgVal).replace(/\D/g,''));
-  if (isNaN(code)) return null;
-  // EPSG:326xx = UTM North Zone xx
-  if (code>=32601&&code<=32660) return { zone:code-32600, northern:true };
-  // EPSG:327xx = UTM South Zone xx
-  if (code>=32701&&code<=32760) return { zone:code-32700, northern:false };
-  return null;
-}
-
-// ── WKT에서 UTM Zone 추출 ─────────────────────────────────────
-function parseWKTZone(wkt) {
-  if (!wkt) return null;
-  const m = wkt.match(/UTM[_\s]Zone[_\s](\d+)([NS])?/i)
-           || wkt.match(/zone\s+(\d+)([NS])?/i);
-  if (!m) return null;
-  const zone = parseInt(m[1]);
-  const northern = m[2]?.toUpperCase() !== 'S';
-  return { zone, northern };
-}
-
 // ── 좌표 유효성 검사 ─────────────────────────────────────────
 function isValidLatLon(lat, lon) {
   return !isNaN(lat)&&!isNaN(lon)
@@ -1264,173 +1409,466 @@ function isValidLatLon(lat, lon) {
     && !(Math.abs(lat)<0.0001&&Math.abs(lon)<0.0001);
 }
 
-// ════════════════════════════════════════════════════════
+// ── EPSG 코드 → UTM Zone/반구 ────────────────────────────────
+function parseEPSG(v) {
+  const code = parseInt(String(v).replace(/\D/g,''));
+  if (isNaN(code)) return null;
+  if (code>=32601&&code<=32660) return { zone:code-32600, northern:true };
+  if (code>=32701&&code<=32760) return { zone:code-32700, northern:false };
+  return null;
+}
+
+// ── WKT 문자열 → UTM Zone/반구 (다양한 형식 지원) ────────────
+function parseWKTZone(wkt) {
+  if (!wkt) return null;
+
+  // ── 최우선: UTM Zone 이름에서 직접 파싱 (가장 명확) ──────────
+  // "WGS_1984_UTM_Zone_50N", "UTM_Zone_49S", "UTM zone 50N" 등
+  let m = wkt.match(/UTM[_\s]Zone[_\s](\d+)\s*([NS])/i);
+  if (m) {
+    const z=parseInt(m[1]), n=m[2].toUpperCase()==='N';
+    if(z>=1&&z<=60){ console.log('[WKT] UTMZoneName→',z,n?'N':'S'); return {zone:z,northern:n}; }
+  }
+  m = wkt.match(/\bzone\s+(\d+)\s*([NS])\b/i);
+  if (m) {
+    const z=parseInt(m[1]), n=m[2].toUpperCase()==='N';
+    if(z>=1&&z<=60) return {zone:z,northern:n};
+  }
+
+  // ── EPSG 코드 (두 번째로 정확) ─────────────────────────────────
+  // EPSG:326XX = 북반구, EPSG:327XX = 남반구
+  m = wkt.match(/EPSG[",:\s]+(\d{4,5})/i);
+  if (m) {
+    const r = parseEPSG(m[1]);
+    if (r){ console.log('[WKT] EPSG→',r.zone,r.northern?'N':'S'); return r; }
+  }
+
+  // ── Central_Meridian + False_Northing (Avenza 방식) ────────────
+  // ArcGIS WKT에 반드시 포함되는 파라미터
+  m = wkt.match(/Central_Meridian[",\s]+(-?\d+\.?\d*)/i);
+  if (m) {
+    const cm   = parseFloat(m[1]);
+    const zone = Math.round((cm + 183) / 6);
+    if (zone >= 1 && zone <= 60) {
+      // False_Northing: 0 = 북반구, 10000000 = 남반구
+      const fnM = wkt.match(/False_Northing[",\s]+(\d+\.?\d*)/i);
+      const fn  = fnM ? parseFloat(fnM[1]) : null;
+      const northern = fn !== null ? fn < 5000000 : null; // null=불확실
+      console.log('[WKT] CM='+cm+'→Zone'+zone+', FN='+fn+'→'+(northern?'N':'S'));
+      return { zone, northern };
+    }
+  }
+
+  return null;
+}
+
+// ── NEATLINE 파싱 ────────────────────────────────────────────
+function parseNeatlineStr(str) {
+  if (!str) return null;
+  const nums = str.match(/-?\d+\.?\d*/g);
+  if (!nums||nums.length<8) return null;
+  const floats = nums.map(Number);
+  const eastings  = floats.filter((_,i)=>i%2===0);
+  const northings = floats.filter((_,i)=>i%2===1);
+  const E_min=Math.min(...eastings), E_max=Math.max(...eastings);
+  const N_min=Math.min(...northings), N_max=Math.max(...northings);
+  if (E_min<100000||E_max>900000) return null;
+  return { E_min, E_max, N_min, N_max };
+}
+
+// ── UTM bbox → WGS84 변환 ────────────────────────────────────
+function utmBboxToWGS84(bbox, zoneNumber, isNorthern) {
+  const nw = utmToLatLon(bbox.E_min, bbox.N_max, zoneNumber, isNorthern);
+  const se = utmToLatLon(bbox.E_max, bbox.N_min, zoneNumber, isNorthern);
+  if (!isValidLatLon(nw.lat,nw.lon)||!isValidLatLon(se.lat,se.lon)) return null;
+  return { latNW:nw.lat, lonNW:nw.lon, latSE:se.lat, lonSE:se.lon };
+}
+
+// ── Zone 자동 감지: GPS 위치 → Zone 계산 (가장 정확) ──────────
+// GPS lon → Zone: zone = floor((lon+180)/6)+1  (수학적으로 완전 정확)
+// GPS lat → 반구: lat >= 0 → 북반구, lat < 0 → 남반구
+function zoneFromGPS(lat, lon) {
+  if (lat == null || lon == null || isNaN(lat) || isNaN(lon)) return null;
+  const zone = Math.floor((lon + 180) / 6) + 1;
+  const northern = lat >= 0;
+  if (zone < 1 || zone > 60) return null;
+  return { zone, northern };
+}
+
+// ── Zone 자동 감지: NEATLINE bbox + GPS 위치 조합 ────────────
+// GPS 없을 때: Easting으로는 Zone 구별 불가 → null 반환
+// (Easting은 모든 Zone에서 동일한 offset을 줌)
+function autoDetectZoneFromBbox(bbox) {
+  // GPS 위치가 있으면 100% 정확하게 Zone 계산
+  if (curPos && curPos.lat != null && curPos.lon != null) {
+    const result = zoneFromGPS(curPos.lat, curPos.lon);
+    if (result) {
+      console.log('[AutoZone] GPS → Zone'+result.zone+(result.northern?'N':'S'),
+        'lat='+curPos.lat.toFixed(4)+' lon='+curPos.lon.toFixed(4));
+      return {
+        zone: result.zone,
+        isNorthern: result.northern,
+        nw: utmToLatLon(bbox.E_min, bbox.N_max, result.zone, result.northern),
+        se: utmToLatLon(bbox.E_max, bbox.N_min, result.zone, result.northern),
+        offset: 0,
+        source: 'GPS'
+      };
+    }
+  }
+
+  // GPS 없음: Easting으로 Zone 구별 불가 → null 반환
+  // 상위 코드에서 UTM 모달로 사용자 입력 요청
+  console.warn('[AutoZone] GPS unavailable — cannot determine Zone from Easting alone');
+  return null;
+}
+
+
+// ════════════════════════════════════════════════════════════
 // 메인: GeoPDF 좌표 추출
-// ════════════════════════════════════════════════════════
-async function extractGeoPDFCoords(pdfDocument, canvasW, canvasH) {
+// ════════════════════════════════════════════════════════════
+async function extractGeoPDFCoords(pdfDocument, canvasW, canvasH, pdfFileName) {
   geoPDFData = null;
   let result = null;
-  let utmInfo = { zone:49, northern:false }; // 기본값: UTM 49S (칼리만탄)
+  let utmInfo = null; // null = 아직 미확정
 
-  // ══ 전략 1: getMetadata().info (PDF /Info 딕셔너리) ══════════
-  // PDF.js 공개 API — APK, 브라우저 모두 항상 동작
+  // ══ 전략 0: UTM Zone 자동 결정 ═════════════════════════════════
+  //
+  //  우선순위:
+  //  0a. 사용자 모달 입력 (_savedUtmInfoOverride) → 최우선
+  //  0b. GPS 현재 위치 → lon으로 Zone, lat으로 반구 (수학적 100% 정확)
+  //  0c. 파일명 힌트 (알려진 지도명)
+  //  (이후 전략 1~3에서 WKT/EPSG로 확정 가능)
+  {
+    if (_savedUtmInfoOverride) {
+      // ── 0a: 사용자 모달 입력 (최우선) ─────────────────────────
+      utmInfo = _savedUtmInfoOverride;
+      console.log('[GeoPDF] 0a User-modal Zone:', utmInfo.zone, utmInfo.northern?'N':'S');
+
+    } else if (curPos && curPos.lat != null && curPos.lon != null) {
+      // ── 0b: GPS 위치로 Zone+반구 즉시 계산 ─────────────────────
+      // zone = floor((lon+180)/6)+1  → 경도만으로 완전 정확
+      // northern = lat >= 0          → 위도 부호로 확정
+      const gpZone = Math.floor((curPos.lon + 180) / 6) + 1;
+      const gpNorth = curPos.lat >= 0;
+      if (gpZone >= 1 && gpZone <= 60) {
+        utmInfo = { zone: gpZone, northern: gpNorth };
+        console.log('[GeoPDF] 0b GPS→Zone:', gpZone, gpNorth?'N':'S',
+          '(lat='+curPos.lat.toFixed(4)+', lon='+curPos.lon.toFixed(4)+')');
+      }
+
+    } else {
+      // ── 0c: 파일명 힌트 (GPS 없을 때 보조) ─────────────────────
+      const fname0 = (pdfFileName||curSlot()?.pdfName||loadPDFMeta()?.name||'').toLowerCase();
+
+      if (fname0.includes('parna')||fname0.includes('agromas')||fname0.includes('pam')) {
+        utmInfo = { zone:49, northern:true };
+        console.log('[GeoPDF] 0c filename→Zone 49N (PAM/PARNA)');
+      } else if (fname0.includes('tbsm')||fname0.includes('skde')||fname0.includes('sgue')||
+                 fname0.includes('sgu')||fname0.includes('sekadau')||fname0.includes('sanggau')||
+                 fname0.includes('tahun tanam')) {
+        utmInfo = { zone:49, northern:false };
+        console.log('[GeoPDF] 0c filename→Zone 49S (TBSM/SEKADAU)');
+      }
+      // 미지의 지도: utmInfo = null → WKT/EPSG에서 결정 (전략 1~3)
+    }
+  }
+
+  // ══ 전략 1: getMetadata().info ════════════════════════════
   try {
     const { info, metadata } = await pdfDocument.getMetadata();
-    console.log('[GeoPDF] info keys:', Object.keys(info||{}).join(', '));
+    const infoKeys = Object.keys(info||{});
+    console.log('[GeoPDF] info keys:', infoKeys.join(', '));
 
-    // EPSG 코드로 UTM 파라미터 확정
-    const epsg = info['EPSGCode'] || info['EPSG'] || info['CRS'];
-    if (epsg) {
-      const parsed = parseEPSG(epsg);
-      if (parsed) { utmInfo = parsed; console.log('[GeoPDF] EPSG:', epsg, '→', parsed); }
+    // 1a. EPSG 코드 → Zone 확정 (최우선)
+    const epsgVal = info['EPSGCode']||info['EPSG']||info['CRS'];
+    if (epsgVal) {
+      const p = parseEPSG(epsgVal);
+      if (p) { utmInfo=p; console.log('[GeoPDF] EPSG→Zone:', p); }
     }
 
-    // WKT에서 Zone 추출
-    const wkt = info['WKT'] || info['SRS'] || info['CoordSys'];
-    if (wkt && !epsg) {
-      const parsed = parseWKTZone(wkt);
-      if (parsed) { utmInfo = parsed; console.log('[GeoPDF] WKT zone:', parsed); }
+    // 1b. WKT → Zone 확정
+    const wktVal = info['WKT']||info['SRS']||info['CoordSys']||info['Projection']||info['CRSName']||info['PROJCS']||info['Coordinate System']||'';
+    if (!utmInfo && wktVal) {
+      const p = parseWKTZone(wktVal);
+      if (p) { utmInfo=p; console.log('[GeoPDF] WKT→Zone:', p, wktVal.substring(0,60)); }
     }
 
-    // NEATLINE (ArcMap GeoPDF 핵심 필드)
-    const neatlineVal = info['NEATLINE'] || info['Neatline'] || info['neatline'];
+    // 1c. NEATLINE 파싱
+    const neatlineVal = info['NEATLINE']||info['Neatline']||info['neatline'];
     if (neatlineVal) {
-      console.log('[GeoPDF] NEATLINE found in info:', neatlineVal.substring(0,80));
+      console.log('[GeoPDF] NEATLINE:', neatlineVal.substring(0,80));
       const bbox = parseNeatlineStr(neatlineVal);
       if (bbox) {
-        result = utmBboxToWGS84(bbox, utmInfo.zone, utmInfo.northern);
-        if (result) { geoPDFData = {...result, source:'info/NEATLINE', utmZone:utmInfo.zone, isNorthern:utmInfo.northern}; }
+        // ── 남/북반구 결정: Northing 기준 (항상 이 값으로 판단) ──────
+        // N_max < 9,000,000 → 북반구 (False Northing 없음)
+        // N_max ≥ 9,000,000 → 남반구 (False Northing 10,000,000 적용)
+        const isNorthernFromBbox = bbox.N_max < 9000000;
+
+        if (utmInfo && utmInfo.zone) {
+          // Zone은 힌트에서, northern은 Northing으로 확정
+          const northernFinal = (utmInfo.northern !== null && utmInfo.northern !== undefined)
+            ? utmInfo.northern   // EPSG/WKT/모달로 확정된 경우 유지
+            : isNorthernFromBbox; // 힌트에서 null이면 Northing으로 판단
+          console.log('[GeoPDF] NEATLINE Zone:', utmInfo.zone,
+            northernFinal?'N':'S', '(Northing판단:'+isNorthernFromBbox+')');
+          result = utmBboxToWGS84(bbox, utmInfo.zone, northernFinal);
+          if (result) {
+            utmInfo = {...utmInfo, northern: northernFinal};
+            const src = utmInfo.source === 'GPS'
+              ? 'NEATLINE+GPS-Zone'  // GPS로 Zone 확정
+              : _savedUtmInfoOverride ? 'NEATLINE+Modal-Zone' // 모달 입력
+              : 'NEATLINE+Zone';
+            geoPDFData = {...result, source:src,
+              utmZone:utmInfo.zone, isNorthern:northernFinal};
+          }
+        } else {
+          // Zone 모름 → 자동감지 (isNorthern은 Northing으로 정확히 판단됨)
+          const detected = autoDetectZoneFromBbox(bbox);
+          if (detected) {
+            result = { latNW:detected.nw.lat, lonNW:detected.nw.lon,
+                       latSE:detected.se.lat, lonSE:detected.se.lon };
+            utmInfo = {zone:detected.zone, northern:detected.isNorthern};
+            geoPDFData = {...result, source:'AutoZone/NEATLINE',
+              utmZone:detected.zone, isNorthern:detected.isNorthern};
+          }
+        }
       }
     }
 
-    // OriginX/Y + PixelWidth/Height (래스터 원점 방식)
-    if (!geoPDFData) {
-      const ox2 = parseFloat(info['OriginX'] || info['originX'] || '');
-      const oy2 = parseFloat(info['OriginY'] || info['originY'] || '');
-      const pw  = parseFloat(info['PixelWidth'] || info['pixelWidth'] || '');
-      const ph  = parseFloat(info['PixelHeight']|| info['pixelHeight']|| '');
+    // 1d. OriginX/Y + PixelSize
+    // OriginX/Y: 항상 시도 (NEATLINE보다 정확)
+    {
+      const ox2=parseFloat(info['OriginX']||info['originX']||'');
+      const oy2=parseFloat(info['OriginY']||info['originY']||'');
+      const pw =parseFloat(info['PixelWidth']||info['pixelWidth']||'');
+      const ph =parseFloat(info['PixelHeight']||info['pixelHeight']||'');
       if (!isNaN(ox2)&&!isNaN(oy2)&&!isNaN(pw)&&canvasW>0) {
         console.log('[GeoPDF] Origin+Pixel:', ox2, oy2, pw, ph);
-        const E_min=ox2, N_max=oy2;
-        const E_max=ox2+pw*canvasW, N_min=oy2+ph*canvasH; // ph는 음수
-        const bbox = { E_min:Math.min(E_min,E_max), E_max:Math.max(E_min,E_max),
-                       N_min:Math.min(N_max,N_min), N_max:Math.max(N_max,N_min) };
-        result = utmBboxToWGS84(bbox, utmInfo.zone, utmInfo.northern);
-        if (result) { geoPDFData = {...result, source:'info/Origin+Pixel', utmZone:utmInfo.zone, isNorthern:utmInfo.northern}; }
+        const bbox = { E_min:Math.min(ox2,ox2+pw*canvasW),
+                       E_max:Math.max(ox2,ox2+pw*canvasW),
+                       N_min:Math.min(oy2,oy2+ph*canvasH),
+                       N_max:Math.max(oy2,oy2+ph*canvasH) };
+        // 남/북반구를 Northing으로 자동 결정 (N_max < 9M → 북반구)
+        const isNorthOrig = bbox.N_max < 9000000;
+        let zi2 = utmInfo ? {...utmInfo} : autoDetectZoneFromBbox(bbox);
+        if (zi2) {
+          // northern이 null(파일명 힌트만 있는 경우)이면 Northing으로 확정
+          if (zi2.northern === null || zi2.northern === undefined) {
+            zi2 = {...zi2, northern: isNorthOrig};
+          }
+          result = utmBboxToWGS84(bbox, zi2.zone, zi2.northern);
+          if (result) { utmInfo=zi2;
+            geoPDFData = {...result, source:'Origin+Pixel',
+              utmZone:zi2.zone, isNorthern:zi2.northern}; }
+        }
       }
     }
 
-    // ══ 전략 2: XMP metadata XML 파싱 ════════════════════════════
+    // ══ 전략 2: XMP metadata ══════════════════════════════
     if (!geoPDFData && metadata) {
-      let xmpRaw = '';
-      try { xmpRaw = metadata.getRaw?.() || metadata._data || ''; } catch(_){}
-      if (!xmpRaw) {
-        // PDF.js 3.x PDFMetadata 내부 접근
-        try { xmpRaw = metadata._metadata || JSON.stringify(metadata) || ''; } catch(_){}
-      }
-      if (xmpRaw && xmpRaw.length > 10) {
-        console.log('[GeoPDF] XMP length:', xmpRaw.length);
-        // NEATLINE 태그 파싱 (다양한 네임스페이스)
-        const xmpPatterns = [
+      let xmpRaw='';
+      try { xmpRaw=metadata.getRaw?.()||metadata._data||''; } catch(_){}
+      if (!xmpRaw) { try { xmpRaw=metadata._metadata||JSON.stringify(metadata)||''; } catch(_){} }
+      if (xmpRaw && xmpRaw.length>10) {
+        console.log('[GeoPDF] XMP len:', xmpRaw.length);
+        // WKT in XMP
+        if (!utmInfo) {
+          const wktM = xmpRaw.match(/PROJCS\["([^"]+)"/i);
+          if (wktM) { const p=parseWKTZone(wktM[0]); if(p){utmInfo=p;console.log('[GeoPDF] XMP WKT Zone:',p);} }
+        }
+        // NEATLINE in XMP
+        const xmpNL = [
           /NEATLINE[^>]*>([^<]+)</i,
           /GEO:NEATLINE[^>]*>([^<]+)</i,
           /NEATLINE\s*=\s*["']?([^"'<\n]+)/i,
         ];
-        for (const pat of xmpPatterns) {
+        for (const pat of xmpNL) {
           const m = xmpRaw.match(pat);
           if (m) {
-            console.log('[GeoPDF] XMP NEATLINE found');
             const bbox = parseNeatlineStr(m[1]);
             if (bbox) {
-              result = utmBboxToWGS84(bbox, utmInfo.zone, utmInfo.northern);
-              if (result) { geoPDFData = {...result, source:'XMP/NEATLINE', utmZone:utmInfo.zone, isNorthern:utmInfo.northern}; break; }
-            }
-          }
-        }
-        // EPSGCode in XMP
-        if (!geoPDFData) {
-          const epsgXmp = xmpRaw.match(/EPSG[:\s]+(\d{4,5})/i);
-          if (epsgXmp) {
-            const p = parseEPSG(epsgXmp[1]);
-            if (p) utmInfo = p;
-          }
-        }
-      }
-    }
-  } catch(metaErr) {
-    console.warn('[GeoPDF] getMetadata failed:', metaErr.message||metaErr);
-  }
-
-  // ══ 전략 3: PDF.js 내부 스트림 (바이너리 텍스트 파싱) ════════
-  if (!geoPDFData) {
-    try {
-      const rawText = await getPDFRawTextV3(pdfDocument);
-      if (rawText) {
-        // NEATLINE 텍스트 파싱
-        const nlMatch = rawText.match(/NEATLINE[^(]*(POLYGON[^)]+\))/i)
-                     || rawText.match(/NEATLINE\s*=?\s*(POLYGON[^)]+\))/i);
-        if (nlMatch) {
-          console.log('[GeoPDF] Stream NEATLINE found');
-          const bbox = parseNeatlineStr(nlMatch[1]);
-          if (bbox) {
-            result = utmBboxToWGS84(bbox, utmInfo.zone, utmInfo.northern);
-            if (result) geoPDFData = {...result, source:'stream/NEATLINE', utmZone:utmInfo.zone, isNorthern:utmInfo.northern};
-          }
-        }
-        // EPSG in stream
-        if (!geoPDFData) {
-          const epsgM = rawText.match(/EPSG[:\s]*(\d{4,5})/i);
-          if (epsgM) { const p=parseEPSG(epsgM[1]); if(p) utmInfo=p; }
-        }
-        // GPTS (위경도 직접)
-        if (!geoPDFData) {
-          const gptsM = rawText.match(/\/GPTS\s*\[([\d\s.\-]+)\]/);
-          if (gptsM) {
-            const g = gptsM[1].trim().split(/\s+/).map(Number);
-            if (g.length>=8) {
-              const lats=[g[0],g[2],g[4],g[6]], lons=[g[1],g[3],g[5],g[7]];
-              const latNW=Math.max(...lats),latSE=Math.min(...lats);
-              const lonNW=Math.min(...lons),lonSE=Math.max(...lons);
-              if (isValidLatLon(latNW,lonNW)&&isValidLatLon(latSE,lonSE)) {
-                geoPDFData = {latNW,lonNW,latSE,lonSE,source:'stream/GPTS'};
+              let zi3 = utmInfo ? {...utmInfo} : autoDetectZoneFromBbox(bbox);
+              if (zi3) {
+                // northern이 null이면 Northing으로 확정
+                if (zi3.northern===null||zi3.northern===undefined) zi3={...zi3,northern:bbox.N_max<9000000};
+                result = utmBboxToWGS84(bbox, zi3.zone, zi3.northern);
+                if (result) { utmInfo=zi3;
+                  geoPDFData = {...result, source:'XMP/NEATLINE',
+                    utmZone:zi3.zone, isNorthern:zi3.northern}; break; }
               }
             }
           }
         }
       }
-    } catch(streamErr) {
-      console.warn('[GeoPDF] stream parse failed:', streamErr.message||streamErr);
     }
+  } catch(metaErr) {
+    console.warn('[GeoPDF] getMetadata failed:', metaErr?.message||metaErr);
   }
 
-  // ══ 전략 4: 파일명 파싱 ══════════════════════════════════════
+  // ══ 전략 3: 스트림 바이너리 파싱 ════════════════════════
   if (!geoPDFData) {
-    result = parseFilenameCoords(loadPDFMeta()?.name || '');
-    if (result) geoPDFData = {...result, source:'filename'};
+    try {
+      const rawText = await getPDFRawTextV3(pdfDocument);
+      if (rawText) {
+        // WKT/PROJCS 전체 블록 추출 (Avenza 방식)
+        if (!utmInfo || utmInfo.northern === null) {
+          // PROJCS 전체 블록 추출 (Central_Meridian + False_Northing 포함)
+          const projcsM = rawText.match(/PROJCS[\s\S]{0,2000}?False_Northing[^\]]{0,100}/i);
+          if (projcsM) {
+            const p = parseWKTZone(projcsM[0]);
+            if (p && p.zone && p.northern !== null) {
+              utmInfo = p;
+              console.log('[GeoPDF] Stream WKT full:', p.zone, p.northern?'N':'S');
+            }
+          }
+          // PROJCS 이름만 추출
+          if (!utmInfo || utmInfo.northern === null) {
+            const wktM = rawText.match(/PROJCS\s*\[?\s*"([^"]+)"/i);
+            if (wktM) { const p=parseWKTZone(wktM[1]); if(p) utmInfo=p; }
+          }
+          // EPSG 코드
+          if (!utmInfo) {
+            const epsgM = rawText.match(/EPSG[:\s]+(\d{4,5})/i);
+            if (epsgM) { const p=parseEPSG(epsgM[1]); if(p) utmInfo=p; }
+          }
+        }
+        // NEATLINE
+        const nlM = rawText.match(/NEATLINE[^(]*(POLYGON[^)]+\))/i)
+                 || rawText.match(/NEATLINE\s*=?\s*(POLYGON[^)]+\))/i);
+        if (nlM) {
+          const bbox = parseNeatlineStr(nlM[1]);
+          if (bbox) {
+            let zi5 = utmInfo ? {...utmInfo} : autoDetectZoneFromBbox(bbox);
+            if (zi5) {
+              if (zi5.northern===null||zi5.northern===undefined) zi5={...zi5,northern:bbox.N_max<9000000};
+              result = utmBboxToWGS84(bbox, zi5.zone, zi5.northern);
+              if (result) { utmInfo=zi5;
+                geoPDFData = {...result, source:'stream/NEATLINE',
+                  utmZone:zi5.zone, isNorthern:zi5.northern}; }
+            }
+          }
+        }
+        // GPTS + BBox (위경도 + 뷰포트 픽셀 직접 매핑)
+        if (!geoPDFData) {
+          const gptsM = rawText.match(/\/GPTS\s*\[([\d\s.\-]+)\]/);
+          if (gptsM) {
+            const g = gptsM[1].trim().split(/\s+/).map(Number);
+            if (g.length >= 8) {
+              const lats=[g[0],g[2],g[4],g[6]], lons=[g[1],g[3],g[5],g[7]];
+              const latNW=Math.max(...lats), latSE=Math.min(...lats);
+              const lonNW=Math.min(...lons), lonSE=Math.max(...lons);
+
+              if (isValidLatLon(latNW,lonNW) && isValidLatLon(latSE,lonSE)) {
+                // BBox 파싱: /VP[<</Type/Viewport/BBox[left top_pdf right bottom_pdf]
+                // PDF 좌표계: y=0이 페이지 하단 → 화면 좌표로 변환 필요
+                const bboxM = rawText.match(/\/BBox\s*\[([\d\s.\-]+)\]/);
+                if (bboxM && canvasW > 0 && canvasH > 0) {
+                  const b = bboxM[1].trim().split(/\s+/).map(Number);
+                  if (b.length >= 4) {
+                    // PDF pt → 캔버스 픽셀 변환 비율
+                    // PDF.js는 scale:1로 렌더링 시 pt와 px가 동일
+                    const pdfW = canvasW, pdfH = canvasH;
+                    // BBox[left, top_from_bottom, right, bottom_from_bottom]
+                    // 화면 y = pageHeight - pdf_y
+                    const bLeft   = b[0];
+                    const bTop    = pdfH - b[1];  // PDF y → 화면 y
+                    const bRight  = b[2];
+                    const bBottom = pdfH - b[3];  // PDF y → 화면 y
+                    if (bRight > bLeft && bBottom > bTop &&
+                        bLeft >= 0 && bTop >= 0 &&
+                        bRight <= pdfW && bBottom <= pdfH) {
+                      // BBox 기반 calibPts — 여백 있는 PDF도 정확하게 처리
+                      console.log('[GeoPDF] GPTS+BBox:',
+                        'NW=('+latNW.toFixed(5)+','+lonNW.toFixed(5)+')',
+                        'SE=('+latSE.toFixed(5)+','+lonSE.toFixed(5)+')',
+                        'BBox=['+bLeft.toFixed(0)+','+bTop.toFixed(0)+','+bRight.toFixed(0)+','+bBottom.toFixed(0)+']');
+                      geoPDFData = {
+                        latNW, lonNW, latSE, lonSE,
+                        source: 'stream/GPTS+BBox',
+                        // BBox 픽셀 좌표 저장 (applyGeoPDFToCalib에서 사용)
+                        bboxPx: { left:bLeft, top:bTop, right:bRight, bottom:bBottom }
+                      };
+                    }
+                  }
+                }
+                // BBox 없으면 기본 GPTS (지도가 페이지 전체를 차지하는 경우)
+                if (!geoPDFData) {
+                  console.log('[GeoPDF] GPTS only (no BBox):',
+                    'NW=('+latNW.toFixed(5)+','+lonNW.toFixed(5)+')',
+                    'SE=('+latSE.toFixed(5)+','+lonSE.toFixed(5)+')');
+                  geoPDFData = { latNW, lonNW, latSE, lonSE, source:'stream/GPTS' };
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch(e) { console.warn('[GeoPDF] stream parse:', e?.message); }
   }
 
-  // ══ 전략 5: Fallback — QGIS 확인값 자동 적용 ═════════════════
-  // ArcMap GeoPDF이지만 파싱 실패 → QGIS에서 확인한 정확한 값 사용
+  // ══ 전략 4: 파일명 좌표 파싱 ════════════════════════════
   if (!geoPDFData) {
-    // PDF 파일명이 현재 지도와 일치하는지 확인
-    const fname = (loadPDFMeta()?.name || '').toLowerCase();
-    const isKnownMap = fname.includes('tbsm') || fname.includes('skde') || fname.includes('skue')
-                    || fname.includes('tahun tanam') || fname.includes('sgue');
-    if (isKnownMap || !fname) {
-      console.log('[GeoPDF] Applying QGIS fallback values for known map');
+    const r2 = parseFilenameCoords(pdfFileName||curSlot()?.pdfName||loadPDFMeta()?.name||'');
+    if (r2) geoPDFData = {...r2, source:'filename'};
+  }
+
+  // ══ 전략 5: 알려진 지도 — QGIS 검증값 직접 적용 ════════
+  {
+    const fname5 = (pdfFileName||curSlot()?.pdfName||loadPDFMeta()?.name||'').toLowerCase();
+
+    // TBSM 법인 (SEKADAU + SANGGAU 지역, 칼리만탄 서부)
+    // QGIS 검증값: NW=0.016645°N/110.634313°E, SE=-0.169585°N/110.896035°E
+    // UTM Zone 49S (중앙경선 111°E)
+    // PAM/PARNA 지도는 북반구(Zone 49N) → TBSM 남반구 좌표 적용 제외
+    const isPAM = fname5.includes('parna') || fname5.includes('agromas') ||
+                  fname5.includes('pam');
+    const isTBSM = !isPAM && (
+                   fname5.includes('tbsm') || fname5.includes('skde') ||
+                   fname5.includes('sgue') || fname5.includes('sgu') ||
+                   fname5.includes('sekadau') || fname5.includes('sanggau') ||
+                   fname5.includes('tahun tanam') ||
+                   fname5.includes('tintin') || fname5.includes('boyok') ||
+                   fname5.includes('makmur'));
+    // ⚠️ 'peta'는 너무 범용적 → 제거 (PAM 지도도 "Peta..."로 시작)
+
+    // PAM 지도 백업: GPTS 파싱 실패 시 확인된 좌표 사용
+    if (isPAM && !geoPDFData) {
+      console.log('[GeoPDF] PAM fallback: using verified GPTS coords');
       geoPDFData = {
-        latNW:  0.016645, lonNW: 110.634313,
-        latSE: -0.169585, lonSE: 110.896035,
-        source: 'QGIS-fallback', utmZone: 49, isNorthern: false
+        latNW: 0.39172, lonNW: 110.96371,
+        latSE: 0.08236, lonSE: 111.17704,
+        source: 'PAM-verified-GPTS', utmZone: 49, isNorthern: true
       };
     }
+
+    if (isTBSM) {
+      // GPS로 이미 정확하게 설정됐으면 QGIS 강제값 불필요
+      const gpsZoneUsed = geoPDFData && (geoPDFData.source||'').includes('GPS');
+      const needsQGIS = !gpsZoneUsed && (
+        !geoPDFData ||
+        (geoPDFData.source||'').includes('AutoZone') ||
+        (geoPDFData.utmZone && geoPDFData.utmZone !== 49));
+
+      if (needsQGIS) {
+        console.log('[GeoPDF] Applying QGIS-verified coords for TBSM/Kalimantan map. File:', fname5.substring(0,30));
+        geoPDFData = {
+          latNW: 0.016645, lonNW: 110.634313,
+          latSE: -0.169585, lonSE: 110.896035,
+          source: 'QGIS-verified-TBSM', utmZone: 49, isNorthern: false
+        };
+      } else {
+        console.log('[GeoPDF] Keeping parsed coords for TBSM map:', geoPDFData?.source);
+      }
+    }
   }
 
-  // ══ 결과 처리 ════════════════════════════════════════════════
+  // ══ 결과 처리 ════════════════════════════════════════════
   if (geoPDFData) {
     console.log('[GeoPDF] SUCCESS:', geoPDFData.source,
-      'NW('+geoPDFData.latNW.toFixed(5)+','+geoPDFData.lonNW.toFixed(5)+')',
-      'SE('+geoPDFData.latSE.toFixed(5)+','+geoPDFData.lonSE.toFixed(5)+')');
+      geoPDFData.utmZone ? 'Zone'+geoPDFData.utmZone+(geoPDFData.isNorthern?'N':'S') : '',
+      'NW('+geoPDFData.latNW?.toFixed(5)+','+geoPDFData.lonNW?.toFixed(5)+')',
+      'SE('+geoPDFData.latSE?.toFixed(5)+','+geoPDFData.lonSE?.toFixed(5)+')',
+      'canvas='+canvasW+'x'+canvasH);
     showGeoPDFBanner(geoPDFData, canvasW, canvasH);
     applyGeoPDFToCalib(geoPDFData, canvasW, canvasH);
     return true;
@@ -1441,27 +1879,34 @@ async function extractGeoPDFCoords(pdfDocument, canvasW, canvasH) {
   return false;
 }
 
-// ── PDF.js 스트림 텍스트 추출 v3 ─────────────────────────────
-async function getPDFRawTextV3(pdfDoc, maxBytes=800000) {
-  // 다양한 내부 경로 시도
+// ── PDF 원시 데이터 추출 (강화) ──────────────────────────────
+async function getPDFRawTextV3(pdfDoc, maxBytes=2000000) {
+  // 방법 1: PDF.js 공식 API - getData() (PDF.js 2.x+)
+  try {
+    const data = await pdfDoc.getData();
+    if (data && data.length > 100) {
+      const text = _bytesToAscii(data, maxBytes);
+      if (text.includes('%PDF')) {
+        console.log('[GeoPDF] getData() success, len:', text.length);
+        return text;
+      }
+    }
+  } catch(_) {}
+
+  // 방법 2: 내부 transport 경로들
   const getters = [
-    () => pdfDoc._transport?._params?.data,
-    () => pdfDoc._transport?._fullReader?._stream?.bytes,
-    () => pdfDoc._transport?._fullReader?._stream?._rawData,
-    () => pdfDoc._transport?._networkStream?._fullReader?._stream?.bytes,
+    ()=>pdfDoc._transport?._params?.data,
+    ()=>pdfDoc._transport?._fullReader?._stream?.bytes,
+    ()=>pdfDoc._transport?._fullReader?._stream?._rawData,
+    ()=>pdfDoc._transport?._networkStream?._fullReader?._stream?.bytes,
+    ()=>pdfDoc._transport?._fullReader?._loaded,
   ];
   for (const g of getters) {
     try {
-      const src = g();
-      if (!src||src.length<100) continue;
-      const bytes = new Uint8Array(src.buffer||src);
-      let text='';
-      for(let i=0;i<Math.min(bytes.length,maxBytes);i++){
-        const c=bytes[i];
-        text += (c>=32&&c<127)?String.fromCharCode(c):' ';
-      }
-      if(text.includes('PDF')||text.includes('NEATLINE')||text.includes('/Type')){
-        console.log('[GeoPDF] rawText from stream, length:',text.length);
+      const src=g(); if(!src||src.length<100) continue;
+      const text = _bytesToAscii(src, maxBytes);
+      if (text.includes('PDF')||text.includes('GPTS')||text.includes('PROJCS')) {
+        console.log('[GeoPDF] stream text len:', text.length);
         return text;
       }
     } catch(_) {}
@@ -1469,33 +1914,53 @@ async function getPDFRawTextV3(pdfDoc, maxBytes=800000) {
   return null;
 }
 
-// ── 파일명에서 좌표 추출 ─────────────────────────────────────
+// ── 바이트 배열 → ASCII 문자열 변환 ──────────────────────────
+function _bytesToAscii(src, maxBytes=2000000) {
+  const bytes = new Uint8Array(src.buffer || src);
+  let text = '';
+  for (let i=0; i<Math.min(bytes.length, maxBytes); i++) {
+    const c = bytes[i];
+    text += (c>=32&&c<127) ? String.fromCharCode(c) : ' ';
+  }
+  return text;
+}
+
+// ── 파일명 좌표 파싱 ──────────────────────────────────────────
 function parseFilenameCoords(filename) {
   if (!filename) return null;
-  const nums = filename.match(/-?\d+\.?\d*/g);
-  if (!nums||nums.length<4) return null;
-  const floats = nums.map(Number).filter(n=>!isNaN(n));
-  const lats = floats.filter(n=>n>=-10&&n<=10&&n!==0);
-  const lons = floats.filter(n=>n>=100&&n<=125);
-  if (lats.length>=2&&lons.length>=2) {
+  const nums=filename.match(/-?\d+\.?\d*/g);
+  if(!nums||nums.length<4) return null;
+  const floats=nums.map(Number).filter(n=>!isNaN(n));
+  const lats=floats.filter(n=>n>=-15&&n<=15&&n!==0);
+  const lons=floats.filter(n=>n>=90&&n<=145);
+  if(lats.length>=2&&lons.length>=2)
     return {latNW:Math.max(...lats),lonNW:Math.min(...lons),
             latSE:Math.min(...lats),lonSE:Math.max(...lons)};
-  }
   return null;
 }
 
-// ── 보정 적용 ────────────────────────────────────────────────
+// ── 보정 적용 ─────────────────────────────────────────────────
 function applyGeoPDFToCalib(data, canvasW, canvasH) {
+  // BBox 픽셀 좌표가 있으면 사용 (PDF에 여백이 있는 경우 정확도 향상)
+  let px0=0, py0=0, px1=canvasW, py1=canvasH;
+  if (data.bboxPx && canvasW > 0 && canvasH > 0) {
+    px0 = data.bboxPx.left;
+    py0 = data.bboxPx.top;
+    px1 = data.bboxPx.right;
+    py1 = data.bboxPx.bottom;
+    console.log('[Calib] BBox pixels: ('+px0.toFixed(0)+','+py0.toFixed(0)+')'
+      +' → ('+px1.toFixed(0)+','+py1.toFixed(0)+')');
+  }
   calibPts = [
-    {px:0,       py:0,       lat:data.latNW, lon:data.lonNW},
-    {px:canvasW, py:canvasH, lat:data.latSE, lon:data.lonSE}
+    {px:px0, py:py0, lat:data.latNW, lon:data.lonNW},
+    {px:px1, py:py1, lat:data.latSE, lon:data.lonSE}
   ];
   saveCalib();
   drawGPS();
-  console.log('[Calib] Applied: canvas='+canvasW+'x'+canvasH,
-    'NW('+data.latNW.toFixed(5)+','+data.lonNW.toFixed(5)+')',
-    'SE('+data.latSE.toFixed(5)+','+data.lonSE.toFixed(5)+')');
-  if(curPos){ setTimeout(()=>{ try{centerGPS();}catch(e){} },400); }
+  console.log('[Calib] NW('+data.latNW.toFixed(5)+','+data.lonNW.toFixed(5)+')',
+    'SE('+data.latSE.toFixed(5)+','+data.lonSE.toFixed(5)+')',
+    'canvas:'+canvasW+'x'+canvasH);
+  if(curPos){ setTimeout(()=>{try{centerGPS();}catch(e){}},400); }
 }
 
 // ── ll2c: 위경도 → 캔버스 픽셀 ──────────────────────────────
@@ -1515,10 +1980,11 @@ function showGeoPDFBanner(data, cW2, cH2) {
   const b=document.getElementById('geopdf-banner');
   const inf=document.getElementById('geopdf-info');
   if(!b||!inf) return;
-  const utmStr = data.utmZone ? ` (UTM Zone ${data.utmZone}${data.isNorthern?'N':'S'})` : '';
+  const utmStr = data.utmZone
+    ? ` · UTM Zone ${data.utmZone}${data.isNorthern?'N':'S'}` : '';
   inf.innerHTML = `출처: ${data.source}${utmStr}<br>`
-    +`NW: ${data.latNW.toFixed(5)}°, ${data.lonNW.toFixed(5)}°<br>`
-    +`SE: ${data.latSE.toFixed(5)}°, ${data.lonSE.toFixed(5)}°`;
+    +`NW: ${data.latNW?.toFixed(5)}°, ${data.lonNW?.toFixed(5)}°<br>`
+    +`SE: ${data.latSE?.toFixed(5)}°, ${data.lonSE?.toFixed(5)}°`;
   b.style.background='rgba(122,180,80,.15)';
   b.style.border='.5px solid rgba(122,180,80,.4)';
   const title=b.querySelector('div');
@@ -1535,11 +2001,11 @@ function showGeoPDFFailBanner() {
   b.style.border='.5px solid rgba(232,168,74,.4)';
   const title=b.querySelector('div');
   if(title) title.textContent='⚠️ 좌표 자동 감지 실패';
-  inf.innerHTML='GeoPDF 좌표를 읽지 못했습니다.<br>아래 방법 중 하나를 선택하세요.';
+  inf.innerHTML='보정 버튼(📐) → 아래 방법 중 하나를 선택하세요.';
   b.style.display='block';
 }
 
-// ── UI: 버튼 핸들러들 ────────────────────────────────────────
+// ── UI 버튼 핸들러 ────────────────────────────────────────────
 function applyGeoPDFCalib() {
   if(!geoPDFData||!cW||!cH){toast('보정 데이터 없음. PDF를 다시 불러오세요.');return;}
   applyGeoPDFToCalib(geoPDFData,cW,cH);
@@ -1572,7 +2038,7 @@ function applyQGISValues() {
   };
   applyGeoPDFToCalib(geoPDFData,cW,cH);
   showGeoPDFBanner(geoPDFData,cW,cH);
-  toast('✅ QGIS 좌표 보정 완료! GPS가 정확히 표시됩니다.');
+  toast('✅ QGIS 좌표 보정 완료!');
   hidePanel('calib-panel');
 }
 
@@ -1592,483 +2058,758 @@ function switchCalibTab(tab) {
   }
 }
 
-/* ─── CALIBRATION ─── */
-function ll2c(lat,lon){
-  // UTM GeoPDF 보정 포함 위경도 → 캔버스 픽셀 변환
-  return ll2cFromCalib(lat,lon);
+// ── 캔버스 픽셀 → 화면(GPS SVG) 픽셀 변환 ──────────────────
+// gps-svg가 fixed 이므로 map-area의 실제 화면 위치를 고려
+function canvasToScreen(cpx, cpy){
+  const ma = document.getElementById('map-area');
+  const rect = ma ? ma.getBoundingClientRect() : {left:0, top:0};
+  return {
+    x: rect.left + ox + cpx * scale,
+    y: rect.top  + oy + cpy * scale
+  };
 }
 
-function startCalib(){
-  if(!gpsOn){ toast(T('need_gps')); return; }
-  calibDrawMode=true; calibPts=[];
-  document.getElementById('calib-status').textContent = T('calib_pt')+' 0/2';
-  hidePanel('calib-panel');
-  toast(T('calib_tap'));
+// 위경도 → 화면 픽셀 (지도 밖도 정확하게)
+function ll2screen(lat, lon){
+  if(calibPts.length < 2) return null;
+  const cp = ll2cFromCalib(lat, lon);  // 캔버스 픽셀 (지도 밖도 선형 외삽)
+  if(!cp) return null;
+  return canvasToScreen(cp.px, cp.py);
 }
 
-function centerGPS(){
-  if(!curPos){ toast(T('no_gps')); return; }
-  if(calibPts.length<2){ toast(T('no_calib')); return; }
-  const c=ll2c(curPos.lat,curPos.lon); if(!c) return;
-  ox=MA.clientWidth/2-c.px*scale; oy=MA.clientHeight/2-c.py*scale;
-  clamp(); applyTx();
-}
+/* ─── GPS 오버레이 렌더링 ─────────────────────────────────────
+   gps-svg = 화면 전체 fixed 오버레이
+   모든 좌표: 캔버스픽셀 → canvasToScreen() → 화면픽셀
+   → 지도 범위 밖도 정확하게 표시 (무제한 범위)
+─────────────────────────────────────────────────────────────── */
+function drawGPS(){
+  const svg=document.getElementById('gps-svg'); if(!svg) return;
+  svg.innerHTML='';
+  // gps-svg는 map-wrap 안 → 캔버스 좌표 직접 사용 (transform 자동 적용)
+  // SVG 크기 = 캔버스 크기 (overflow:visible로 지도 밖도 그려짐)
+  if(cW>0){
+    svg.setAttribute('width', String(cW));
+    svg.setAttribute('height', String(cH));
+  }
 
-/* ─── GPS SVG OVERLAY ─── */
-function mkSVG(tag){ return document.createElementNS('http://www.w3.org/2000/svg',tag); }
+  const slot=curSlot();
+  const S=scale||1;
 
-// drawGPS: see MultiMap engine below
+  // ── 저장된 트랙 ──────────────────────────────────────────────
+  if(slot && calibPts.length>=2){
+    (slot.tracks||[]).filter(t=>t.visible&&(t.pts||[]).length>=2).forEach(t=>{
+      const pts=t.pts.map(p=>ll2c(p.lat,p.lon)).filter(Boolean);
+      if(pts.length<2) return;
+      const pa=mkSVG('path');
+      pa.setAttribute('d','M'+pts.map(p=>p.px+','+p.py).join('L'));
+      pa.setAttribute('fill','none');
+      pa.setAttribute('stroke',t.color||'#ff7814');
+      pa.setAttribute('stroke-width','3');
+      pa.setAttribute('stroke-linecap','round');
+      pa.setAttribute('stroke-linejoin','round');
+      pa.setAttribute('opacity','0.9');
+      svg.appendChild(pa);
+    });
+  }
 
+  // ── 현재 녹화 중 트랙 ────────────────────────────────────────
+  if(trackOn && trkPts.length>=2 && calibPts.length>=2){
+    const pts=trkPts.map(p=>ll2c(p.lat,p.lon)).filter(Boolean);
+    if(pts.length>=2){
+      const pa=mkSVG('path');
+      pa.setAttribute('d','M'+pts.map(p=>p.px+','+p.py).join('L'));
+      pa.setAttribute('fill','none');
+      pa.setAttribute('stroke',trkCurrentColor||'#ff7814');
+      pa.setAttribute('stroke-width','3');
+      pa.setAttribute('stroke-linecap','round');
+      pa.setAttribute('stroke-dasharray','8,4');
+      pa.setAttribute('opacity','0.95');
+      svg.appendChild(pa);
+    }
+    const ep=document.getElementById('trk-pts'); if(ep) ep.textContent=trkPts.length;
+    const ed=document.getElementById('trk-dist'); if(ed) ed.textContent=Math.round(calcDist())+'m';
+  }
 
-/* ─── TRACKING ─── */
-function toggleTrack(){
-  if(!trackOn){
-    if(!gpsOn){ toast(T('need_gps')); return; }
-    trackOn=true; trkStart=new Date(); trkPts=[];
-    document.getElementById('btn-track').classList.add('on');
-    toast(T('track_on'));
+  // ── 보정 마커 (캔버스 좌표 → 화면 좌표) ─────────────────────
+  calibPts.forEach((cp,i)=>{
+    const g=mkSVG('g');
+    const c=mkSVG('circle');
+    c.setAttribute('cx',String(cp.px)); c.setAttribute('cy',String(cp.py));
+    c.setAttribute('r',String(8/scale)); c.setAttribute('class','calib-pin');
+    c.setAttribute('stroke-width',String(2/scale));
+    const t=mkSVG('text');
+    t.setAttribute('x',String(cp.px)); t.setAttribute('y',String(cp.py));
+    t.setAttribute('class','calib-lbl');
+    t.setAttribute('font-size',String(8/scale)); t.textContent=String(i+1);
+    g.appendChild(c); g.appendChild(t); svg.appendChild(g);
+  });
+
+  // ── GPS 현재 위치 마커 ────────────────────────────────────────
+  if(!curPos) return;
+
+  // GPS 위경도 → 캔버스 픽셀 (map-wrap 기준, transform 자동 적용)
+  let gx, gy;
+  if(calibPts.length>=2){
+    // 디버그: calibPts 값 출력 (한 번만)
+    if(!drawGPS._lastCalibLog ||
+       Math.abs(calibPts[0].lat - drawGPS._lastCalibLog) > 0.001){
+      drawGPS._lastCalibLog = calibPts[0].lat;
+      console.log('[GPS] calibPts:',
+        'NW=('+calibPts[0].lat.toFixed(5)+','+calibPts[0].lon.toFixed(5)+')',
+        'SE=('+calibPts[1].lat.toFixed(5)+','+calibPts[1].lon.toFixed(5)+')',
+        'canvas='+cW+'x'+cH);
+      console.log('[GPS] curPos: lat='+curPos.lat.toFixed(5)+', lon='+curPos.lon.toFixed(5));
+    }
+    const cp=ll2c(curPos.lat, curPos.lon);
+    if(cp){ gx=cp.px; gy=cp.py; }
+  }
+  if(gx===undefined){
+    // 보정 없음 → GPS 마커 표시 불가, 배너로 안내
+    // 지도가 없거나 미보정 → 배너 처리는 updateFarBanner에 위임
+    // 단, 지도가 없으면(cW=0) 아무것도 표시 안 함
+    if(cW > 0 && curPos){
+      const fb=document.getElementById('gps-far-banner');
+      if(fb){
+        const ce=document.getElementById('gps-far-coords');
+        const de=document.getElementById('gps-far-dist');
+        const ft=fb.querySelector('.far-title');
+        if(ft) ft.textContent='📍 GPS 위치 (지도 미보정)';
+        if(ce) ce.textContent=curPos.lat.toFixed(5)+'°, '+curPos.lon.toFixed(5)+'°';
+        if(de) de.textContent='📐 보정 버튼으로 UTM Zone을 설정하세요';
+        fb.style.display='block';
+      }
+    }
+    return; // 마커 그리지 않음
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // GPS 위치 표시 전략 (B+D 조합)
+  // ══════════════════════════════════════════════════════════
+  //
+  // [A] 지도 범위 안         → 일반 마커
+  // [B] 지도 범위 밖 / 가까움 → 지도 경계 화살표 + 거리
+  // [B+D] 지도 범위 훨씬 밖  → 경계 화살표 + 하단 배너
+  //       (GPS Zone ≠ 지도 Zone 등, 수백km 이상 차이)
+  //
+  // "훨씬 밖" 기준: GPS→지도 중심 거리 > 지도 대각선 길이의 3배
+  // ══════════════════════════════════════════════════════════
+
+  // 지도 범위 안/밖 판단 (캔버스 픽셀 기준)
+  const isInMap = gx>=0 && gx<=cW && gy>=0 && gy<=cH;
+
+  // 화면 기준
+  const screenX = ox + gx*scale;
+  const screenY = oy + gy*scale;
+  const SW=MA.clientWidth, SH=MA.clientHeight;
+  const isOnScreen = screenX>=-50 && screenX<=SW+50 && screenY>=-50 && screenY<=SH+50;
+
+  // ── "훨씬 밖" 판단: GPS가 지도 크기의 N배 이상 벗어남 ──────
+  // GPS→지도 중심 캔버스 거리 vs 지도 대각선 길이
+  const mapDiag = Math.hypot(cW, cH);          // 지도 대각선 (픽셀)
+  const distFromCenter = Math.hypot(gx - cW/2, gy - cH/2);
+  const FAR_THRESHOLD = mapDiag * 3.0;          // 대각선 3배 이상 = 훨씬 밖
+  const isFarAway = distFromCenter > FAR_THRESHOLD;
+
+  // 정확도 링 반지름
+  let accR=20;
+  if(calibPts.length>=2&&cH>0){
+    const latRange=Math.abs(calibPts[1].lat-calibPts[0].lat);
+    const mPerPx=(latRange*111320)/cH;
+    if(mPerPx>0) accR=Math.min(80, Math.max(10, curPos.acc/mPerPx));
+  }
+
+  // ── 배너 초기화 (항상) ────────────────────────────────────
+  const farBanner = document.getElementById('gps-far-banner');
+
+  if(isInMap){
+    // ══ [A] 지도 범위 안: 일반 GPS 마커 ════════════════════
+    if(farBanner) farBanner.style.display='none';
+    const S=scale||1;
+    const CORE=6/S, HALO=11/S;
+
+    const ar=mkSVG('circle'); ar.setAttribute('cx',String(gx)); ar.setAttribute('cy',String(gy));
+    ar.setAttribute('r',String(accR)); ar.setAttribute('class','acc-ring'); ar.setAttribute('stroke-width',String(1/S));
+    svg.appendChild(ar);
+
+    const ha=mkSVG('circle'); ha.setAttribute('cx',String(gx)); ha.setAttribute('cy',String(gy));
+    ha.setAttribute('r',String(HALO*1.8)); ha.setAttribute('class','gps-pulse'); ha.setAttribute('stroke-width',String(1/S));
+    svg.appendChild(ha);
+
+    const ha2=mkSVG('circle'); ha2.setAttribute('cx',String(gx)); ha2.setAttribute('cy',String(gy));
+    ha2.setAttribute('r',String(HALO)); ha2.setAttribute('class','gps-halo');
+    svg.appendChild(ha2);
+
+    if(curPos.heading!=null&&!isNaN(curPos.heading)){
+      const rad=(curPos.heading-90)*Math.PI/180;
+      const aD=HALO*1.4;
+      const poly=mkSVG('polygon');
+      poly.setAttribute('points',`${gx+Math.cos(rad)*aD},${gy+Math.sin(rad)*aD} ${gx+Math.cos(rad-.45)*aD*.7},${gy+Math.sin(rad-.45)*aD*.7} ${gx+Math.cos(rad+.45)*aD*.7},${gy+Math.sin(rad+.45)*aD*.7}`);
+      poly.setAttribute('fill','#ff4db8'); poly.setAttribute('opacity','.8');
+      svg.appendChild(poly);
+    }
+
+    const cd=mkSVG('circle'); cd.setAttribute('cx',String(gx)); cd.setAttribute('cy',String(gy));
+    cd.setAttribute('r',String(CORE)); cd.setAttribute('class','gps-core'); cd.setAttribute('stroke-width',String(1.5/S));
+    svg.appendChild(cd);
+
+    const cs=HALO*.7;
+    [[-cs,0],[cs,0],[0,-cs],[0,cs]].forEach(([dx,dy])=>{
+      const m2=cs*.25, line=mkSVG('line');
+      line.setAttribute('x1',String(gx+(dx>0?m2:dx<0?-m2:0)));
+      line.setAttribute('y1',String(gy+(dy>0?m2:dy<0?-m2:0)));
+      line.setAttribute('x2',String(gx+dx)); line.setAttribute('y2',String(gy+dy));
+      line.setAttribute('stroke','#ff4db8'); line.setAttribute('stroke-width',String(0.8/S));
+      line.setAttribute('opacity','0.9');
+      svg.appendChild(line);
+    });
+
+    const lbl=document.getElementById('gps-lbl');
+    if(lbl&&lbl.textContent==='▶ 지도 밖'){ lbl.textContent=T('gps_active'); lbl.style.color=''; }
+
+    // 지도 범위 안: GPS 정보 저장 (배너 숨김)
+    if(curMapId) slotGPSInfo[curMapId] = {
+      gpsLat: curPos.lat, gpsLon: curPos.lon,
+      isInMap: true, isFarAway: false
+    };
+    updateFarBanner();
+
   } else {
-    trackOn=false;
-    document.getElementById('btn-track').classList.remove('on');
-    updTrackStats(); showPanel('track-panel');
-    toast(T('track_off'));
+    // ══ [B/B+D] 지도 범위 밖 ════════════════════════════════
+    // 항상: 지도 경계에 방향 화살표 표시 (전략 B)
+    // 추가: 훨씬 밖이면 하단 배너도 표시 (전략 D)
+
+    // ── 지도 경계 방향 화살표 그리기 ──────────────────────
+    // 지도 경계에서 GPS 방향으로 화살표 배치
+    // 경계 클램프: gx,gy → 지도 경계 안쪽 여백 위치
+    const margin = 28/( scale||1); // 화면 28px = 캔버스 28/scale px
+    const borderX = Math.max(margin, Math.min(cW-margin, gx));
+    const borderY = Math.max(margin, Math.min(cH-margin, gy));
+
+    // GPS 방향각 (지도 중심 → GPS)
+    const angle = Math.atan2(gy - cH/2, gx - cW/2);
+
+    // 지도 경계에서 angle 방향으로 화살표 위치 계산
+    const arrowPos = _clampToMapEdge(gx, gy, cW, cH, margin);
+
+    // 실거리 계산 (Haversine)
+    const distM = _haversineDist(curPos.lat, curPos.lon,
+      (calibPts[0].lat+calibPts[1].lat)/2,
+      (calibPts[0].lon+calibPts[1].lon)/2);
+    const distTxt = distM < 1000
+      ? Math.round(distM)+'m'
+      : (distM/1000).toFixed(0)+'km';
+
+    // 방위 문자 계산
+    const bearDeg = _bearing(
+      (calibPts[0].lat+calibPts[1].lat)/2,
+      (calibPts[0].lon+calibPts[1].lon)/2,
+      curPos.lat, curPos.lon);
+    const bearStr = _bearingToCardinal(bearDeg);
+
+    _drawBorderArrow(svg, arrowPos.x, arrowPos.y, angle, distTxt, isFarAway);
+    _showOutOfMapLabel();
+
+    // ── [D] 슬롯별 GPS 정보 저장 + 배너 갱신 ────────────
+    if(curMapId) {
+      slotGPSInfo[curMapId] = {
+        distM, bearStr, distTxt,
+        gpsLat: curPos.lat, gpsLon: curPos.lon,
+        isInMap: false, isFarAway
+      };
+    }
+    updateFarBanner();
+  }
+
+
+  // ── 메모 핀 ─────────────────────────────────────────────────
+  const memoList=slot?.memos||[];
+  memoList.forEach((m,i)=>{
+    // 위치 계산: lat/lon → 캔버스 픽셀
+    let cpx=null, cpy=null;
+    if(m.lat!=null && calibPts.length>=2){
+      const c=ll2c(m.lat, m.lon); if(c){cpx=c.px;cpy=c.py;}
+    }
+    if(cpx==null && m.pinX!=null){cpx=m.pinX;cpy=m.pinY;}
+    if(cpx==null) return; // 위치 없으면 스킵
+
+    const sx=cpx, sy=cpy;
+    const S=scale||1;
+    const pinR=14/S; // 화면 기준 14px
+
+    const g=mkSVG('g');
+    g.setAttribute('data-memo-id',m.id);
+    g.style.cursor='grab';
+
+    // ── 핀 그리기 헬퍼 (입체 핀, 꼬리 끝이 정확한 위치) ──────
+    // cx,cy = 꼬리 끝점 (정확한 지도 위치)
+    // 머리는 위쪽으로 올라가 GPS 마커와 겹치지 않음
+    function drawPinShape(gEl, cx, cy, r, col, label){
+      const ncx = Number(cx), ncy = Number(cy);
+      const headCY = ncy - r * 2.4; // 머리 중심 = 정확한 위치보다 위쪽
+      const sw = String; // 짧게
+
+      if(memoPinStyle === 'number'){
+        // ── 번호 스타일: 위쪽 원 + 꼬리 ──────────────────
+        // 그림자
+        const shadow = mkSVG('ellipse');
+        shadow.setAttribute('cx', sw(ncx)); shadow.setAttribute('cy', sw(ncy + 1.5/S));
+        shadow.setAttribute('rx', sw(r*0.6)); shadow.setAttribute('ry', sw(r*0.18));
+        shadow.setAttribute('fill','rgba(0,0,0,0.25)');
+        shadow.setAttribute('pointer-events','none');
+        // 꼬리 (아래 삼각형, 끝이 cy)
+        const tail = mkSVG('polygon');
+        tail.setAttribute('points',
+          (ncx-r*0.45)+','+(headCY+r)+' '+
+          (ncx+r*0.45)+','+(headCY+r)+' '+
+          ncx+','+ncy
+        );
+        tail.setAttribute('fill', col);
+        // 외곽선 원
+        const outerRing = mkSVG('circle');
+        outerRing.setAttribute('cx',sw(ncx)); outerRing.setAttribute('cy',sw(headCY));
+        outerRing.setAttribute('r',sw(r+2/S)); outerRing.setAttribute('fill','#fff');
+        outerRing.setAttribute('pointer-events','none');
+        // 어두운 테두리
+        const borderRing = mkSVG('circle');
+        borderRing.setAttribute('cx',sw(ncx)); borderRing.setAttribute('cy',sw(headCY));
+        borderRing.setAttribute('r',sw(r+2.5/S)); borderRing.setAttribute('fill','none');
+        borderRing.setAttribute('stroke','rgba(0,0,0,0.35)');
+        borderRing.setAttribute('stroke-width',sw(1/S));
+        borderRing.setAttribute('pointer-events','none');
+        // 본체 원
+        const bg = mkSVG('circle');
+        bg.setAttribute('cx',sw(ncx)); bg.setAttribute('cy',sw(headCY));
+        bg.setAttribute('r',sw(r)); bg.setAttribute('fill',col);
+        // 하이라이트 (입체감)
+        const hi = mkSVG('ellipse');
+        hi.setAttribute('cx',sw(ncx-r*0.28)); hi.setAttribute('cy',sw(headCY-r*0.28));
+        hi.setAttribute('rx',sw(r*0.38)); hi.setAttribute('ry',sw(r*0.25));
+        hi.setAttribute('fill','rgba(255,255,255,0.45)');
+        hi.setAttribute('pointer-events','none');
+        // 번호
+        const txt = mkSVG('text');
+        txt.setAttribute('x',sw(ncx)); txt.setAttribute('y',sw(headCY));
+        txt.setAttribute('text-anchor','middle'); txt.setAttribute('dominant-baseline','central');
+        txt.setAttribute('font-size',sw(r*0.9)); txt.setAttribute('font-weight','700');
+        txt.setAttribute('fill','#fff'); txt.setAttribute('pointer-events','none');
+        txt.textContent = label;
+        gEl.appendChild(shadow); gEl.appendChild(tail);
+        gEl.appendChild(outerRing); gEl.appendChild(borderRing);
+        gEl.appendChild(bg); gEl.appendChild(hi); gEl.appendChild(txt);
+
+      } else {
+        // ── 핀 스타일: 입체 물방울 (꼬리 끝이 cy) ─────────
+        // 그림자
+        const shadow = mkSVG('ellipse');
+        shadow.setAttribute('cx',sw(ncx)); shadow.setAttribute('cy',sw(ncy+1.5/S));
+        shadow.setAttribute('rx',sw(r*0.55)); shadow.setAttribute('ry',sw(r*0.18));
+        shadow.setAttribute('fill','rgba(0,0,0,0.25)');
+        shadow.setAttribute('pointer-events','none');
+        // 꼬리 (끝점이 cy = 정확한 위치)
+        const tail = mkSVG('polygon');
+        tail.setAttribute('points',
+          (ncx-r*0.48)+','+(headCY+r)+' '+
+          (ncx+r*0.48)+','+(headCY+r)+' '+
+          ncx+','+ncy
+        );
+        tail.setAttribute('fill', col);
+        // 외곽 흰 원 (두껍게)
+        const outerRing = mkSVG('circle');
+        outerRing.setAttribute('cx',sw(ncx)); outerRing.setAttribute('cy',sw(headCY));
+        outerRing.setAttribute('r',sw(r+2.5/S)); outerRing.setAttribute('fill','#fff');
+        outerRing.setAttribute('pointer-events','none');
+        // 그림자 테두리
+        const borderRing = mkSVG('circle');
+        borderRing.setAttribute('cx',sw(ncx)); borderRing.setAttribute('cy',sw(headCY));
+        borderRing.setAttribute('r',sw(r+3/S)); borderRing.setAttribute('fill','none');
+        borderRing.setAttribute('stroke','rgba(0,0,0,0.3)');
+        borderRing.setAttribute('stroke-width',sw(1.5/S));
+        borderRing.setAttribute('pointer-events','none');
+        // 핀 본체 (어두운 빨강)
+        const bodyDark = mkSVG('circle');
+        bodyDark.setAttribute('cx',sw(ncx)); bodyDark.setAttribute('cy',sw(headCY));
+        bodyDark.setAttribute('r',sw(r)); bodyDark.setAttribute('fill',col);
+        // 밝은 위쪽 절반 (입체감)
+        const bodyBright = mkSVG('circle');
+        bodyBright.setAttribute('cx',sw(ncx)); bodyBright.setAttribute('cy',sw(headCY-r*0.15));
+        bodyBright.setAttribute('r',sw(r*0.85)); bodyBright.setAttribute('fill', col.replace(')',',0.85)').replace('rgb','rgba'));
+        bodyBright.setAttribute('pointer-events','none');
+        // 하이라이트 (반짝이는 흰 점)
+        const hi = mkSVG('ellipse');
+        hi.setAttribute('cx',sw(ncx-r*0.3)); hi.setAttribute('cy',sw(headCY-r*0.32));
+        hi.setAttribute('rx',sw(r*0.32)); hi.setAttribute('ry',sw(r*0.22));
+        hi.setAttribute('fill','rgba(255,255,255,0.55)');
+        hi.setAttribute('pointer-events','none');
+        // 번호
+        const txt = mkSVG('text');
+        txt.setAttribute('x',sw(ncx)); txt.setAttribute('y',sw(headCY));
+        txt.setAttribute('text-anchor','middle'); txt.setAttribute('dominant-baseline','central');
+        txt.setAttribute('font-size',sw(r*0.85)); txt.setAttribute('font-weight','700');
+        txt.setAttribute('fill','#fff'); txt.setAttribute('pointer-events','none');
+        txt.setAttribute('text-shadow','0 1px 2px rgba(0,0,0,0.5)');
+        txt.textContent = label;
+        gEl.appendChild(shadow); gEl.appendChild(tail);
+        gEl.appendChild(outerRing); gEl.appendChild(borderRing);
+        gEl.appendChild(bodyDark); gEl.appendChild(bodyBright);
+        gEl.appendChild(hi); gEl.appendChild(txt);
+      }
+    }
+
+    // ── GPS 근접 여부 판단 (5m 이내 → 형광 파란색) ──────────
+    const NEAR_THRESHOLD_M = 5; // 5m
+    let pinColor = '#e8001c'; // 기본: 빨간
+    let isNearGPS = false;
+    if(curPos && m.lat!=null){
+      const dLat = (curPos.lat - m.lat) * Math.PI/180;
+      const dLon = (curPos.lon - m.lon) * Math.PI/180;
+      const a = Math.sin(dLat/2)**2 +
+        Math.cos(m.lat*Math.PI/180)*Math.cos(curPos.lat*Math.PI/180)*Math.sin(dLon/2)**2;
+      const distM = 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      if(distM <= NEAR_THRESHOLD_M){
+        pinColor = '#00f0ff'; // 형광 파란색
+        isNearGPS = true;
+      }
+    }
+
+    drawPinShape(g, String(sx), String(sy), pinR, pinColor, String(i+1));
+
+    // 근접 시: 펄스 링 애니메이션
+    if(isNearGPS){
+      const S=scale||1;
+      const headCYp = sy - pinR*2.4;
+      const pulse = mkSVG('circle');
+      pulse.setAttribute('cx',String(sx)); pulse.setAttribute('cy',String(headCYp));
+      pulse.setAttribute('r',String(pinR+3/S));
+      pulse.setAttribute('fill','none');
+      pulse.setAttribute('stroke','#00f0ff');
+      pulse.setAttribute('stroke-width',String(2/S));
+      pulse.setAttribute('opacity','0.8');
+      pulse.setAttribute('pointer-events','none');
+      // CSS 애니메이션 (SVG animate)
+      const anim = mkSVG('animate');
+      anim.setAttribute('attributeName','r');
+      anim.setAttribute('from',String(pinR+2/S));
+      anim.setAttribute('to',String(pinR+12/S));
+      anim.setAttribute('dur','1.2s');
+      anim.setAttribute('repeatCount','indefinite');
+      anim.setAttribute('calcMode','ease-out');
+      const animOp = mkSVG('animate');
+      animOp.setAttribute('attributeName','opacity');
+      animOp.setAttribute('from','0.9');
+      animOp.setAttribute('to','0');
+      animOp.setAttribute('dur','1.2s');
+      animOp.setAttribute('repeatCount','indefinite');
+      animOp.setAttribute('calcMode','ease-out');
+      pulse.appendChild(anim); pulse.appendChild(animOp);
+      g.appendChild(pulse);
+    }
+
+    // ── 드래그 상태 ─────────────────────────────────────────
+    let _dragActive=false, _startCX=0, _startCY=0, _startMX=sx, _startMY=sy;
+
+    // 드래그 공통 함수 (터치/마우스)
+    function startDrag(clientX, clientY){
+      _dragActive=false;
+      _startCX=clientX; _startCY=clientY;
+      _startMX=m.pinX!=null?m.pinX:sx;
+      _startMY=m.pinY!=null?m.pinY:sy;
+    }
+    function moveDrag(clientX, clientY){
+      const dx=clientX-_startCX, dy=clientY-_startCY;
+      if(!_dragActive && Math.hypot(dx,dy)>6) _dragActive=true;
+      if(!_dragActive) return false;
+      // 화면 픽셀 delta → 캔버스 픽셀 delta
+      m.pinX=_startMX+dx/S; m.pinY=_startMY+dy/S;
+      // 위경도 갱신
+      if(calibPts.length>=2){
+        const [a,b]=calibPts;
+        const dLon=b.lon-a.lon, dLat=b.lat-a.lat;
+        if(Math.abs(b.px-a.px)>0.01){
+          m.lon=a.lon+(m.pinX-a.px)*dLon/(b.px-a.px);
+          m.lat=a.lat+(m.pinY-a.py)*dLat/(b.py-a.py);
+        }
+      }
+      drawGPS();
+      return true;
+    }
+    function endDrag(){
+      if(_dragActive){ saveMemos(); toast('📍 핀 '+(i+1)+' 위치 저장됨'); }
+      _dragActive=false;
+    }
+
+    // ── 터치 이벤트 ─────────────────────────────────────────
+    g.addEventListener('touchstart',ev=>{
+      if(ev.touches.length!==1) return;
+      ev.stopPropagation();
+      startDrag(ev.touches[0].clientX, ev.touches[0].clientY);
+      g.style.cursor='grabbing';
+      function onTM(ev2){
+        if(ev2.touches.length!==1) return;
+        moveDrag(ev2.touches[0].clientX, ev2.touches[0].clientY);
+      }
+      function onTE(){
+        if(!_dragActive) toast('📍'+(i+1)+': '+m.text.substring(0,60));
+        endDrag(); g.style.cursor='grab';
+        document.removeEventListener('touchmove',onTM);
+        document.removeEventListener('touchend',onTE);
+      }
+      document.addEventListener('touchmove',onTM,{passive:true});
+      document.addEventListener('touchend',onTE,{once:true});
+    },{passive:true});
+
+    // ── 마우스 이벤트 ────────────────────────────────────────
+    g.addEventListener('mousedown',ev=>{
+      if(ev.button!==0) return;
+      ev.stopPropagation();
+      startDrag(ev.clientX, ev.clientY);
+      g.style.cursor='grabbing';
+      function onMM(ev2){
+        moveDrag(ev2.clientX, ev2.clientY);
+      }
+      function onMU(ev2){
+        if(!_dragActive && Math.hypot(ev2.clientX-_startCX,ev2.clientY-_startCY)<6)
+          toast('📍'+(i+1)+': '+m.text.substring(0,60));
+        endDrag(); g.style.cursor='grab';
+        window.removeEventListener('mousemove',onMM);
+        window.removeEventListener('mouseup',onMU);
+      }
+      window.addEventListener('mousemove',onMM);
+      window.addEventListener('mouseup',onMU,{once:true});
+    });
+
+    svg.appendChild(g);
+  });
+
+  // ── 새 메모 배치 중인 임시 핀 ────────────────────────────────
+  // memo-panel이 열려있거나 핀 이동 모드일 때만 표시
+  const _memoOpen = document.getElementById('memo-panel')?.classList.contains('show');
+  const _pinMoveOpen = document.getElementById('pin-move-bar')?.classList.contains('show');
+  if(pinDragActive && (_memoOpen || _pinMoveOpen)){
+    const sx2=pinDragX, sy2=pinDragY;
+    const S2=scale||1, pR2=14/S2;
+    const headCY2 = sy2 - pR2*2.4; // 머리를 위로
+    const g2=mkSVG('g');
+
+    // 꼬리 (끝점이 sy2)
+    const tail2=mkSVG('polygon');
+    tail2.setAttribute('points',
+      (sx2-pR2*0.48)+','+(headCY2+pR2)+' '+
+      (sx2+pR2*0.48)+','+(headCY2+pR2)+' '+
+      sx2+','+sy2
+    );
+    tail2.setAttribute('fill','rgba(232,0,28,0.7)');
+    // 외곽 (점선으로 배치 중임을 표시)
+    const ring2=mkSVG('circle');
+    ring2.setAttribute('cx',String(sx2)); ring2.setAttribute('cy',String(headCY2));
+    ring2.setAttribute('r',String(pR2+3/S2)); ring2.setAttribute('fill','none');
+    ring2.setAttribute('stroke','#fff'); ring2.setAttribute('stroke-width',String(2.5/S2));
+    ring2.setAttribute('stroke-dasharray',String(4/S2)+' '+String(2.5/S2));
+    ring2.setAttribute('pointer-events','none');
+    // 본체 (반투명)
+    const head2=mkSVG('circle');
+    head2.setAttribute('cx',String(sx2)); head2.setAttribute('cy',String(headCY2));
+    head2.setAttribute('r',String(pR2)); head2.setAttribute('fill','rgba(232,0,28,0.8)');
+    // 하이라이트
+    const hi2=mkSVG('ellipse');
+    hi2.setAttribute('cx',String(sx2-pR2*0.3)); hi2.setAttribute('cy',String(headCY2-pR2*0.3));
+    hi2.setAttribute('rx',String(pR2*0.32)); hi2.setAttribute('ry',String(pR2*0.22));
+    hi2.setAttribute('fill','rgba(255,255,255,0.4)'); hi2.setAttribute('pointer-events','none');
+    // ✎ 아이콘
+    const lbl2=mkSVG('text');
+    lbl2.setAttribute('x',String(sx2)); lbl2.setAttribute('y',String(headCY2));
+    lbl2.setAttribute('text-anchor','middle'); lbl2.setAttribute('dominant-baseline','central');
+    lbl2.setAttribute('font-size',String(pR2*0.85)); lbl2.setAttribute('font-weight','700');
+    lbl2.setAttribute('fill','#fff'); lbl2.setAttribute('pointer-events','none');
+    lbl2.textContent='✎';
+    g2.appendChild(tail2); g2.appendChild(ring2);
+    g2.appendChild(head2); g2.appendChild(hi2); g2.appendChild(lbl2);
+    svg.appendChild(g2);
+  }
+
+
+}
+// ── 슬롯별 GPS 거리 배너 갱신 ────────────────────────────────
+function updateFarBanner(){
+  const farBanner = document.getElementById('gps-far-banner');
+  if(!farBanner) return;
+
+  // 지도가 없으면 배너 숨김
+  if(!calibPts.length || calibPts.length < 2 || !cW){
+    farBanner.style.display='none';
+    return;
+  }
+
+  const info = curMapId ? slotGPSInfo[curMapId] : null;
+  if(!info || !info.isFarAway){
+    farBanner.style.display='none';
+    return;
+  }
+
+  const coordEl = document.getElementById('gps-far-coords');
+  const distEl  = document.getElementById('gps-far-dist');
+  const titleEl = farBanner.querySelector('.far-title');
+
+  if(titleEl) titleEl.textContent = '📍 GPS 위치 — 이 지도 범위 밖';
+  if(coordEl) coordEl.textContent = info.gpsLat.toFixed(5)+'°, '+info.gpsLon.toFixed(5)+'°';
+  if(distEl)  distEl.textContent  = '이 지도에서 '+info.bearStr+' 방향 '+info.distTxt+' 떨어진 위치';
+  farBanner.style.display='block';
+}
+
+// ── 지도 경계 클램프 (캔버스 좌표) ──────────────────────────
+// GPS 방향을 가리키는 지도 경계 위치 계산
+function _clampToMapEdge(gx, gy, W, H, margin){
+  // 지도 중심 → GPS 방향벡터
+  const cx=W/2, cy=H/2;
+  const angle=Math.atan2(gy-cy, gx-cx);
+  const dx=Math.cos(angle), dy=Math.sin(angle);
+  // 경계까지의 t 계산
+  let t=Infinity;
+  if(dx>0) t=Math.min(t,(W-margin-cx)/dx);
+  if(dx<0) t=Math.min(t,(margin-cx)/dx);
+  if(dy>0) t=Math.min(t,(H-margin-cy)/dy);
+  if(dy<0) t=Math.min(t,(margin-cy)/dy);
+  return { x:cx+dx*Math.max(0,t), y:cy+dy*Math.max(0,t), angle };
+}
+
+// ── 지도 경계 방향 화살표 (캔버스 좌표계) ────────────────────
+function _drawBorderArrow(svg, ex, ey, angle, distTxt, isFar){
+  const S = scale||1;
+  const R = 20/S;  // 원 반지름 (화면 20px 고정)
+  const col = isFar ? '#ff9900' : '#ff4db8'; // 훨씬 밖=주황, 그냥 밖=핑크
+
+  // 배경 원
+  const bg=mkSVG('circle');
+  bg.setAttribute('cx',String(ex)); bg.setAttribute('cy',String(ey));
+  bg.setAttribute('r',String(R)); bg.setAttribute('fill','rgba(255,255,255,0.92)');
+  bg.setAttribute('stroke',col); bg.setAttribute('stroke-width',String(2.5/S));
+  svg.appendChild(bg);
+
+  // 화살표 삼각형 (GPS 방향)
+  const aLen=R*0.58;
+  const ax=ex+Math.cos(angle)*aLen, ay=ey+Math.sin(angle)*aLen;
+  const a1x=ex+Math.cos(angle-2.5)*aLen*.6, a1y=ey+Math.sin(angle-2.5)*aLen*.6;
+  const a2x=ex+Math.cos(angle+2.5)*aLen*.6, a2y=ey+Math.sin(angle+2.5)*aLen*.6;
+  const arr=mkSVG('polygon');
+  arr.setAttribute('points',`${ax},${ay} ${a1x},${a1y} ${a2x},${a2y}`);
+  arr.setAttribute('fill',col);
+  svg.appendChild(arr);
+
+  // 거리 텍스트 (화살표 아래)
+  const fs=9/S;
+  const tw=distTxt.length*fs*0.65+8/S, th=fs*1.5;
+  const tbg=mkSVG('rect');
+  tbg.setAttribute('x',String(ex-tw/2)); tbg.setAttribute('y',String(ey+R+1/S));
+  tbg.setAttribute('width',String(tw)); tbg.setAttribute('height',String(th));
+  tbg.setAttribute('rx',String(3/S)); tbg.setAttribute('fill','rgba(255,255,255,0.95)');
+  tbg.setAttribute('stroke',col); tbg.setAttribute('stroke-width',String(0.8/S));
+  svg.appendChild(tbg);
+  const dtxt=mkSVG('text');
+  dtxt.setAttribute('x',String(ex)); dtxt.setAttribute('y',String(ey+R+th/2+1/S));
+  dtxt.setAttribute('text-anchor','middle'); dtxt.setAttribute('dominant-baseline','central');
+  dtxt.setAttribute('font-size',String(fs)); dtxt.setAttribute('font-weight','700');
+  dtxt.setAttribute('fill',col); dtxt.setAttribute('font-family','monospace');
+  dtxt.textContent=distTxt;
+  svg.appendChild(dtxt);
+}
+
+// ── Haversine 거리 계산 (m) ────────────────────────────────
+function _haversineDist(lat1,lon1,lat2,lon2){
+  const R=6371000, r=Math.PI/180;
+  const dLat=(lat2-lat1)*r, dLon=(lon2-lon1)*r;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*r)*Math.cos(lat2*r)*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+// ── 방위각 계산 (도, 지도중심→GPS) ───────────────────────────
+function _bearing(lat1,lon1,lat2,lon2){
+  const r=Math.PI/180;
+  const dLon=(lon2-lon1)*r;
+  const y=Math.sin(dLon)*Math.cos(lat2*r);
+  const x=Math.cos(lat1*r)*Math.sin(lat2*r)-Math.sin(lat1*r)*Math.cos(lat2*r)*Math.cos(dLon);
+  return (Math.atan2(y,x)*180/Math.PI+360)%360;
+}
+
+// ── 방위각 → 방위 문자 변환 ──────────────────────────────────
+function _bearingToCardinal(deg){
+  const dirs=['북','북동','동','남동','남','남서','서','북서'];
+  return dirs[Math.round(deg/45)%8];
+}
+
+// _drawGPSMarker → 인라인으로 통합됨
+
+// _clampToScreenEdge → _clampToMapEdge로 교체됨
+
+// _drawEdgeArrow → _drawBorderArrow로 교체됨
+
+// ── 지도 밖 상태 표시 ───────────────────────────────────────
+function _showOutOfMapLabel(){
+  const lbl=document.getElementById('gps-lbl');
+  if(lbl){
+    lbl.textContent='▶ 지도 밖';
+    lbl.style.color='#ff4db8';
   }
 }
 
-function updTrackStats(){
-  document.getElementById('trk-pts').textContent=trkPts.length;
-  document.getElementById('trk-dist').textContent=calcDist()+' m';
-  document.getElementById('trk-start').textContent=trkStart?trkStart.toLocaleTimeString():'—';
-}
 
+/* ─── HELPER UTILS ─── */
+function escHTML(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function mkSVG(tag){ return document.createElementNS('http://www.w3.org/2000/svg',tag); }
+function toast(msg,dur=3200){
+  const el=document.getElementById('toast'); if(!el)return;
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('show'),dur);
+}
+function showLoad(msg){ const l=document.getElementById('loading'); if(l){ document.getElementById('loading-txt').textContent=msg||''; l.classList.add('show');} }
+function hideLoad(){ const l=document.getElementById('loading'); if(l) l.classList.remove('show'); }
+function showPanel(id){ document.getElementById(id)?.classList.add('show'); }
+function hidePanel(id){ document.getElementById(id)?.classList.remove('show'); }
 function calcDist(){
+  if(trkPts.length<2) return 0;
   let d=0;
   for(let i=1;i<trkPts.length;i++){
-    const a=trkPts[i-1],b=trkPts[i],R=6371000;
-    const dLat=(b.lat-a.lat)*Math.PI/180, dLon=(b.lon-a.lon)*Math.PI/180;
-    const x=Math.sin(dLat/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLon/2)**2;
-    d+=R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+    const dLat=(trkPts[i].lat-trkPts[i-1].lat)*Math.PI/180;
+    const dLon=(trkPts[i].lon-trkPts[i-1].lon)*Math.PI/180;
+    const a=Math.sin(dLat/2)**2+Math.cos(trkPts[i-1].lat*Math.PI/180)*Math.cos(trkPts[i].lat*Math.PI/180)*Math.sin(dLon/2)**2;
+    d+=6371000*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
   }
-  return Math.round(d);
+  return d;
 }
 
-// exportGPX: use exportGPXAll
-function exportGPX_legacy(){
-  if(trkPts.length<2){ toast(T('gpx_few')); return; }
-  const pts=trkPts.map(p=>'    <trkpt lat="'+p.lat+'" lon="'+p.lon+'"><time>'+p.time+'</time></trkpt>').join('\n');
-  const gpx='<?xml version="1.0"?>\n<gpx version="1.1" creator="PalmFarmMap">\n  <trk><name>Palm Farm Track</name><trkseg>\n'+pts+'\n  </trkseg></trk>\n</gpx>';
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([gpx],{type:'application/gpx+xml'}));
-  a.download='track_'+new Date().toISOString().slice(0,10)+'.gpx';
-  a.click(); hidePanel('track-panel'); toast(T('gpx_ok'));
-}
+/* ─── CALIBRATION ─── */
+function ll2c(lat,lon){ return ll2cFromCalib(lat,lon); }
 
-function clearTrack(){ trkPts=[]; trkStart=null; drawGPS(); hidePanel('track-panel'); toast(T('track_clr')); } // legacy
-
-/* ─── MEMOS ─── */
-// loadMemos: defined in MultiMap engine above
-
-// saveMemos: defined in MultiMap engine above
-
-
-/* ─── LAYER PERSISTENCE ─── */
-function saveLayers(){
-  try{ localStorage.setItem('palmmap_layers', JSON.stringify(layers)); }catch(e){ console.warn('Layer save failed',e); }
-}
-function loadLayersFromStorage(){
-  try{
-    const saved=JSON.parse(localStorage.getItem('palmmap_layers')||'null');
-    if(saved&&saved.length){ layers=saved; return true; }
-  }catch(e){}
-  return false;
-}
-
-/* ─── CALIB PERSISTENCE ─── */
-function saveCalib(){
-  try{ localStorage.setItem('palmmap_calib', JSON.stringify(calibPts)); }catch(e){}
-}
+function saveCalib(){ try{ localStorage.setItem('palmmap_calib',JSON.stringify(calibPts)); }catch(e){} }
 function loadCalibFromStorage(){
-  try{
-    const saved=JSON.parse(localStorage.getItem('palmmap_calib')||'null');
-    if(saved&&saved.length>=2){ calibPts=saved; return true; }
-  }catch(e){}
-  return false;
+  try{ const s=JSON.parse(localStorage.getItem('palmmap_calib')||'null'); if(s&&s.length) calibPts=s; }catch(e){}
+}
+function startCalib(){
+  calibDrawMode=true; calibPts=[];
+  document.getElementById('calib-draw-hint')?.classList.add('show');
+  toast('지도를 탭해서 보정점을 찍으세요 (최소 2개)');
+}
+function endCalib(){
+  calibDrawMode=false;
+  document.getElementById('calib-draw-hint')?.classList.remove('show');
+  if(calibPts.length>=2){ saveCalib(); drawGPS(); toast('✅ 보정 완료! ('+calibPts.length+'점)'); }
+  else { calibPts=[]; toast('보정점이 부족합니다.'); }
 }
 
-// openMemo: defined in MultiMap engine above
-
-
-// saveMemo: defined in MultiMap engine above
-
-
-function memoFromPop(){
-  const f=selFeat?.feat;
-  closePop();
-  openMemo(f ? '['+( f.name||f.code||'')+'] ' : '');
-}
-
-// openMemoList: defined in MultiMap engine above
-
-
-// renderMemoList: defined in MultiMap engine above
-
-
-// delMemo: defined in MultiMap engine above
-
-
-function escHTML(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-/* ─── PDF INDEXEDDB STORAGE ─── */
-// PDF 파일을 IndexedDB에 저장/불러오기 (localStorage는 용량 부족)
-const IDB_NAME='PalmMapDB', IDB_VER=1, IDB_STORE='pdfstore';
-let idb=null;
-
-function openIDB(){
-  return new Promise((res,rej)=>{
-    if(idb){res(idb);return;}
-    const req=indexedDB.open(IDB_NAME,IDB_VER);
-    req.onupgradeneeded=e=>e.target.result.createObjectStore(IDB_STORE);
-    req.onsuccess=e=>{idb=e.target.result;res(idb);};
-    req.onerror=e=>rej(e.target.error);
-  });
-}
-
-async function savePDFtoDB(arrayBuf, fileName){
-  try{
-    const db=await openIDB();
-    const tx=db.transaction(IDB_STORE,'readwrite');
-    tx.objectStore(IDB_STORE).put({buf:arrayBuf, name:fileName, ts:Date.now()},'current');
-    await new Promise((res,rej)=>{tx.oncomplete=res;tx.onerror=e=>rej(e.target.error);});
-  }catch(e){console.warn('PDF save failed:',e);}
-}
-
-async function loadPDFfromDB(){
-  try{
-    const db=await openIDB();
-    const tx=db.transaction(IDB_STORE,'readonly');
-    const req=tx.objectStore(IDB_STORE).get('current');
-    return await new Promise((res,rej)=>{req.onsuccess=e=>res(e.target.result);req.onerror=e=>rej(e.target.error);});
-  }catch(e){return null;}
-}
-
-async function deletePDFfromDB(){
-  try{
-    const db=await openIDB();
-    const tx=db.transaction(IDB_STORE,'readwrite');
-    tx.objectStore(IDB_STORE).delete('current');
-  }catch(e){}
-}
-
-// 저장된 PDF 메타 정보 (이름, 날짜)는 localStorage로 관리
-function savePDFMeta(name){
-  localStorage.setItem('palmmap_pdf_meta', JSON.stringify({name, ts:Date.now()}));
-}
-function loadPDFMeta(){
-  try{ return JSON.parse(localStorage.getItem('palmmap_pdf_meta')||'null'); }catch(e){return null;}
-}
-function clearPDFMeta(){ localStorage.removeItem('palmmap_pdf_meta'); }
-
-/* ─── PDF ─── */
-function triggerPDF(){
-  // 기존 저장된 지도가 있으면 관리 메뉴, 없으면 바로 파일 선택
-  const meta=loadPDFMeta();
-  if(meta){
-    showPDFMenu();
-  } else {
-    document.getElementById('pdf-input').click();
-  }
-}
-
-// PDF 교체: 새 파일 선택
-function replacePDF(){
-  hidePanel('pdf-menu-panel');
-  document.getElementById('pdf-input').click();
-}
-
-// 현재 지도 삭제
-async function clearPDF(){
-  if(!confirm(T('pdf_cleared')+'\n\n삭제하시겠습니까?')) return;
-  hidePanel('pdf-menu-panel');
-  await deletePDFfromDB();
-  clearPDFMeta();
-  pdfDoc=null; cW=0; cH=0;
-  document.getElementById('pdf-canvas').width=0;
-  document.getElementById('pdf-canvas').height=0;
-  document.getElementById('layer-svg').innerHTML='';
-  document.getElementById('gps-svg').innerHTML='';
-  document.getElementById('empty-state').style.display='';
-  document.getElementById('page-nav').classList.remove('show');
-  document.getElementById('pdf-map-info').style.display='none';
-  // map-area 원래 위치로
-  document.getElementById('map-area').style.top='50px';
-  document.getElementById('page-nav').style.top='58px';
-  // 상단 버튼 원래대로
-  const pdfBtn=document.getElementById('t-pdf');
-  if(pdfBtn) pdfBtn.textContent=T('pdf');
-  // 레이어/보정 초기화
-  layers=[]; calibPts=[]; saveLayers(); saveCalib();
-  renderLayerList(); drawGPS();
-  toast(T('pdf_cleared'));
-}
-
-function loadPDF(input){
-  const file=input.files[0]; if(!file) return;
-  addMapSlot(file);
-  input.value='';
-}
-
-function doPDF(file){
-  const fr=new FileReader();
-  fr.onload=async e=>{
-    try{
-      const buf=e.target.result;
-      pdfDoc=await pdfjsLib.getDocument({data:buf.slice(0)}).promise;
-      totalPgs=pdfDoc.numPages; curPg=1;
-      await renderPg(1);
-      document.getElementById('empty-state').style.display='none';
-      if(totalPgs>1) document.getElementById('page-nav').classList.add('show');
-      updPgLbl();
-      // ── GeoPDF 자동 좌표 추출 ──────────────────────────────────
-      // ── GeoPDF 자동 좌표 추출 (이전 캐시 완전 초기화 후 시도) ──
-      calibPts = []; saveCalib(); // 이전 잘못된 보정 초기화
-      let geoOk = false;
-      try {
-        geoOk = await extractGeoPDFCoords(pdfDoc, cW, cH);
-      } catch(geoErr) {
-        console.warn('[GeoPDF] Extract error:', geoErr);
-      }
-      if (geoOk) {
-        toast('✅ GeoPDF 자동 보정! GPS가 정확한 위치에 표시됩니다.');
-      } else {
-        toast(T('pdf_ok')+' ('+totalPgs+'p) — 보정 버튼(📐)으로 GPS를 맞추세요');
-        showPanel('calib-panel'); // 보정 패널 자동 열기
-      }
-      // 저장
-      await savePDFtoDB(buf, file.name);
-      savePDFMeta(file.name);
-      updatePDFInfoBar(file.name);
-    } catch(err){ toast(T('pdf_err')+': '+err.message); }
-    hideLoad();
-  };
-  fr.readAsArrayBuffer(file);
-}
-
-function updatePDFInfoBar(name){
-  const bar=document.getElementById('pdf-map-info');
-  const nm=document.getElementById('pdf-map-name');
-  const btn=document.getElementById('t-pdf-change-btn');
-  if(bar&&nm){
-    nm.textContent='🗺 '+name;
-    bar.style.display='flex';
-    // map-area를 info bar 아래로 내림 (info bar 높이 약 26px)
-    document.getElementById('map-area').style.top='76px';
-    document.getElementById('page-nav').style.top='84px';
-    document.getElementById('layer-popup').style.bottom='74px'; // unchanged
-  }
-  if(btn) btn.textContent=T('pdf_change_btn');
-  // 상단 PDF 버튼에 저장됨 표시
-  const pdfBtn=document.getElementById('t-pdf');
-  if(pdfBtn) pdfBtn.innerHTML='🗺 <span style="font-size:9px;color:var(--green2)">●</span>';
-}
-
-// 앱 시작 시 저장된 PDF 자동 복원
-async function restoreSavedPDF(){
-  const meta=loadPDFMeta();
-  if(!meta){ return; } // 저장된 PDF 없음
-
-  showLoad(T('load_pdf_restore')+' "'+meta.name+'"');
-  try{
-    const saved=await loadPDFfromDB();
-    if(!saved||!saved.buf){ clearPDFMeta(); hideLoad(); return; }
-
-    // PDF.js 로드
-    await loadPDFJS();
-
-    pdfDoc=await pdfjsLib.getDocument({data:saved.buf.slice(0)}).promise;
-    totalPgs=pdfDoc.numPages; curPg=1;
-    await renderPg(1);
-    document.getElementById('empty-state').style.display='none';
-    if(totalPgs>1) document.getElementById('page-nav').classList.add('show');
-    updPgLbl();
-    updatePDFInfoBar(saved.name||meta.name);
-    toast(T('pdf_restored')+' "'+( saved.name||meta.name)+'"');
-    // 레이어 복원
-    if(loadLayersFromStorage()){ renderLayerList(); drawLayerSVG(); }
-    // ── GPS 보정: GeoPDF 항상 우선 시도 → 실패 시 캐시 폴백 ──────
-    let geoOk = false;
-    try {
-      geoOk = await extractGeoPDFCoords(pdfDoc, cW, cH);
-    } catch(e) {
-      console.warn('[Calib] GeoPDF extract failed:', e);
-    }
-    if (geoOk) {
-      toast('✅ GeoPDF 자동 보정 적용됨');
-    } else {
-      // GeoPDF 실패 → 저장된 보정점 시도
-      const hasCalib = loadCalibFromStorage();
-      if (hasCalib) {
-        drawGPS();
-        toast('📐 저장된 보정점 복원됨');
-      } else {
-        toast('⚠️ GPS 보정 없음 — 보정 버튼을 눌러 설정하세요');
-      }
-    }
-  }catch(err){
-    console.warn('PDF restore failed:', err);
-    clearPDFMeta();
-    toast(T('pdf_restore_fail'));
-  }
-  hideLoad();
-}
-
-function loadPDFJS(){
-  return new Promise((res,rej)=>{
-    if(window.pdfjsLib){ res(); return; }
-    const s=document.createElement('script');
-    s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-    s.onload=()=>{ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; res(); };
-    s.onerror=rej;
-    document.head.appendChild(s);
-  });
-}
-
-async function renderPg(n){
-  const page=await pdfDoc.getPage(n);
-  const vp=page.getViewport({scale:2*DPR});
-  const canvas=document.getElementById('pdf-canvas');
-  canvas.width=vp.width; canvas.height=vp.height;
-  canvas.style.width=(vp.width/DPR)+'px'; canvas.style.height=(vp.height/DPR)+'px';
-  cW=vp.width/DPR; cH=vp.height/DPR;
-  syncSVGSize();
-  await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
-  const aW=MA.clientWidth, aH=MA.clientHeight;
-  scale=Math.min(aW/cW, aH/cH)*.95;
-  ox=(aW-cW*scale)/2; oy=(aH-cH*scale)/2;
-  applyTx(); drawLayerSVG(); drawGPS();
-}
-
+/* ─── LAYER SVG ─── */
 function syncSVGSize(){
-  ['layer-svg','gps-svg'].forEach(id=>{
-    const s=document.getElementById(id);
-    s.setAttribute('width',cW); s.setAttribute('height',cH);
-    s.style.width=cW+'px'; s.style.height=cH+'px';
-  });
+  const ls=document.getElementById('layer-svg');
+  if(ls){ ls.setAttribute('width',cW); ls.setAttribute('height',cH); ls.style.width=cW+'px'; ls.style.height=cH+'px'; }
+  const gs=document.getElementById('gps-svg');
+  if(gs && cW>0){ gs.setAttribute('width',String(cW)); gs.setAttribute('height',String(cH)); gs.style.width=cW+'px'; gs.style.height=cH+'px'; }
 }
 
-function changePg(d){ const n=curPg+d; if(n<1||n>totalPgs) return; curPg=n; showLoad(T('load_pdf')); renderPg(n).then(hideLoad); updPgLbl(); }
-function updPgLbl(){ document.getElementById('page-lbl').textContent=curPg+'/'+totalPgs; }
-
-/* ─── HIT TEST ─── */
-function hitTest(px,py){
-  for(let i=layers.length-1;i>=0;i--){
-    const l=layers[i]; if(!l.visible) continue;
-    for(const f of l.features){
-      const poly=f.polygon||[];
-      if(l.type==='road'){ if(poly.length>=2&&lineHit(poly,px,py,8)) return{layer:l,feat:f}; }
-      else{ if(poly.length>=3&&pip(poly,px,py)) return{layer:l,feat:f}; }
-    }
-  }
-  return null;
+function saveLayers(){ try{ localStorage.setItem('palmmap_layers',JSON.stringify(layers)); }catch(e){} }
+function loadLayersFromStorage(){
+  try{ const s=JSON.parse(localStorage.getItem('palmmap_layers')||'null'); if(s&&s.length) layers=s; }catch(e){}
 }
 
-function pip(poly,px,py){
-  let inside=false;
-  for(let i=0,j=poly.length-1;i<poly.length;j=i++){
-    const xi=poly[i].px,yi=poly[i].py,xj=poly[j].px,yj=poly[j].py;
-    if(((yi>py)!==(yj>py))&&px<(xj-xi)*(py-yi)/(yj-yi)+xi) inside=!inside;
-  }
-  return inside;
-}
-
-function lineHit(pts,px,py,tol){
-  for(let i=1;i<pts.length;i++){
-    const ax=pts[i-1].px,ay=pts[i-1].py,bx=pts[i].px,by=pts[i].py;
-    const dx=bx-ax,dy=by-ay,l2=dx*dx+dy*dy;
-    if(!l2) continue;
-    const t=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/l2));
-    if(Math.hypot(px-ax-t*dx,py-ay-t*dy)<=tol) return true;
-  }
-  return false;
-}
-
-/* ─── LAYER POPUP ─── */
-function showPop(hit){
-  selFeat=hit;
-  const{layer,feat}=hit;
-  const m=TYPE_META[layer.type]||TYPE_META.other;
-  document.getElementById('lp-badge').textContent=T(m.lKey);
-  document.getElementById('lp-badge').className='lp-badge '+m.badgeCls;
-  document.getElementById('lp-name').textContent=feat.name||feat.code||'—';
-  document.getElementById('lp-grid').innerHTML=buildFields(layer.type,feat).map(f=>
-    `<div class="lp-field${f.wide?' wide':''}">
-      <div class="lp-fl">${f.l}</div>
-      <div class="lp-fv${f.mono?' mono':''}">${f.v}</div>
-      ${f.extra||''}
-    </div>`
-  ).join('');
-  document.getElementById('layer-popup').classList.add('show');
-}
-
-function buildFields(type,feat){
-  const yr=parseInt(feat.year)||null;
-  const age=yr?(new Date().getFullYear()-yr)+(curLang==='en'?' yr':'년차'):'—';
-  const mat=yr?Math.min(100,Math.max(0,Math.round((new Date().getFullYear()-yr-2)/20*100))):0;
-  const stMap={
-    active:`<span class="sdot sdot-a"></span>${T('st_a')}`,
-    immature:`<span class="sdot sdot-i"></span>${T('st_i')}`,
-    replant:`<span class="sdot sdot-r"></span>${T('st_r')}`
-  };
-  const rtMap={main:T('rt_m'),collection:T('rt_c'),field:T('rt_f')};
-
-  if(type==='block') return [
-    {l:T('lbl_code'),v:feat.code||'—',mono:true},
-    {l:T('lbl_div'),v:feat.division||'—'},
-    {l:T('lbl_est'),v:feat.estate||'—'},
-    {l:T('lbl_area'),v:feat.area?feat.area+' Ha':'—',mono:true},
-    {l:T('lbl_trees'),v:feat.trees?feat.trees+(curLang==='en'?' trees':'그루'):'—',mono:true},
-    {l:T('lbl_yr'),v:yr?yr+' ('+age+')':'—',mono:true},
-    {l:T('lbl_status'),v:stMap[feat.status||'active']||'—'},
-    {l:T('lbl_mat'),v:'',wide:true,extra:`<div class="prog-bg"><div class="prog-fg" style="width:${mat}%"></div></div><div style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-top:4px">${mat}%</div>`},
-    ...(feat.notes?[{l:T('lbl_notes'),v:escHTML(feat.notes),wide:true}]:[])
-  ];
-  if(type==='division') return [
-    {l:T('lbl_code'),v:feat.code||'—',mono:true},
-    {l:T('lbl_est'),v:feat.estate||'—'},
-    {l:T('lbl_area'),v:feat.area?feat.area+' Ha':'—',mono:true},
-    {l:T('lbl_status'),v:stMap[feat.status||'active']||'—'},
-    ...(feat.notes?[{l:T('lbl_notes'),v:escHTML(feat.notes),wide:true}]:[])
-  ];
-  if(type==='estate') return [
-    {l:T('lbl_code'),v:feat.code||'—',mono:true},
-    {l:T('lbl_area'),v:feat.area?feat.area+' Ha':'—',mono:true},
-    {l:T('lbl_yr'),v:feat.year||'—',mono:true},
-    ...(feat.notes?[{l:T('lbl_notes'),v:escHTML(feat.notes),wide:true}]:[])
-  ];
-  if(type==='road') return [
-    {l:T('lbl_code'),v:feat.code||'—',mono:true},
-    {l:T('lbl_rtype'),v:rtMap[feat.roadType||'main']||'—'},
-    {l:T('lbl_rlen'),v:feat.roadLen?feat.roadLen+' m':'—',mono:true},
-    ...(feat.notes?[{l:T('lbl_notes'),v:escHTML(feat.notes),wide:true}]:[])
-  ];
-  return [
-    {l:T('lbl_code'),v:feat.code||'—',mono:true},
-    ...(feat.area?[{l:T('lbl_area'),v:feat.area+' Ha',mono:true}]:[]),
-    ...(feat.notes?[{l:T('lbl_notes'),v:escHTML(feat.notes),wide:true}]:[])
-  ];
-}
-
-function closePop(){ document.getElementById('layer-popup').classList.remove('show'); selFeat=null; }
-function navFeat(){
-  const poly=selFeat?.feat?.polygon||[]; if(!poly.length) return;
-  const cx=poly.reduce((s,p)=>s+p.px,0)/poly.length;
-  const cy=poly.reduce((s,p)=>s+p.py,0)/poly.length;
-  ox=MA.clientWidth/2-cx*scale; oy=MA.clientHeight/2-cy*scale;
-  clamp(); applyTx(); closePop();
-}
-
-/* ─── LAYER SVG RENDER ─── */
 function drawLayerSVG(){
-  const svg=document.getElementById('layer-svg'); svg.innerHTML='';
+  const svg=document.getElementById('layer-svg'); if(!svg) return;
+  svg.innerHTML='';
   if(!cW) return;
   ['estate','division','block','road','other'].forEach(type=>{
     layers.filter(l=>l.type===type&&l.visible).forEach(layer=>{
@@ -2106,101 +2847,534 @@ function svgTxt(txt,x,y,size,fill){
   const t=mkSVG('text');
   t.setAttribute('x',x); t.setAttribute('y',y);
   t.setAttribute('text-anchor','middle'); t.setAttribute('dominant-baseline','central');
-  t.setAttribute('font-size',size); t.setAttribute('font-weight','700');
-  t.setAttribute('fill',fill); t.setAttribute('paint-order','stroke');
-  t.setAttribute('stroke','rgba(15,26,15,.9)'); t.setAttribute('stroke-width','3');
+  t.setAttribute('font-size',size); t.setAttribute('font-weight','600');
+  t.setAttribute('fill',fill); t.setAttribute('pointer-events','none');
   t.setAttribute('stroke-linejoin','round'); t.setAttribute('pointer-events','none');
   t.textContent=txt; return t;
 }
 
-/* ─── LAYER MANAGER ─── */
-function openLayerPanel(){
-  renderLayerList();
-  document.getElementById('layer-panel').classList.add('show');
+/* ─── HIT TEST ─── */
+function hitTest(px,py){
+  for(let i=layers.length-1;i>=0;i--){
+    const l=layers[i]; if(!l.visible) continue;
+    for(const feat of (l.features||[])){
+      const poly=feat.polygon||[]; if(poly.length<3) continue;
+      let inside=false;
+      for(let j=0,k=poly.length-1;j<poly.length;k=j++){
+        const xi=poly[j].px,yi=poly[j].py,xk=poly[k].px,yk=poly[k].py;
+        if(((yi>py)!==(yk>py))&&(px<(xk-xi)*(py-yi)/(yk-yi)+xi)) inside=!inside;
+      }
+      if(inside) return {layer:l,feat};
+    }
+  }
+  return null;
 }
 
+/* ─── LAYER POPUP ─── */
+function showPop(sel){
+  selFeat=sel;
+  const el=document.getElementById('layer-popup');
+  if(!el) return;
+  const f=sel.feat, l=sel.layer, m=TYPE_META[l.type]||TYPE_META.other;
+  const rows=[
+    ['이름',f.name],['코드',f.code],['면적(ha)',f.area],['식재년도',f.year],
+    ['나무수',f.trees],['상태',f.status],['구역',f.division],['Estate',f.estate],
+    ['메모',f.notes],['도로유형',f.roadType],['도로길이',f.roadLen]
+  ].filter(([,v])=>v);
+  el.innerHTML=`<div class="pop-hdr"><span class="badge ${m.badgeCls}">${l.name}</span>
+    <div style="display:flex;gap:6px">
+      <button class="btn-icon" onclick="memoFromPop()" title="메모">📍</button>
+      <button class="btn-icon" onclick="closePop()">✕</button>
+    </div></div>
+    <div class="pop-body">${rows.map(([k,v])=>`<div class="pop-row"><span class="pop-k">${k}</span><span class="pop-v">${escHTML(v)}</span></div>`).join('')}</div>`;
+  el.style.display='block';
+}
+function closePop(){ selFeat=null; const el=document.getElementById('layer-popup'); if(el) el.style.display='none'; }
+
+/* ─── LAYER LIST ─── */
 function renderLayerList(){
-  const body=document.getElementById('layer-list-body');
-  if(!layers.length){
-    body.innerHTML='<p style="font-size:12px;color:var(--text3);padding:8px 0">'+T('memo_none')+'</p>'; return;
-  }
-  body.innerHTML=layers.map((l,i)=>{
+  const body=document.getElementById('layer-list-body'); if(!body) return;
+  if(!layers.length){ body.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0">레이어 없음</div>'; return; }
+  body.innerHTML=layers.slice().reverse().map(l=>{
     const m=TYPE_META[l.type]||TYPE_META.other;
-    return `<div class="layer-row">
-      <div class="layer-dot" style="background:${m.stroke}"></div>
-      <div class="layer-info">
-        <div class="layer-name">${escHTML(l.name)}</div>
-        <div class="layer-cnt">${T(m.lKey)} · ${l.features.length}</div>
-      </div>
-      <button class="vis-tog ${l.visible?'on':'off'}" onclick="toggleVis(${i},event)"></button>
+    return `<div class="layer-item">
+      <span class="badge ${m.badgeCls}">${l.type.toUpperCase()}</span>
+      <span style="flex:1;font-size:12px;color:var(--text)">${escHTML(l.name)}</span>
+      <span style="font-size:10px;color:var(--text3)">${(l.features||[]).length}개</span>
+      <button class="track-vis-btn ${l.visible?'on':''}" onclick="toggleLayerVisible('${l.id}')">${l.visible?'👁':'🚫'}</button>
+      <button class="track-del-btn" onclick="deleteLayer('${l.id}')">🗑</button>
     </div>`;
   }).join('');
 }
-
-function toggleVis(i,e){ e.stopPropagation(); layers[i].visible=!layers[i].visible; renderLayerList(); drawLayerSVG(); saveLayers(); }
-
-function triggerGeo(){ document.getElementById('geo-input').click(); }
-
-function loadGeo(input){
-  const file=input.files[0]; if(!file) return;
-  showLoad(T('load_layer'));
-  const fr=new FileReader();
-  fr.onload=e=>{
-    try{
-      if(file.name.endsWith('.csv')) importCSV(e.target.result,file.name);
-      else importGeoJSON(JSON.parse(e.target.result),file.name);
-    } catch(err){ toast('Error: '+err.message); }
-    hideLoad(); renderLayerList(); drawLayerSVG();
-  };
-  fr.readAsText(file); input.value='';
+function toggleLayerVisible(id){
+  const l=layers.find(x=>x.id===id); if(l){ l.visible=!l.visible; saveLayers(); drawLayerSVG(); renderLayerList(); }
+}
+function deleteLayer(id){
+  layers=layers.filter(x=>x.id!==id); saveLayers(); drawLayerSVG(); renderLayerList(); toast('레이어 삭제됨');
 }
 
-function importGeoJSON(gj,fname){
-  if(!gj.features?.length) return;
-  const type=guessType(gj.features[0].properties||{},fname);
-  const feats=gj.features.map(f=>{
-    const p=f.properties||{};
-    return{
-      name:p.NAME||p.name||p.BLOCK||p.DIVISION||p.ESTATE||p.block_name||'',
-      code:p.CODE||p.code||p.BLOCK_CODE||p.ID||'',
-      area:p.AREA_HA||p.area||p.HA||'',year:p.YEAR||p.PLANT_YEAR||p.year||'',
-      trees:p.TREES||p.NUM_TREES||'',status:p.STATUS||p.status||'active',
-      division:p.DIVISION||p.division||'',estate:p.ESTATE||p.estate||'',
-      notes:p.NOTES||p.notes||p.REMARK||'',
-      roadType:p.ROAD_TYPE||p.road_type||'main',roadLen:p.LENGTH||p.length||'',
-      polygon:geomToCanvas(f.geometry)
+/* ─── CENTER GPS ─── */
+function centerGPS(){
+  if(!curPos){ toast(T('no_gps')); return; }
+  if(calibPts.length<2){ toast(T('no_calib')); return; }
+  const c=ll2c(curPos.lat,curPos.lon); if(!c) return;
+  ox=MA.clientWidth/2-c.px*scale; oy=MA.clientHeight/2-c.py*scale;
+  clamp(); applyTx();
+}
+
+/* ─── PDF RENDERING ─── */
+const IDB_NAME='PalmMapDB', IDB_VER=2, IDB_STORE='pdfstore';
+function openIDB(){
+  return new Promise((res,rej)=>{
+    const req=indexedDB.open(IDB_NAME,IDB_VER);
+    req.onupgradeneeded=e=>{
+      const db=e.target.result;
+      if(!db.objectStoreNames.contains(IDB_STORE))
+        db.createObjectStore(IDB_STORE);
     };
-  }).filter(f=>f.polygon.length>0);
-  layers.push({id:Date.now(),name:fname.replace(/\.[^.]+$/,''),type,visible:true,features:feats});
-  saveLayers();
+    req.onsuccess=e=>res(e.target.result);
+    req.onerror=e=>rej(e.target.error);
+  });
+}
+async function savePDFtoDB(buf,name){ try{ const db=await openIDB(); const tx=db.transaction(IDB_STORE,'readwrite'); tx.objectStore(IDB_STORE).put({buf,name,ts:Date.now()},'current'); }catch(e){} }
+async function loadPDFfromDB(){ try{ const db=await openIDB(); const tx=db.transaction(IDB_STORE,'readonly'); const req=tx.objectStore(IDB_STORE).get('current'); return await new Promise((r,j)=>{req.onsuccess=e=>r(e.target.result);req.onerror=e=>j(e.target.error);}); }catch(e){return null;} }
+function savePDFMeta(name){ localStorage.setItem('palmmap_pdf_meta',JSON.stringify({name,ts:Date.now()})); }
+function loadPDFMeta(){ try{ return JSON.parse(localStorage.getItem('palmmap_pdf_meta')||'null'); }catch(e){return null;} }
+function clearPDFMeta(){ localStorage.removeItem('palmmap_pdf_meta'); }
+
+async function savePDFSlot(slotId,buf,name){
+  try{ const db=await openIDB(); const tx=db.transaction(IDB_STORE,'readwrite'); tx.objectStore(IDB_STORE).put({buf,name,ts:Date.now()},'slot_'+slotId); await new Promise((r,j)=>{tx.oncomplete=r;tx.onerror=e=>j(e.target.error);}); }catch(e){ console.warn(e); }
+}
+async function loadPDFSlot(slotId){
+  try{ const db=await openIDB(); const tx=db.transaction(IDB_STORE,'readonly'); const req=tx.objectStore(IDB_STORE).get('slot_'+slotId); return await new Promise((r,j)=>{req.onsuccess=e=>r(e.target.result);req.onerror=e=>j(e.target.error);}); }catch(e){return null;}
+}
+async function deletePDFSlot(slotId){
+  try{ const db=await openIDB(); const tx=db.transaction(IDB_STORE,'readwrite'); tx.objectStore(IDB_STORE).delete('slot_'+slotId); }catch(e){}
 }
 
-function importCSV(text,fname){
-  const lines=text.trim().split('\n');
-  const hdrs=lines[0].split(',').map(h=>h.trim().replace(/"/g,''));
-  const feats=lines.slice(1).map(line=>{
-    const vals=line.split(',').map(v=>v.trim().replace(/"/g,''));
-    const row={}; hdrs.forEach((h,i)=>row[h]=vals[i]||'');
-    return{name:row.NAME||row.name||row.BLOCK||row.block||row.DIVISION||row.division||'',
-      code:row.CODE||row.code||row.ID||'',area:row.AREA_HA||row.area||'',year:row.YEAR||row.year||'',
-      trees:row.TREES||'',status:row.STATUS||row.status||'active',
-      division:row.DIVISION||row.division||'',estate:row.ESTATE||row.estate||'',
-      notes:row.NOTES||row.notes||'',polygon:[]};
-  }).filter(f=>f.name||f.code);
-  layers.push({id:Date.now(),name:fname.replace(/\.[^.]+$/,''),type:guessType(feats[0]||{},fname),visible:true,features:feats});
-  saveLayers();
+function loadPDFJS(){
+  return new Promise((res,rej)=>{
+    if(window.pdfjsLib){ res(); return; }
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload=()=>{ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; res(); };
+    s.onerror=()=>rej(new Error('PDF.js load failed'));
+    document.head.appendChild(s);
+  });
 }
 
-function guessType(p,f){
-  const s=(JSON.stringify(p)+f).toLowerCase();
-  if(s.includes('estate')) return'estate';
-  if(s.includes('division')||s.includes('divisi')) return'division';
-  if(s.includes('road')||s.includes('jalan')) return'road';
-  return'block';
+async function renderPg(n){
+  if(!pdfDoc||n<1||n>totalPgs) return;
+  curPg=n;
+  const page=await pdfDoc.getPage(n);
+  const canvas=document.getElementById('pdf-canvas');
+  // scale:1 viewport로 논리 크기(pt) 획득
+  const vpBase=page.getViewport({scale:1});
+  cW=Math.round(vpBase.width); cH=Math.round(vpBase.height);
+  // DPR 고해상도 렌더링: canvas 실제 픽셀=cW*DPR, CSS 크기=cW px
+  const vpHiDPI=page.getViewport({scale:DPR});
+  canvas.width=Math.round(vpHiDPI.width);
+  canvas.height=Math.round(vpHiDPI.height);
+  canvas.style.width=cW+'px'; canvas.style.height=cH+'px';
+  syncSVGSize();
+  // HiDPI로 렌더링
+  const ctx=canvas.getContext('2d');
+  await page.render({canvasContext:ctx, viewport:vpHiDPI}).promise;
+  // 화면 기준 초기 scale/offset 계산
+  const aW=MA.clientWidth;
+  const aH=MA.clientHeight;
+  scale=Math.min(aW/cW, aH/cH);  // 0.95 여백 제거 → 화면 꽉 채우기
+  ox=Math.round((aW-cW*scale)/2);
+  oy=Math.round((aH-cH*scale)/2);
+  // oy가 음수이면 0으로 (지도가 화면보다 세로로 길 경우)
+  if(oy < 0) oy=0;
+  // map-area 실제 높이 재측정 (updatePDFInfoBar가 top을 변경했을 수 있음)
+  const aW2=MA.clientWidth, aH2=MA.clientHeight;
+  if(Math.abs(aH2-aH)>5){
+    // infobar가 있어서 높이가 달라진 경우 재계산
+    scale=Math.min(aW2/cW, aH2/cH);
+    ox=Math.round((aW2-cW*scale)/2);
+    oy=Math.round((aH2-cH*scale)/2);
+    if(oy<0) oy=0;
+    applyTx();
+  }
+  drawLayerSVG(); drawGPS();
+}
+function changePg(d){ const n=curPg+d; if(n<1||n>totalPgs) return; curPg=n; showLoad(T('load_pdf')); renderPg(n).then(hideLoad); updPgLbl(); }
+function updPgLbl(){ document.getElementById('page-lbl').textContent=curPg+'/'+totalPgs; }
+
+function updatePDFInfoBar(name){
+  const bar=document.getElementById('pdf-map-info');
+  const nm=document.getElementById('pdf-map-name');
+  if(bar&&nm){ nm.textContent=name||''; bar.style.display='flex'; document.getElementById('map-area').style.top='84px'; }
 }
 
+async function clearPDF(){
+  pdfDoc=null; cW=0; cH=0;
+  document.getElementById('pdf-canvas').width=0;
+  document.getElementById('layer-svg').innerHTML='';
+  document.getElementById('gps-svg').innerHTML='';
+  document.getElementById('empty-state').style.display='';
+  document.getElementById('page-nav').classList.remove('show');
+  document.getElementById('pdf-map-info').style.display='none';
+  document.getElementById('map-area').style.top='50px';
+  calibPts=[]; geoPDFData=null; saveCalib();
+  try{ const db=await openIDB(); const tx=db.transaction(IDB_STORE,'readwrite'); tx.objectStore(IDB_STORE).delete('current'); }catch(e){}
+  clearPDFMeta();
+}
+
+function loadPDF(input){
+  const file=input.files[0]; input.value=''; if(!file) return;
+  closeMapSwitcher();
+  addMapSlot(file);
+}
+
+function triggerPDF(){
+  if(mapSlots.length===0){ document.getElementById('pdf-input').click(); }
+  else { toggleMapSwitcher(); }
+}
+
+async function restoreSavedPDF(){
+  // 슬롯 방식으로 교체됨 - initMultiMap이 처리
+}
+
+function showPDFMenu(){
+  const meta=loadPDFMeta();
+  if(meta){
+    document.getElementById('pdf-menu-fname').textContent=meta.name||'—';
+    document.getElementById('pdf-menu-fdate').textContent=meta.ts?new Date(meta.ts).toLocaleString():'';
+  }
+  showPanel('pdf-menu-panel');
+}
+
+/* ─── TRACKING ─── */
+let trkCurrentColor = '#ff7814';
+function selectTrackColor(el){
+  trkCurrentColor=el.dataset.color;
+  document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('sel'));
+  el.classList.add('sel');
+}
+function toggleTrack(){
+  if(!trackOn){
+    if(!gpsOn){ toast(T('need_gps')); return; }
+    trackOn=true; trkStart=new Date(); trkPts=[];
+    trkCurrentColor='#ff7814';
+    document.getElementById('btn-track')?.classList.add('on');
+    document.getElementById('track-recording-info').style.display='block';
+    showPanel('track-panel');
+    toast(T('track_on'));
+  } else { showPanel('track-panel'); }
+}
+function stopAndSaveTrack(){
+  if(!trackOn||trkPts.length<2){ toast('트랙 포인트 부족'); trackOn=false; document.getElementById('btn-track')?.classList.remove('on'); document.getElementById('track-recording-info').style.display='none'; hidePanel('track-panel'); return; }
+  const slot=curSlot(); if(!slot){ toast('지도를 먼저 불러오세요'); return; }
+  slot.tracks.push({ id:'trk_'+Date.now(), name:new Date(trkStart).toLocaleString(), color:trkCurrentColor, visible:true, pts:trkPts.slice(), startTime:trkStart.toISOString(), dist:calcDist() });
+  saveSlotsMeta(); trackOn=false; trkPts=[];
+  document.getElementById('btn-track')?.classList.remove('on');
+  document.getElementById('track-recording-info').style.display='none';
+  drawGPS(); renderTrackList(); hidePanel('track-panel');
+  toast('✅ 트랙 저장됨');
+}
+function discardTrack(){
+  trackOn=false; trkPts=[];
+  document.getElementById('btn-track')?.classList.remove('on');
+  document.getElementById('track-recording-info').style.display='none';
+  hidePanel('track-panel'); toast('트랙 삭제됨');
+}
+function deleteTrack(trkId){ const slot=curSlot(); if(!slot) return; slot.tracks=slot.tracks.filter(t=>t.id!==trkId); saveSlotsMeta(); drawGPS(); renderTrackList(); toast('트랙 삭제됨'); }
+function toggleTrackVisible(trkId){ const slot=curSlot(); if(!slot) return; const t=slot.tracks.find(t=>t.id===trkId); if(t){ t.visible=!t.visible; saveSlotsMeta(); drawGPS(); renderTrackList(); } }
+function renderTrackList(){
+  const body=document.getElementById('track-list-body'); if(!body) return;
+  const tracks=curSlot()?.tracks||[];
+  if(!tracks.length){ body.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0">저장된 트랙 없음</div>'; return; }
+  body.innerHTML=tracks.slice().reverse().map(t=>`<div class="track-item"><div class="track-color-swatch" style="background:${t.color}" onclick="toggleTrackVisible('${t.id}')"></div><div class="track-item-info"><div class="track-item-name">${escHTML(t.name)}</div><div class="track-item-meta">${Math.round(t.dist||0)}m · ${(t.pts||[]).length}pts</div></div><button class="track-vis-btn ${t.visible?'on':''}" onclick="toggleTrackVisible('${t.id}')">${t.visible?'👁':'🚫'}</button><button class="track-del-btn" onclick="deleteTrack('${t.id}')">🗑</button></div>`).join('')+`<button class="btn-green" onclick="exportGPXAll()" style="width:100%;border:none;margin-top:6px">📤 GPX 내보내기</button>`;
+}
+function exportGPXAll(){
+  const slot=curSlot(); if(!slot) return;
+  const vis=slot.tracks.filter(t=>t.visible&&(t.pts||[]).length>=2);
+  if(!vis.length){ toast(T('gpx_few')); return; }
+  const gpx='<?xml version="1.0"?>\n<gpx version="1.1" creator="PalmFarmMap">\n'+vis.map(t=>`  <trk><name>${escHTML(t.name)}</name><trkseg>\n`+t.pts.map(p=>`    <trkpt lat="${p.lat}" lon="${p.lon}"><time>${p.time}</time></trkpt>`).join('\n')+`\n  </trkseg></trk>`).join('\n')+'\n</gpx>';
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([gpx],{type:'application/gpx+xml'}));
+  a.download=(slot.name||'track')+'_'+new Date().toISOString().slice(0,10)+'.gpx'; a.click(); toast(T('gpx_ok'));
+}
+
+/* ─── MEMO ─── */
+function saveMemos(){ const slot=curSlot(); if(!slot) return; saveSlotsMeta(); }
+function loadMemos(){}
+function openMemo(pre){
+  if(!cW){ toast(T('no_map')); return; }
+  const slot=curSlot(); if(!slot){ toast(T('no_map')); return; }
+
+  // 기본 위치: GPS → 뷰포트 중앙 순
+  let initPx, initPy;
+  if(curPos && calibPts.length>=2){
+    const c=ll2c(curPos.lat, curPos.lon);
+    if(c){
+      initPx = Math.max(0, Math.min(cW, c.px));
+      initPy = Math.max(0, Math.min(cH, c.py));
+    }
+  }
+  if(initPx==null){
+    const S=scale||1;
+    initPx = Math.max(cW*.05, Math.min(cW*.95, (-ox + MA.clientWidth/2) / S));
+    initPy = Math.max(cH*.05, Math.min(cH*.95, (-oy + MA.clientHeight/2) / S));
+  }
+  // 패널이 열려있을 때만 임시 핀 표시 (pinDragActive)
+  pinDragActive=true; pinDragMemoId=null; pinDragX=initPx; pinDragY=initPy;
+  drawGPS(); // 임시 핀 즉시 표시
+  document.getElementById('memo-drag-hint')?.classList.add('show');
+  document.getElementById('memo-input').value=pre||'';
+  // 핀 스타일 버튼 상태 동기화
+  const btnPin=document.getElementById('pin-style-pin');
+  const btnNum=document.getElementById('pin-style-num');
+  if(btnPin&&btnNum){
+    const isPinStyle=memoPinStyle!=='number';
+    btnPin.style.background=isPinStyle?'var(--amber)':'var(--bg3)';
+    btnPin.style.color=isPinStyle?'#111':'var(--text2)';
+    btnPin.style.fontWeight=isPinStyle?'700':'400';
+    btnNum.style.background=isPinStyle?'var(--bg3)':'var(--amber)';
+    btnNum.style.color=isPinStyle?'var(--text2)':'#111';
+    btnNum.style.fontWeight=isPinStyle?'400':'700';
+  }
+  showPanel('memo-panel');
+  setTimeout(()=>document.getElementById('memo-input')?.focus(),150);
+  drawGPS();
+}
+function saveMemo(){
+  const txt=document.getElementById('memo-input').value.trim();
+  if(!txt){ toast(T('memo_empty_input')); return; }
+  const slot=curSlot(); if(!slot){ toast(T('no_map')); return; }
+  const now=new Date();
+  let lat=null, lon=null;
+  if(calibPts.length>=2){
+    const a=calibPts[0],b=calibPts[1];
+    const dLon=b.lon-a.lon, dLat=b.lat-a.lat;
+    if(Math.abs(dLon)>1e-10&&Math.abs(dLat)>1e-10){
+      lon=a.lon+(pinDragX-a.px)*dLon/(b.px-a.px);
+      lat=a.lat+(pinDragY-a.py)*dLat/(b.py-a.py);
+    }
+  }
+  // calibPts 없거나 계산 실패 시 GPS 위치 사용
+  if(lat==null && curPos){ lat=curPos.lat; lon=curPos.lon; }
+  if(lat==null){ lat=0; lon=0; } // 최후 폴백
+  if(pinDragMemoId){
+    const m=slot.memos.find(m=>m.id===pinDragMemoId);
+    if(m){ m.pinX=pinDragX; m.pinY=pinDragY; m.lat=lat; m.lon=lon; m.text=txt; }
+  } else {
+    slot.memos.push({ id:'memo_'+Date.now(), lat,lon,pinX:pinDragX,pinY:pinDragY,text:txt, date:now.toLocaleDateString(),time:now.toLocaleTimeString(),layerName:selFeat?.feat?.name||'' });
+  }
+  saveMemos(); pinDragActive=false; pinDragMemoId=null;
+  document.getElementById('memo-input').value='';
+  document.getElementById('memo-drag-hint')?.classList.remove('show');
+  hidePanel('memo-panel'); drawGPS(); toast(T('memo_saved'));
+}
+function memoFromPop(){ const f=selFeat?.feat; closePop(); openMemo(f?'['+(f.name||f.code||'')+'] ':''); }
+function delMemo(id){ const slot=curSlot(); if(!slot) return; slot.memos=slot.memos.filter(m=>m.id!==id); saveMemos(); drawGPS(); renderMemoList(); toast(T('memo_del')); }
+/* ─── 핀 이동 모드 ─── */
+// 패널을 완전히 숨기고 지도에서 핀을 자유롭게 드래그하는 모드
+
+let _pinMoveSavedText = '';   // 패널 복원용 텍스트 보관
+
+function enterPinMoveMode(){
+  // 현재 메모 텍스트 저장
+  _pinMoveSavedText = document.getElementById('memo-input')?.value || '';
+  // 메모 패널 완전히 숨김 (× 없이 숨겨야 하므로 직접 classList 조작)
+  const panel = document.getElementById('memo-panel');
+  if(panel) panel.classList.remove('show');
+  // 핀 이동 안내 바 표시
+  document.getElementById('pin-move-bar')?.classList.add('show');
+  // map-area 하단 여백 줄이기 (안내 바 높이 52px 확보)
+  const ma = document.getElementById('map-area');
+  if(ma) ma.style.bottom = '126px'; // bottombar(74) + 안내바(52)
+  // 드래그 힌트
+  document.getElementById('memo-drag-hint')?.classList.add('show');
+  toast('✋ 핀을 손가락으로 드래그하여 위치 조정');
+}
+
+function confirmPinMove(){
+  // 안내 바 숨기고 패널 복원
+  document.getElementById('pin-move-bar')?.classList.remove('show');
+  const ma = document.getElementById('map-area');
+  if(ma) ma.style.bottom = '';
+  document.getElementById('memo-drag-hint')?.classList.remove('show');
+  // 패널 다시 열기
+  const input = document.getElementById('memo-input');
+  if(input) input.value = _pinMoveSavedText;
+  showPanel('memo-panel');
+  setTimeout(()=>document.getElementById('memo-input')?.focus(), 150);
+}
+
+function cancelPinMove(){
+  // 핀 이동 취소 → 패널 복원
+  confirmPinMove();
+  // 핀 위치를 이동 전 초기값으로 되돌리기 (GPS 위치)
+  if(curPos && calibPts.length>=2){
+    const c = ll2c(curPos.lat, curPos.lon);
+    if(c){
+      pinDragX = Math.max(0, Math.min(cW, c.px));
+      pinDragY = Math.max(0, Math.min(cH, c.py));
+      drawGPS();
+    }
+  }
+}
+
+
+function cancelMemo(){
+  // 임시 핀 완전 초기화
+  pinDragActive = false;
+  pinDragMemoId = null;
+  document.getElementById('memo-drag-hint')?.classList.remove('show');
+  hidePanel('memo-panel');
+  drawGPS(); // 임시 핀 제거
+}
+
+
+function tapMemoPinToEdit(memoId){ const slot=curSlot(); if(!slot) return; const m=slot.memos.find(m=>m.id===memoId); if(!m) return; pinDragActive=true; pinDragMemoId=memoId; pinDragX=m.pinX||cW/2; pinDragY=m.pinY||cH/2; document.getElementById('memo-input').value=m.text; document.getElementById('memo-drag-hint')?.classList.add('show'); showPanel('memo-panel'); drawGPS(); }
+function openMemoList(){ renderMemoList(); document.getElementById('memo-list-panel')?.classList.add('show'); }
+/* ─── 메모 TXT 내보내기 ─── */
+function exportMemosTXT(){
+  const slot = curSlot();
+  if(!slot){ toast('지도를 먼저 불러오세요.'); return; }
+  const memos = slot.memos || [];
+  if(!memos.length){ toast('저장된 메모가 없습니다.'); return; }
+
+  const mapName = slot.name || slot.pdfName || 'map';
+  const now = new Date();
+
+  // ── 날짜/시간: ISO 형식 (locale 독립, 어디서나 동일하게 표시) ──
+  const pad2 = n => String(n).padStart(2,'0');
+  const dateTag  = now.toISOString().slice(0,10);           // 2026-05-03
+  const dateStr  = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}`;
+  const timeStr  = `${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`;
+
+  // ── TXT 파일 내용 구성 ──────────────────────────────────────
+  // ASCII 구분선 (이모지 없음 → 메모장 구버전 호환)
+  const SEP1 = '='.repeat(54);
+  const SEP2 = '-'.repeat(54);
+  const lines = [];
+
+  // 헤더
+  lines.push(SEP1);
+  lines.push('  Palm Farm Field Map - Memo Report');
+  lines.push(SEP1);
+  lines.push(`Map     : ${mapName}`);
+  lines.push(`Exported: ${dateStr} ${timeStr}`);
+  lines.push(`Count   : ${memos.length}`);
+
+  // 좌표계 정보
+  if(slot.geoPDFData){
+    const g = slot.geoPDFData;
+    if(g.utmZone) lines.push(`CRS     : UTM Zone ${g.utmZone}${g.isNorthern?'N':'S'} (WGS84)`);
+  }
+  lines.push('');
+
+  // ── 날짜별 그룹화 ───────────────────────────────────────────
+  const grps = {};
+  memos.forEach((m, i) => {
+    const d = m.date || 'Unknown date';
+    if(!grps[d]) grps[d] = [];
+    grps[d].push({...m, _idx: i+1});
+  });
+
+  Object.keys(grps).forEach(date => {
+    lines.push(SEP2);
+    lines.push(`  [${date}]  ${grps[date].length} memo(s)`);
+    lines.push(SEP2);
+
+    grps[date].forEach(m => {
+      lines.push('');
+      // 번호 + 시간
+      const timeLabel = m.time || '';
+      lines.push(`[${String(m._idx).padStart(3,'0')}] ${timeLabel}`);
+
+      // 위치 정보 (ASCII + 숫자만 사용)
+      if(m.lat != null && m.lon != null && (m.lat !== 0 || m.lon !== 0)){
+        const latDir = m.lat >= 0 ? 'N' : 'S';
+        const lonDir = m.lon >= 0 ? 'E' : 'W';
+        const latAbs = Math.abs(m.lat).toFixed(6);
+        const lonAbs = Math.abs(m.lon).toFixed(6);
+        // 소수점 형식
+        lines.push(`  Lat  : ${latAbs} ${latDir}`);
+        lines.push(`  Lon  : ${lonAbs} ${lonDir}`);
+        // DMS 형식 (도분초 - ASCII 기호만 사용)
+        const toDMS = (deg) => {
+          const d   = Math.floor(deg);
+          const mf  = (deg - d) * 60;
+          const min = Math.floor(mf);
+          const sec = ((mf - min) * 60).toFixed(2);
+          return `${d}d ${String(min).padStart(2,'0')}m ${String(sec).padStart(5,'0')}s`;
+        };
+        lines.push(`  DMS  : ${toDMS(Math.abs(m.lat))}${latDir}, ${toDMS(Math.abs(m.lon))}${lonDir}`);
+      } else {
+        lines.push('  Loc  : No coordinates');
+      }
+
+      // 구역/블록 정보 (한글/영문/인도네시아어 모두 UTF-8 통과)
+      if(m.layerName && m.layerName.trim()){
+        lines.push(`  Area : ${m.layerName}`);
+      }
+
+      // 메모 내용 - 줄바꿈 처리 (한글/영문/인도네시아어 UTF-8 그대로)
+      const txtLines = (m.text || '').split('\n');
+      lines.push(`  Memo : ${txtLines[0]}`);
+      for(let k=1; k<txtLines.length; k++){
+        if(txtLines[k].trim()) lines.push(`         ${txtLines[k]}`);
+      }
+    });
+    lines.push('');
+  });
+
+  // 푸터
+  lines.push(SEP1);
+  lines.push('  End of Report');
+  lines.push(SEP1);
+
+  // ── Blob 생성 및 다운로드 ────────────────────────────────────
+  // UTF-8 BOM(﻿): 윈도우 메모장/Excel에서 한글·인도네시아어 깨짐 방지
+  // \r\n: Windows CRLF (메모장 호환)
+  const content = lines.join('\r\n');
+  const blob = new Blob(['﻿' + content], { type: 'text/plain' });
+  // type에 charset 생략: JS Blob은 내부적으로 UTF-16이지만
+  // '﻿' BOM이 UTF-8 인코더에 신호를 줌 (Edge/Chrome 표준 동작)
+
+  // 파일명: 영숫자+언더스코어만 허용 (OS 호환)
+  const safeMapName = mapName
+    .replace(/[^\wㄱ-힣가-힣a-zA-Z0-9_\-]/g, '_')
+    .substring(0, 30);
+  const filename = `memo_${safeMapName}_${dateTag}.txt`;
+
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 1500);
+
+  toast('✅ ' + filename + ' (' + memos.length + ' memos)');
+}
+
+
+function renderMemoList(){
+  const body=document.getElementById('memo-list-body'); if(!body) return;
+  const memos=curSlot()?.memos||[];
+  if(!memos.length){ body.innerHTML='<div class="memo-empty">'+T('memo_none')+'</div>'; return; }
+  const grps={};
+  const allMemos=[...memos].reverse();
+  allMemos.forEach(m=>{ if(!grps[m.date])grps[m.date]=[]; grps[m.date].push(m); });
+  // 번호는 원래 순서(reverse 전) 기준
+  const idxMap={}; memos.forEach((m,i)=>{ idxMap[m.id]=i+1; });
+  body.innerHTML=Object.keys(grps).map(date=>`<div class="memo-date-group"><div class="memo-date-hdr">📅 ${date} (${grps[date].length})</div>${grps[date].map(m=>{
+    const pinIcon=memoPinStyle==='number'
+      ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#ff7814;color:#fff;font-size:9px;font-weight:700;flex-shrink:0">${idxMap[m.id]||'?'}</span>`
+      : '📍';
+    return `<div class="memo-item" id="mi-${m.id}"><div class="memo-body" style="display:flex;gap:6px;align-items:flex-start">${pinIcon}<div>${m.lat?'<div class="memo-coords">'+m.lat.toFixed(5)+', '+m.lon.toFixed(5)+'</div>':''}<div class="memo-text">${escHTML(m.text)}</div></div></div><div style="display:flex;flex-direction:column;gap:4px"><button class="memo-del" onclick="tapMemoPinToEdit('${m.id}')" title="위치수정">✏️</button><button class="memo-del" onclick="delMemo('${m.id}')" title="삭제">🗑</button></div></div>`;
+  }).join('')}</div>`).join('');
+}
+
+/* ─── DEMO / IMPORT ─── */
+function guessType(p,f){ const s=(JSON.stringify(p)+f).toLowerCase(); if(s.includes('estate')) return 'estate'; if(s.includes('division')||s.includes('divisi')) return 'division'; if(s.includes('road')||s.includes('jalan')) return 'road'; return 'block'; }
 function geomToCanvas(geom){
-  if(!geom) return[];
+  if(!geom) return [];
   let ring=[];
   if(geom.type==='Polygon') ring=geom.coordinates[0]||[];
   else if(geom.type==='MultiPolygon') ring=(geom.coordinates[0]||[[]])[0]||[];
@@ -2208,905 +3382,442 @@ function geomToCanvas(geom){
   if(calibPts.length>=2) return ring.map(([lon,lat])=>ll2c(lat,lon)||{px:0,py:0}).filter(p=>p.px||p.py);
   return ring.map(([x,y])=>({px:x,py:y}));
 }
-
-/* ─── DEMO LAYERS ─── */
+function importGeoJSON(gj,fname){
+  if(!gj.features?.length) return;
+  const type=guessType(gj.features[0].properties||{},fname);
+  const feats=gj.features.map(f=>{ const p=f.properties||{}; return{name:p.NAME||p.name||p.BLOCK||p.DIVISION||p.ESTATE||p.block_name||'',code:p.CODE||p.code||p.BLOCK_CODE||p.ID||'',area:p.AREA_HA||p.area||p.HA||'',year:p.YEAR||p.PLANT_YEAR||p.year||'',trees:p.TREES||p.NUM_TREES||'',status:p.STATUS||p.status||'active',division:p.DIVISION||p.division||'',estate:p.ESTATE||p.estate||'',notes:p.NOTES||p.notes||p.REMARK||'',roadType:p.ROAD_TYPE||p.road_type||'main',roadLen:p.LENGTH||p.length||'',polygon:geomToCanvas(f.geometry)}; }).filter(f=>f.polygon.length>0);
+  layers.push({id:Date.now(),name:fname.replace(/\.[^.]+$/,''),type,visible:true,features:feats});
+  renderLayerList(); drawLayerSVG(); saveLayers();
+}
+function importCSV(text,fname){
+  const lns=text.trim().split('\n');
+  const hdrs=lns[0].split(',').map(h=>h.trim().replace(/"/g,''));
+  const feats=lns.slice(1).map(line=>{ const vals=line.split(',').map(v=>v.trim().replace(/"/g,'')); const row={}; hdrs.forEach((h,i)=>row[h]=vals[i]||''); return{name:row.NAME||row.name||row.BLOCK||row.block||row.DIVISION||row.division||'',code:row.CODE||row.code||row.ID||'',area:row.AREA_HA||row.area||'',year:row.YEAR||row.PLANT_YEAR||row.year||'',trees:row.TREES||'',status:row.STATUS||row.status||'active',division:row.DIVISION||row.division||'',estate:row.ESTATE||row.estate||'',notes:row.NOTES||row.notes||'',polygon:[]}; }).filter(f=>f.name||f.code);
+  layers.push({id:Date.now(),name:fname.replace(/\.[^.]+$/,''),type:guessType(feats[0]||{},fname),visible:true,features:feats});
+  saveLayers();
+}
 function loadDemo(){
   if(!cW){ toast(T('no_map')); return; }
-  layers=[];
-  const W=cW, H=cH;
-
-  layers.push({id:1,name:'Estate A',type:'estate',visible:true,features:[{
-    name:'Estate A',code:'EST-A',area:'2,450',year:'2005',notes:'서부 칼리만탄 팜 농장',
-    polygon:[{px:W*.04,py:H*.04},{px:W*.96,py:H*.04},{px:W*.96,py:H*.96},{px:W*.04,py:H*.96}]
-  }]});
-
-  layers.push({id:2,name:'Divisions',type:'division',visible:true,features:[
-    {name:'Division 1',code:'D-1',area:'580',estate:'EST-A',status:'active',polygon:[{px:W*.04,py:H*.04},{px:W*.5,py:H*.04},{px:W*.5,py:H*.5},{px:W*.04,py:H*.5}]},
-    {name:'Division 2',code:'D-2',area:'620',estate:'EST-A',status:'active',polygon:[{px:W*.5,py:H*.04},{px:W*.96,py:H*.04},{px:W*.96,py:H*.5},{px:W*.5,py:H*.5}]},
-    {name:'Division 3',code:'D-3',area:'590',estate:'EST-A',status:'active',polygon:[{px:W*.04,py:H*.5},{px:W*.5,py:H*.5},{px:W*.5,py:H*.96},{px:W*.04,py:H*.96}]},
-    {name:'Division 4',code:'D-4',area:'660',estate:'EST-A',status:'active',polygon:[{px:W*.5,py:H*.5},{px:W*.96,py:H*.5},{px:W*.96,py:H*.96},{px:W*.5,py:H*.96}]},
-  ]});
-
-  const bw=(W*.46)/3, bh=(H*.46)/3;
-  const bNames=['B-01','B-02','B-03','B-04','B-05','B-06','B-07','B-08','B-09'];
-  const bYrs=[2010,2012,2008,2015,2011,2007,2018,2013,2009];
-  const bSt=['active','active','active','immature','active','replant','immature','active','replant'];
-  const bTr=[148,152,146,138,150,141,135,149,143];
-  const blks=[];
-  for(let r=0;r<3;r++) for(let c=0;c<3;c++){
-    const i=r*3+c, x1=W*.04+c*bw+3, y1=H*.04+r*bh+3;
-    blks.push({name:bNames[i],code:'BLK-0'+(i+1),area:(bw*bh/900).toFixed(1),year:bYrs[i],trees:bTr[i],status:bSt[i],division:'D-1',estate:'EST-A',polygon:[{px:x1,py:y1},{px:x1+bw-6,py:y1},{px:x1+bw-6,py:y1+bh-6},{px:x1,py:y1+bh-6}]});
-  }
-  for(let r=0;r<3;r++) for(let c=0;c<3;c++){
-    const i=r*3+c, n=i+9, x1=W*.5+c*bw+3, y1=H*.04+r*bh+3;
-    blks.push({name:'B-'+(n+1<10?'0':'')+(n+1),code:'BLK-'+(n+1),area:(bw*bh/900).toFixed(1),year:2010+i%6,trees:140+i*3,status:['active','active','immature'][i%3],division:'D-2',estate:'EST-A',polygon:[{px:x1,py:y1},{px:x1+bw-6,py:y1},{px:x1+bw-6,py:y1+bh-6},{px:x1,py:y1+bh-6}]});
-  }
+  layers=[]; const W=cW, H=cH;
+  layers.push({id:1,name:'Estate A',type:'estate',visible:true,features:[{name:'Estate A',code:'EST-A',area:'2,450',year:'2005',notes:'팜 농장',polygon:[{px:W*.04,py:H*.04},{px:W*.96,py:H*.04},{px:W*.96,py:H*.96},{px:W*.04,py:H*.96}]}]});
+  const bw=(W*.46)/3, bh=(H*.46)/3, bNames=['B-01','B-02','B-03','B-04','B-05','B-06','B-07','B-08','B-09'], bYrs=[2010,2012,2008,2015,2011,2007,2018,2013,2009], bSt=['active','active','active','immature','active','replant','immature','active','replant'], bTr=[148,152,146,138,150,141,135,149,143], blks=[];
+  for(let r=0;r<3;r++) for(let c=0;c<3;c++){ const i=r*3+c,x1=W*.04+c*bw+3,y1=H*.04+r*bh+3; blks.push({name:bNames[i],code:'BLK-0'+(i+1),area:(bw*bh/900).toFixed(1),year:bYrs[i],trees:bTr[i],status:bSt[i],division:'D-1',estate:'EST-A',polygon:[{px:x1,py:y1},{px:x1+bw-6,py:y1},{px:x1+bw-6,py:y1+bh-6},{px:x1,py:y1+bh-6}]}); }
   layers.push({id:3,name:'Blocks',type:'block',visible:true,features:blks});
-
-  layers.push({id:4,name:'Roads',type:'road',visible:true,features:[
-    {name:'Main Road N-S',code:'RD-M1',roadType:'main',roadLen:'2400',polygon:[{px:W*.5,py:H*.02},{px:W*.5,py:H*.98}]},
-    {name:'Main Road E-W',code:'RD-M2',roadType:'main',roadLen:'2200',polygon:[{px:W*.02,py:H*.5},{px:W*.98,py:H*.5}]},
-    {name:'Coll. Road A',code:'RD-C1',roadType:'collection',roadLen:'800',polygon:[{px:W*.04,py:H*.27},{px:W*.5,py:H*.27}]},
-    {name:'Coll. Road B',code:'RD-C2',roadType:'collection',roadLen:'800',polygon:[{px:W*.5,py:H*.27},{px:W*.96,py:H*.27}]},
-    {name:'Coll. Road C',code:'RD-C3',roadType:'collection',roadLen:'800',polygon:[{px:W*.04,py:H*.73},{px:W*.5,py:H*.73}]},
-    {name:'Coll. Road D',code:'RD-C4',roadType:'collection',roadLen:'800',polygon:[{px:W*.5,py:H*.73},{px:W*.96,py:H*.73}]},
-  ]});
-
   renderLayerList(); drawLayerSVG(); saveLayers();
-  toast(T('demo_ok'));
-  document.getElementById('layer-panel').classList.remove('show');
+  toast(T('demo_ok')); document.getElementById('layer-panel')?.classList.remove('show');
 }
 
-/* ─── PANEL UTILS ─── */
-function showPanel(id){ document.getElementById(id).classList.add('show'); }
-function hidePanel(id){ document.getElementById(id).classList.remove('show'); }
-
-// PDF 관리 메뉴 열기 + 현재 저장 정보 표시
-function showPDFMenu(){
-  const meta=loadPDFMeta();
-  if(meta){
-    document.getElementById('pdf-menu-fname').textContent=meta.name||'—';
-    const d=meta.ts?new Date(meta.ts).toLocaleString():'';
-    document.getElementById('pdf-menu-fdate').textContent=d;
-  }
-  showPanel('pdf-menu-panel');
-}
-
-/* ─── TOAST / LOADING ─── */
-let toastTmr;
-function toast(msg){
-  const el=document.getElementById('toast');
-  el.textContent=msg; el.classList.add('show');
-  clearTimeout(toastTmr); toastTmr=setTimeout(()=>el.classList.remove('show'),3200);
-}
-function showLoad(msg){ document.getElementById('loading-txt').textContent=msg; document.getElementById('loading').classList.add('show'); }
-function hideLoad(){ document.getElementById('loading').classList.remove('show'); }
-
-
-/* ─── 전체화면 / 화면 잠금 ─── */
+/* ─── FULLSCREEN ─── */
 function toggleFullscreen(){
-  const el = document.documentElement;
-  const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
-  
-  if (!isFs) {
-    // 전체화면 진입
-    const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
-    if (req) {
-      req.call(el).then(() => {
-        document.getElementById('fs-btn').textContent = '⛶';
-        // 화면 방향 잠금 시도 (지원 기기만)
-        screen.orientation?.lock?.('any').catch(() => {});
-      }).catch(() => {
-        // 전체화면 실패 시 — 브라우저 UI 숨김 스크롤 트릭
-        window.scrollTo(0, 1);
-      });
-    } else {
-      window.scrollTo(0, 1);
-    }
-  } else {
-    // 전체화면 해제
-    const exit = document.exitFullscreen || document.webkitExitFullscreen;
-    if (exit) exit.call(document);
-    document.getElementById('fs-btn').textContent = '⛶';
-  }
+  const el=document.documentElement;
+  const isFs=!!(document.fullscreenElement||document.webkitFullscreenElement);
+  if(!isFs){ const req=el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen; if(req) req.call(el).then(()=>{ document.getElementById('fs-btn').textContent='⛶'; screen.orientation?.lock?.('any').catch(()=>{}); }).catch(()=>window.scrollTo(0,1)); else window.scrollTo(0,1); }
+  else { const exit=document.exitFullscreen||document.webkitExitFullscreen; if(exit) exit.call(document); document.getElementById('fs-btn').textContent='⛶'; }
 }
+document.addEventListener('fullscreenchange',updateFsBtn);
+document.addEventListener('webkitfullscreenchange',updateFsBtn);
+function updateFsBtn(){ const b=document.getElementById('fs-btn'); if(b) b.textContent=!!(document.fullscreenElement||document.webkitFullscreenElement)?'✕':'⛶'; }
+window.addEventListener('orientationchange',()=>{ setTimeout(()=>{ if(pdfDoc){clamp();applyTx();syncSVGSize&&syncSVGSize();} },300); });
+window.addEventListener('resize',()=>{ if(pdfDoc){clamp();applyTx();} });
 
-// 전체화면 변경 감지
-document.addEventListener('fullscreenchange',     updateFsBtn);
-document.addEventListener('webkitfullscreenchange', updateFsBtn);
-function updateFsBtn(){
-  const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
-  const btn = document.getElementById('fs-btn');
-  if (btn) btn.textContent = isFs ? '✕' : '⛶';
-}
-
-// 가로/세로 모드 전환 감지 → 지도 재조정
-window.addEventListener('orientationchange', () => {
-  setTimeout(() => {
-    if (pdfDoc) {
-      // 지도 영역 크기 변경에 맞춰 뷰 재조정
-      clamp(); applyTx();
-      syncSVGSize && syncSVGSize();
-    }
-  }, 300);
-});
-
-// resize 이벤트 대응
-window.addEventListener('resize', () => {
-  if (pdfDoc) { clamp(); applyTx(); }
-});
-
-
-/* ════════════════════════════════════════════════════════════════
-   멀티 지도 슬롯 엔진
-   ────────────────────────────────────────────────────────────────
-   - 최대 10개 지도 저장 (IndexedDB: PDF blob, localStorage: meta)
-   - 지도별 독립 tracks / memos / calibPts / layers
-   - 트랙: 형광 주황 기본, 색상 선택, 개별 표시/숨김/삭제
-   - 메모 핀: GPS 위치에 생성 후 드래그로 이동
-════════════════════════════════════════════════════════════════ */
-
-// ── 슬롯 데이터 저장/불러오기 ────────────────────────────────
-const SLOT_META_KEY = 'palmmap_slots_meta';
-const MAX_SLOTS = 10;
-
-function saveSlotsMeta(){
-  // PDF blob 제외한 메타만 저장
-  const meta = mapSlots.map(s=>({
-    id:s.id, name:s.name, pdfName:s.pdfName, ts:s.ts,
-    calibPts:s.calibPts, layers:s.layers, geoPDFData:s.geoPDFData,
-    tracks:s.tracks, memos:s.memos
-  }));
-  try{ localStorage.setItem(SLOT_META_KEY, JSON.stringify(meta)); }catch(e){}
-}
-
-function loadSlotsMeta(){
-  try{
-    const saved = JSON.parse(localStorage.getItem(SLOT_META_KEY)||'null');
-    if(saved&&saved.length) mapSlots = saved;
-  }catch(e){ mapSlots=[]; }
-}
-
-// PDF blob은 IndexedDB에 slot별로 저장
-async function savePDFSlot(slotId, arrayBuf, name){
-  try{
-    const db = await openIDB();
-    const tx = db.transaction(IDB_STORE,'readwrite');
-    tx.objectStore(IDB_STORE).put({buf:arrayBuf,name,ts:Date.now()}, 'slot_'+slotId);
-    await new Promise((res,rej)=>{tx.oncomplete=res;tx.onerror=e=>rej(e.target.error);});
-  }catch(e){ console.warn('PDF slot save failed:',e); }
-}
-
-async function loadPDFSlot(slotId){
-  try{
-    const db = await openIDB();
-    const tx = db.transaction(IDB_STORE,'readonly');
-    const req = tx.objectStore(IDB_STORE).get('slot_'+slotId);
-    return await new Promise((res,rej)=>{req.onsuccess=e=>res(e.target.result);req.onerror=e=>rej(e.target.error);});
-  }catch(e){ return null; }
-}
-
-async function deletePDFSlot(slotId){
-  try{
-    const db = await openIDB();
-    const tx = db.transaction(IDB_STORE,'readwrite');
-    tx.objectStore(IDB_STORE).delete('slot_'+slotId);
-  }catch(e){}
-}
-
-// ── 지도 슬롯 생성 ────────────────────────────────────────────
-function createSlot(pdfName){
-  return {
-    id: 'slot_'+Date.now(),
-    name: pdfName.replace(/\.[^.]+$/,'').substring(0,20),
-    pdfName, ts: Date.now(),
-    calibPts:[], layers:[], geoPDFData:null,
-    tracks:[], memos:[]
-  };
-}
-
-// ── 지도 전환 ─────────────────────────────────────────────────
+/* ─── MULTIMAP SLOTS ─── */
+const SLOT_META_KEY='palmmap_slots_meta', MAX_SLOTS=10;
+function saveSlotsMeta(){ const meta=mapSlots.map(s=>({id:s.id,name:s.name,pdfName:s.pdfName,ts:s.ts,calibPts:s.calibPts,layers:s.layers,geoPDFData:s.geoPDFData,tracks:s.tracks,memos:s.memos})); try{localStorage.setItem(SLOT_META_KEY,JSON.stringify(meta));}catch(e){} }
+function loadSlotsMeta(){ try{ const s=JSON.parse(localStorage.getItem(SLOT_META_KEY)||'null'); if(s&&s.length) mapSlots=s; }catch(e){mapSlots=[];} }
+function createSlot(pdfName){ return{id:'slot_'+Date.now(),name:pdfName.replace(/\.[^.]+$/,'').substring(0,20),pdfName,ts:Date.now(),calibPts:[],layers:[],geoPDFData:null,tracks:[],memos:[]}; }
 async function switchToSlot(slotId){
   if(slotId===curMapId) return;
 
-  // 현재 지도 상태 저장
+  // 현재 슬롯 상태 저장
   if(curMapId){
-    const cur = curSlot();
+    const cur=curSlot();
     if(cur){
-      cur.calibPts = calibPts.slice();
-      cur.layers   = JSON.parse(JSON.stringify(layers));
-      cur.geoPDFData = geoPDFData;
+      cur.calibPts=calibPts.slice();
+      cur.layers=JSON.parse(JSON.stringify(layers));
+      cur.geoPDFData=geoPDFData;
     }
     saveSlotsMeta();
   }
 
-  curMapId = slotId;
-  const slot = curSlot();
+  curMapId=slotId;
+  const slot=curSlot();
   if(!slot){ toast('지도를 찾을 수 없습니다.'); return; }
 
-  showLoad('🗺 지도 불러오는 중...');
+  showLoad('🗺 '+slot.name+' 불러오는 중...');
 
-  // 상태 복원
-  calibPts   = slot.calibPts || [];
-  layers     = slot.layers   || [];
-  geoPDFData = slot.geoPDFData || null;
+  // 슬롯 상태 복원
+  calibPts  = (slot.calibPts||[]).slice();
+  layers    = slot.layers ? JSON.parse(JSON.stringify(slot.layers)) : [];
+  geoPDFData= slot.geoPDFData ? {...slot.geoPDFData} : null;
 
-  // PDF 복원
+  // PDF 로드
+  let loadOk = false;
   try{
     const saved = await loadPDFSlot(slotId);
-    if(saved&&saved.buf){
-      await loadPDFJS();
-      pdfDoc = await pdfjsLib.getDocument({data:saved.buf.slice(0)}).promise;
+    if(saved && saved.buf){
+      if(!window.pdfjsLib) await loadPDFJS();
+      pdfDoc = await pdfjsLib.getDocument({data: new Uint8Array(saved.buf).buffer}).promise;
       totalPgs=pdfDoc.numPages; curPg=1;
-      await renderPg(1);
-      document.getElementById('empty-state').style.display='none';
-      document.getElementById('page-nav').classList.toggle('show', totalPgs>1);
-      updPgLbl();
       updatePDFInfoBar(slot.pdfName||slot.name);
-    }
-  }catch(e){ console.warn('Slot PDF load failed:',e); }
-
-  // GeoPDF 재적용
-  if(calibPts.length<2 && pdfDoc){
-    try{ await extractGeoPDFCoords(pdfDoc,cW,cH); }catch(e){}
-  } else if(calibPts.length>=2){
-    drawGPS();
-  }
-
-  renderLayerList();
-  drawLayerSVG();
-  drawGPS();
-  renderMapSwitcher();
-  updateMapBadge();
-  hideLoad();
-  toast('🗺 '+slot.name);
-}
-
-// ── 새 지도 추가 (PDF 로드) ───────────────────────────────────
-async function addMapSlot(file){
-  if(mapSlots.length>=MAX_SLOTS){
-    toast('지도는 최대 '+MAX_SLOTS+'개까지 저장 가능합니다.'); return;
-  }
-  hidePanel('pdf-menu-panel');
-  showLoad(T('load_pdf'));
-
-  // PDF.js 로드
-  if(!window.pdfjsLib){
-    try{ await loadPDFJS(); }catch(e){ hideLoad(); toast(T('pdf_err')+' (offline)'); return; }
-  }
-
-  const fr = new FileReader();
-  fr.onload = async e=>{
-    try{
-      const buf = e.target.result;
-      const doc = await pdfjsLib.getDocument({data:buf.slice(0)}).promise;
-
-      // 현재 지도 상태 저장
-      if(curMapId){
-        const cur=curSlot();
-        if(cur){ cur.calibPts=calibPts.slice(); cur.layers=JSON.parse(JSON.stringify(layers)); cur.geoPDFData=geoPDFData; }
-        saveSlotsMeta();
-      }
-
-      // 새 슬롯 생성
-      const slot = createSlot(file.name);
-      mapSlots.push(slot);
-      curMapId = slot.id;
-
-      // 상태 초기화
-      pdfDoc=doc; totalPgs=doc.numPages; curPg=1;
-      calibPts=[]; layers=[]; geoPDFData=null;
-      saveCalib();
-
+      await new Promise(r=>requestAnimationFrame(r));
       await renderPg(1);
       document.getElementById('empty-state').style.display='none';
       document.getElementById('page-nav').classList.toggle('show',totalPgs>1);
       updPgLbl();
+      loadOk=true;
+    } else {
+      console.warn('[Switch] No PDF in IDB for slot:', slotId);
+    }
+  }catch(err){ console.warn('[Switch] PDF load error:', err); }
+
+  // GPS 보정값 적용
+  if(calibPts.length>=2){
+    // 저장된 보정값 그대로 사용
+    drawGPS();
+  } else if(loadOk && pdfDoc){
+    // 보정값 없으면 조용히 재파싱 (모달 없이)
+    const prevOverride = _savedUtmInfoOverride;
+    if(!_savedUtmInfoOverride && slot.geoPDFData?.utmZone){
+      _savedUtmInfoOverride = {
+        zone: slot.geoPDFData.utmZone,
+        northern: !!slot.geoPDFData.isNorthern
+      };
+    }
+    try{ await extractGeoPDFCoords(pdfDoc,cW,cH,slot.pdfName||slot.name); }
+    catch(e){ console.warn('[Switch] extractGeoPDF error:', e); }
+    _savedUtmInfoOverride = prevOverride;
+    if(calibPts.length>=2){ drawGPS(); }
+  }
+
+  renderLayerList(); drawLayerSVG();
+  renderMapSwitcher(); updateMapBadge();
+  updateFarBanner(); // ← 슬롯별 GPS 거리 배너 갱신
+  hideLoad(); toast('🗺 '+slot.name);
+  localStorage.setItem('palmmap_cur_slot',slotId);
+}
+async function addMapSlot(file){
+  if(mapSlots.length>=MAX_SLOTS){ toast('지도는 최대 '+MAX_SLOTS+'개까지 저장 가능합니다.'); return; }
+  showLoad(T('load_pdf'));
+  if(!window.pdfjsLib){ try{await loadPDFJS();}catch(e){hideLoad();toast(T('pdf_err')+' (offline)');return;} }
+  const fr=new FileReader();
+  fr.onload=async e=>{
+    try{
+      const buf=e.target.result;
+      const doc=await pdfjsLib.getDocument({data:buf.slice(0)}).promise;
+      if(curMapId){ const cur=curSlot(); if(cur){cur.calibPts=calibPts.slice();cur.layers=JSON.parse(JSON.stringify(layers));cur.geoPDFData=geoPDFData;} saveSlotsMeta(); }
+      const slot=createSlot(file.name); mapSlots.push(slot); curMapId=slot.id;
+      pdfDoc=doc; totalPgs=doc.numPages; curPg=1;
+      calibPts=[]; layers=[]; geoPDFData=null; saveCalib();
       updatePDFInfoBar(file.name);
-
-      // PDF blob 저장
-      await savePDFSlot(slot.id, buf, file.name);
-
-      // GeoPDF 자동 보정
+      await new Promise(r=>requestAnimationFrame(r));
+      await renderPg(1);
+      document.getElementById('empty-state').style.display='none';
+      document.getElementById('page-nav').classList.toggle('show',totalPgs>1);
+      updPgLbl();
+      await savePDFSlot(slot.id,buf,file.name);
+      savePDFMeta(file.name);
       calibPts=[]; saveCalib();
-      let geoOk=false;
-      try{ geoOk=await extractGeoPDFCoords(pdfDoc,cW,cH); }catch(ge){}
-
-      // 슬롯에 보정 결과 저장
-      slot.calibPts = calibPts.slice();
-      slot.geoPDFData = geoPDFData;
+      let geoOk=false; try{geoOk=await extractGeoPDFCoords(pdfDoc,cW,cH,file.name);}catch(ge){}
+      // geoPDFData 검증 후 슬롯에 저장
+      // AutoZone으로 추정된 경우 다음 로드 시 재파싱
+      if(geoPDFData && calibPts.length>=2){
+        slot.calibPts=calibPts.slice();
+        slot.geoPDFData=geoPDFData;
+      } else {
+        slot.calibPts=[]; slot.geoPDFData=null;
+      }
       saveSlotsMeta();
+      renderMapSwitcher(); updateMapBadge();
+      localStorage.setItem('palmmap_cur_slot',slot.id);
 
-      renderMapSwitcher();
-      updateMapBadge();
-
-      if(geoOk) toast('✅ '+file.name.substring(0,20)+' — GPS 자동 보정됨');
-      else toast(T('pdf_ok')+' ('+totalPgs+'p) — 보정 버튼으로 GPS 설정하세요');
-
+      // 보정 결과 처리
+      const isAutoZone2 = geoPDFData && (geoPDFData.source||'').includes('AutoZone');
+      const isQGIS2     = geoPDFData && (geoPDFData.source||'').includes('QGIS');
+      if(isQGIS2){
+        toast('✅ '+file.name.substring(0,20)+' — QGIS 좌표 적용됨');
+      } else if(geoOk && !isAutoZone2){
+        toast('✅ '+file.name.substring(0,20)+' — GPS 자동 보정됨');
+      } else {
+        // 자동 감지 불확실 → UTM Zone 모달 표시
+        hideLoad();
+        showUTMZoneModal(pdfDoc, file, slot, cW, cH);
+        return; // hideLoad 및 toast는 모달에서 처리
+      }
     }catch(err){ toast(T('pdf_err')+': '+err.message); }
     hideLoad();
   };
   fr.readAsArrayBuffer(file);
 }
 
-// ── 지도 삭제 ────────────────────────────────────────────────
-async function deleteMapSlot(slotId, e){
+/* ─── 삭제 모달 ─── */
+let _pendingDeleteSlotId=null;
+function deleteMapSlot(slotId,e){
   e&&e.stopPropagation();
-  const slot = mapSlots.find(s=>s.id===slotId);
+  const slot=mapSlots.find(s=>s.id===slotId); if(!slot) return;
+  _pendingDeleteSlotId=slotId;
+  document.getElementById('map-del-name').textContent='🗺 '+slot.name;
+  const tc=(slot.tracks||[]).length, mc=(slot.memos||[]).length;
+  const td=(slot.tracks||[]).reduce((s,t)=>s+(t.dist||0),0);
+  let stats='';
+  if(tc===0&&mc===0){ stats='<span style="color:var(--text3)">저장된 트랙·메모 없음</span>'; document.getElementById('del-keep-data-label').style.opacity='0.4'; document.getElementById('del-keep-data-label').style.pointerEvents='none'; document.querySelector('input[value="all"]').checked=true; }
+  else{ document.getElementById('del-keep-data-label').style.opacity='1'; document.getElementById('del-keep-data-label').style.pointerEvents=''; if(tc) stats+=`🛣 트랙 <b style="color:var(--text)">${tc}개</b> · 총 ${Math.round(td/1000*10)/10}km<br>`; if(mc) stats+=`📍 메모 <b style="color:var(--text)">${mc}개</b>`; }
+  document.getElementById('map-del-stats').innerHTML=stats;
+  document.querySelector('input[value="all"]').checked=true;
+  document.getElementById('map-del-modal').style.display='flex';
+}
+async function confirmDeleteSlot(){
+  const slotId=_pendingDeleteSlotId; if(!slotId) return;
+  const scope=document.querySelector('input[name="del-scope"]:checked')?.value||'all';
+  const slot=mapSlots.find(s=>s.id===slotId);
+  cancelDeleteSlot();
   if(!slot) return;
-  if(!confirm('"'+slot.name+'" 지도와 모든 트랙/메모를 삭제하시겠습니까?')) return;
-
-  await deletePDFSlot(slotId);
-  mapSlots = mapSlots.filter(s=>s.id!==slotId);
-
-  if(curMapId===slotId){
-    curMapId=null; pdfDoc=null; cW=0; cH=0;
-    calibPts=[]; layers=[]; geoPDFData=null;
-    document.getElementById('pdf-canvas').width=0;
-    document.getElementById('layer-svg').innerHTML='';
-    document.getElementById('gps-svg').innerHTML='';
-    document.getElementById('empty-state').style.display='';
-    document.getElementById('page-nav').classList.remove('show');
-    document.getElementById('pdf-map-info').style.display='none';
-    document.getElementById('map-area').style.top='50px';
-    if(mapSlots.length>0) switchToSlot(mapSlots[0].id);
-  }
-
-  saveSlotsMeta();
-  renderMapSwitcher();
-  updateMapBadge();
-  toast('지도 삭제됨');
+  if(scope==='all'){ await deletePDFSlot(slotId); mapSlots=mapSlots.filter(s=>s.id!==slotId); toast('🗑 "'+slot.name+'" 지도와 모든 데이터 삭제됨'); }
+  else{ await deletePDFSlot(slotId); slot.pdfName=null; slot.name=slot.name+' (PDF없음)'; toast('📄 PDF 삭제됨 — 트랙·메모 보존'); }
+  if(curMapId===slotId){ if(scope==='all'){ _resetMapView(); if(mapSlots.length>0) await switchToSlot(mapSlots[mapSlots.length-1].id); } else{ pdfDoc=null; cW=0; cH=0; document.getElementById('pdf-canvas').width=0; document.getElementById('layer-svg').innerHTML=''; document.getElementById('gps-svg').innerHTML=''; document.getElementById('empty-state').style.display=''; document.getElementById('page-nav').classList.remove('show'); document.getElementById('pdf-map-info').style.display='none'; document.getElementById('map-area').style.top='50px'; drawGPS(); } }
+  saveSlotsMeta(); renderMapSwitcher(); updateMapBadge();
+}
+function cancelDeleteSlot(){ _pendingDeleteSlotId=null; document.getElementById('map-del-modal').style.display='none'; }
+function _resetMapView(){
+  curMapId=null; pdfDoc=null; cW=0; cH=0; calibPts=[]; layers=[]; geoPDFData=null;
+  document.getElementById('pdf-canvas').width=0;
+  document.getElementById('layer-svg').innerHTML='';
+  document.getElementById('gps-svg').innerHTML='';
+  document.getElementById('empty-state').style.display='';
+  document.getElementById('page-nav').classList.remove('show');
+  document.getElementById('pdf-map-info').style.display='none';
+  document.getElementById('map-area').style.top='50px';
+  // 지도 없으면 GPS 배너 숨김
+  const fb=document.getElementById('gps-far-banner');
+  if(fb) fb.style.display='none';
 }
 
-// ── 지도 선택기 UI ────────────────────────────────────────────
+/* ─── 지도 선택기 UI ─── */
 function toggleMapSwitcher(){
-  const sw = document.getElementById('map-switcher');
-  const ov = document.getElementById('map-switcher-overlay');
-  const isShow = sw.classList.contains('show');
-  sw.classList.toggle('show',!isShow);
-  ov.style.display = isShow?'none':'block';
-  if(!isShow) renderMapSwitcher();
+  const sw=document.getElementById('map-switcher'); if(!sw) return;
+  if(sw.classList.contains('show')){ closeMapSwitcher(); }
+  else {
+    sw.classList.add('show');
+    renderMapSwitcher();
+    // capture 없는 단순 외부 클릭 감지
+    setTimeout(()=>{
+      document.addEventListener('click',_closeSwitcherOnOutside);
+    }, 50);
+  }
 }
-
+function _closeSwitcherOnOutside(e){
+  const sw=document.getElementById('map-switcher');
+  const btn=document.getElementById('btn-maps');
+  if(sw && !sw.contains(e.target) && btn && !btn.contains(e.target)){
+    closeMapSwitcher();
+  }
+}
+function closeMapSwitcher(){
+  const sw=document.getElementById('map-switcher');
+  if(sw) sw.classList.remove('show');
+  document.removeEventListener('click',_closeSwitcherOnOutside);
+}
 function renderMapSwitcher(){
-  const sw = document.getElementById('map-switcher');
+  const sw=document.getElementById('map-switcher'); if(!sw) return;
   sw.innerHTML='';
-
   mapSlots.forEach(slot=>{
-    const div=document.createElement('div');
-    div.className='map-slot'+(slot.id===curMapId?' active':'');
-    div.onclick=()=>{ toggleMapSwitcher(); switchToSlot(slot.id); };
-    div.innerHTML=
-      '<div class="map-slot-icon">🗺</div>'+
-      '<div class="map-slot-name">'+escHTML(slot.name)+'</div>'+
-      '<div class="map-slot-del" onclick="deleteMapSlot(\''+slot.id+'\',event)">×</div>';
-    sw.appendChild(div);
-  });
-
-  // 추가 버튼
-  if(mapSlots.length<MAX_SLOTS){
-    const add=document.createElement('div');
-    add.className='map-slot map-slot-add';
-    add.title='새 지도 추가';
-    add.innerHTML='＋';
-    add.onclick=()=>{ toggleMapSwitcher(); document.getElementById('pdf-input').click(); };
-    sw.appendChild(add);
-  }
-}
-
-function updateMapBadge(){
-  const b=document.getElementById('maps-badge');
-  if(b) b.textContent=mapSlots.length||'';
-}
-
-// ── PDF 버튼 클릭 핸들러 재정의 ──────────────────────────────
-function triggerPDF(){
-  toggleMapSwitcher();
-}
-
-// ═══════════════════════════════════════════════════════════════
-// 트랙 관리 (지도별 독립)
-// ═══════════════════════════════════════════════════════════════
-
-let trkCurrentColor = '#ff7814'; // 현재 선택 색상
-
-function selectTrackColor(el){
-  trkCurrentColor = el.dataset.color;
-  document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('sel'));
-  el.classList.add('sel');
-}
-
-// toggleTrack: see MultiMap engine
-
-
-function stopAndSaveTrack(){
-  if(!trackOn||trkPts.length<2){ toast('트랙 포인트 부족'); trackOn=false; document.getElementById('btn-track').classList.remove('on'); document.getElementById('track-recording-info').style.display='none'; hidePanel('track-panel'); return; }
-  const slot=curSlot();
-  if(!slot){ toast('지도를 먼저 불러오세요'); return; }
-  const track={
-    id:'trk_'+Date.now(),
-    name:new Date(trkStart).toLocaleString(),
-    color:trkCurrentColor,
-    visible:true,
-    pts:trkPts.slice(),
-    startTime:trkStart.toISOString(),
-    dist:calcDist()
-  };
-  slot.tracks.push(track);
-  saveSlotsMeta();
-  trackOn=false; trkPts=[];
-  document.getElementById('btn-track').classList.remove('on');
-  document.getElementById('track-recording-info').style.display='none';
-  drawGPS();
-  renderTrackList();
-  hidePanel('track-panel');
-  toast('✅ 트랙 저장됨 ('+Math.round(track.dist)+'m)');
-}
-
-function discardTrack(){
-  trackOn=false; trkPts=[];
-  document.getElementById('btn-track').classList.remove('on');
-  document.getElementById('track-recording-info').style.display='none';
-  hidePanel('track-panel');
-  toast('트랙 삭제됨');
-}
-
-function deleteTrack(trkId){
-  const slot=curSlot(); if(!slot) return;
-  slot.tracks=slot.tracks.filter(t=>t.id!==trkId);
-  saveSlotsMeta(); drawGPS(); renderTrackList();
-  toast('트랙 삭제됨');
-}
-
-function toggleTrackVisible(trkId){
-  const slot=curSlot(); if(!slot) return;
-  const t=slot.tracks.find(t=>t.id===trkId);
-  if(t){ t.visible=!t.visible; saveSlotsMeta(); drawGPS(); renderTrackList(); }
-}
-
-function renderTrackList(){
-  const body=document.getElementById('track-list-body'); if(!body) return;
-  const slot=curSlot();
-  const tracks=slot?.tracks||[];
-  if(!tracks.length){ body.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0">저장된 트랙 없음</div>'; return; }
-  body.innerHTML=tracks.slice().reverse().map(t=>`
-    <div class="track-item">
-      <div class="track-color-swatch" style="background:${t.color}" onclick="toggleTrackVisible('${t.id}')"></div>
-      <div class="track-item-info">
-        <div class="track-item-name">${escHTML(t.name)}</div>
-        <div class="track-item-meta">${Math.round(t.dist||0)}m · ${(t.pts||[]).length}pts</div>
-      </div>
-      <button class="track-vis-btn ${t.visible?'on':''}" onclick="toggleTrackVisible('${t.id}')">${t.visible?'👁':'🚫'}</button>
-      <button class="track-del-btn" onclick="deleteTrack('${t.id}')">🗑</button>
-    </div>
-  `).join('');
-
-  // GPX 내보내기
-  if(tracks.length){
-    body.innerHTML+=`<button class="btn-green" onclick="exportGPXAll()" style="width:100%;border:none;margin-top:6px">📤 GPX 내보내기</button>`;
-  }
-}
-
-function exportGPXAll(){
-  const slot=curSlot(); if(!slot) return;
-  const visTracks=slot.tracks.filter(t=>t.visible&&t.pts?.length>=2);
-  if(!visTracks.length){ toast(T('gpx_few')); return; }
-  const trksXml=visTracks.map(t=>`  <trk><name>${escHTML(t.name)}</name><trkseg>\n`+t.pts.map(p=>`    <trkpt lat="${p.lat}" lon="${p.lon}"><time>${p.time}</time></trkpt>`).join('\n')+`\n  </trkseg></trk>`).join('\n');
-  const gpx=`<?xml version="1.0"?>\n<gpx version="1.1" creator="PalmFarmMap">\n${trksXml}\n</gpx>`;
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([gpx],{type:'application/gpx+xml'}));
-  a.download=(slot.name||'track')+'_'+new Date().toISOString().slice(0,10)+'.gpx';
-  a.click(); toast(T('gpx_ok'));
-}
-
-// ═══════════════════════════════════════════════════════════════
-// 메모 시스템 (지도별 독립 + 드래그 핀)
-// ═══════════════════════════════════════════════════════════════
-
-// 메모 저장/불러오기 (슬롯 기반)
-function saveMemos(){
-  const slot=curSlot(); if(!slot) return;
-  // 메모는 슬롯 안에 있으므로 슬롯 메타 저장
-  saveSlotsMeta();
-}
-function loadMemos(){ /* 슬롯 로드 시 자동 포함 */ }
-
-function get_cur_memos(){ return curSlot()?.memos||[]; }
-
-// 메모 추가: 현재 GPS 위치에 핀 표시 후 드래그 → 메모 입력
-function openMemo(pre){
-  if(!cW){ toast(T('no_map')); return; }
-  const slot=curSlot();
-  if(!slot){ toast(T('no_map')); return; }
-
-  // 초기 핀 위치: GPS 위치 or 화면 중앙
-  let initPx=cW/2, initPy=cH/2;
-  if(curPos&&calibPts.length>=2){
-    const c=ll2c(curPos.lat,curPos.lon);
-    if(c){ initPx=c.px; initPy=c.py; }
-  }
-
-  // 임시 핀 생성
-  startPinDrag(initPx, initPy, null, pre||'');
-}
-
-// 핀 드래그 시작
-function startPinDrag(initPx, initPy, existingMemoId, prefill){
-  pinDragActive=true;
-  pinDragMemoId=existingMemoId;
-  pinDragX=initPx; pinDragY=initPy;
-
-  // 드래그 힌트 표시
-  document.getElementById('memo-drag-hint').classList.add('show');
-
-  // 임시 핀 SVG 추가
-  drawGPS(); // GPS 오버레이 갱신 (핀 포함)
-
-  // 입력 패널 표시
-  document.getElementById('memo-input').value=prefill||'';
-  showPanel('memo-panel');
-  setTimeout(()=>document.getElementById('memo-input').focus(),150);
-}
-
-// 메모 저장 (핀 위치 포함)
-function saveMemo(){
-  const txt=document.getElementById('memo-input').value.trim();
-  if(!txt){ toast(T('memo_empty_input')); return; }
-  const slot=curSlot();
-  if(!slot){ toast(T('no_map')); return; }
-
-  const now=new Date();
-
-  // 핀 위치의 위경도 역변환
-  let lat=0, lon=0;
-  if(calibPts.length>=2){
-    const a=calibPts[0], b=calibPts[1];
-    const dLon=(b.lon-a.lon), dLat=(b.lat-a.lat);
-    if(Math.abs(dLon)>1e-10&&Math.abs(dLat)>1e-10){
-      lon=a.lon+(pinDragX-a.px)*dLon/(b.px-a.px);
-      lat=a.lat+(pinDragY-a.py)*dLat/(b.py-a.py);
-    }
-  } else if(curPos){
-    lat=curPos.lat; lon=curPos.lon;
-  }
-
-  if(pinDragMemoId){
-    // 기존 메모 위치 업데이트
-    const m=slot.memos.find(m=>m.id===pinDragMemoId);
-    if(m){ m.pinX=pinDragX; m.pinY=pinDragY; m.lat=lat; m.lon=lon; m.text=txt; }
-  } else {
-    // 새 메모 생성
-    slot.memos.push({
-      id:'memo_'+Date.now(),
-      lat, lon, pinX:pinDragX, pinY:pinDragY,
-      text:txt,
-      date:now.toLocaleDateString(),
-      time:now.toLocaleTimeString(),
-      layerName:selFeat?.feat?.name||selFeat?.feat?.code||''
+    const div=document.createElement('div'); div.className='map-slot'+(slot.id===curMapId?' active':'');
+    div.addEventListener('click',(e)=>{
+      e.stopPropagation();  // 외부 클릭 감지 차단
+      closeMapSwitcher();
+      switchToSlot(slot.id);
     });
-  }
+    const tc=(slot.tracks||[]).length, mc=(slot.memos||[]).length, hasPDF=!!slot.pdfName;
+    const icon=document.createElement('div'); icon.className='map-slot-icon'; icon.textContent=hasPDF?'🗺':'📂';
+    const name=document.createElement('div'); name.className='map-slot-name'; name.textContent=slot.name;
+    const del=document.createElement('div'); del.className='map-slot-del'; del.textContent='×'; del.title='삭제';
+    del.addEventListener('click',e=>{e.stopPropagation();deleteMapSlot(slot.id,e);});
+    div.appendChild(icon); div.appendChild(name);
+    // 트랙/메모 수 + GPS 거리 표시
+    const info = slotGPSInfo[slot.id];
+    let badgeTxt = (tc?'🛣'+tc:'')+(tc&&mc?' ':'')+( mc?'📍'+mc:'');
+    if(info && !info.isInMap && info.distTxt){
+      badgeTxt += (badgeTxt?' ':'')+info.bearStr+' '+info.distTxt;
+    } else if(info && info.isInMap){
+      badgeTxt += (badgeTxt?' ':'')+'📍현위치';
+    }
+    if(badgeTxt){ const badge=document.createElement('div'); badge.style.cssText='font-size:8px;color:var(--text3);font-family:var(--mono);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:80px'; badge.textContent=badgeTxt; div.appendChild(badge); }
+    div.appendChild(del); sw.appendChild(div);
+  });
+  if(mapSlots.length<MAX_SLOTS){ const add=document.createElement('div'); add.className='map-slot map-slot-add'; add.title='새 지도 추가'; add.textContent='＋'; add.addEventListener('click',()=>{closeMapSwitcher();setTimeout(()=>document.getElementById('pdf-input').click(),50);}); sw.appendChild(add); }
+}
+function updateMapBadge(){ const b=document.getElementById('maps-badge'); if(b) b.textContent=mapSlots.length||''; }
 
-  saveMemos();
-  pinDragActive=false; pinDragMemoId=null;
-  document.getElementById('memo-input').value='';
-  document.getElementById('memo-drag-hint').classList.remove('show');
-  hidePanel('memo-panel');
-  drawGPS();
-  toast(T('memo_saved'));
+/* ─── PANEL UTILS ─── */
+function showPDFMenu(){ const meta=loadPDFMeta(); if(meta){ document.getElementById('pdf-menu-fname').textContent=meta.name||'—'; document.getElementById('pdf-menu-fdate').textContent=meta.ts?new Date(meta.ts).toLocaleString():''; } showPanel('pdf-menu-panel'); }
+
+/* ─── MULTIMAP INIT ─── */
+async function initMultiMap(){
+  loadSlotsMeta(); updateMapBadge(); renderMapSwitcher();
+  const lastId=localStorage.getItem('palmmap_cur_slot');
+  if(lastId&&mapSlots.find(s=>s.id===lastId)) await switchToSlot(lastId);
+  else if(mapSlots.length>0) await switchToSlot(mapSlots[0].id);
+  loadLayersFromStorage(); loadCalibFromStorage(); drawGPS();
 }
 
-function memoFromPop(){
-  const f=selFeat?.feat;
-  closePop();
-  openMemo(f?'['+( f.name||f.code||'')+'] ':'');
-}
-
-function delMemo(id){
-  const slot=curSlot(); if(!slot) return;
-  slot.memos=slot.memos.filter(m=>m.id!==id);
-  saveMemos(); drawGPS(); renderMemoList();
-  toast(T('memo_del'));
-}
-
-// 메모 핀 탭 → 드래그 모드
-function tapMemoPinToEdit(memoId){
-  const slot=curSlot(); if(!slot) return;
-  const m=slot.memos.find(m=>m.id===memoId);
-  if(!m) return;
-  startPinDrag(m.pinX, m.pinY, memoId, m.text);
-}
-
-function openMemoList(){
-  renderMemoList();
-  document.getElementById('memo-list-panel').classList.add('show');
-}
-
-function renderMemoList(){
-  const body=document.getElementById('memo-list-body');
-  const memos=get_cur_memos();
-  if(!memos.length){ body.innerHTML='<div class="memo-empty">'+T('memo_none')+'</div>'; return; }
-  const grps={};
-  [...memos].reverse().forEach(m=>{ if(!grps[m.date])grps[m.date]=[]; grps[m.date].push(m); });
-  const dates=Object.keys(grps);
-  body.innerHTML=dates.map(date=>`
-    <div class="memo-date-group">
-      <div class="memo-date-hdr">📅 ${date} (${grps[date].length})</div>
-      ${grps[date].map(m=>`
-        <div class="memo-item" id="mi-${m.id}">
-          <div class="memo-body">
-            <div class="memo-meta">
-              <span class="memo-time">${m.time||''}</span>
-              ${m.layerName?'<span class="memo-layer-tag">'+escHTML(m.layerName)+'</span>':''}
-            </div>
-            ${m.lat?'<div class="memo-coords">'+m.lat.toFixed(5)+', '+m.lon.toFixed(5)+'</div>':''}
-            <div class="memo-text">${escHTML(m.text)}</div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:4px">
-            <button class="memo-del" onclick="tapMemoPinToEdit('${m.id}')" title="위치수정">📍</button>
-            <button class="memo-del" onclick="delMemo('${m.id}')" title="삭제">🗑</button>
-          </div>
-        </div>
-      `).join('')}
-    </div>
-  `).join('');
-}
-
-// ═══════════════════════════════════════════════════════════════
-// GPS 오버레이 재정의 (트랙 + 메모 핀 드래그 포함)
-// ═══════════════════════════════════════════════════════════════
-// drawGPS: see MultiMap engine
-
-
-// ── handleTap에서 드래그 핀 이동 지원 ────────────────────────
-// map-area touchmove로 핀 드래그
+/* ─── MAP AREA TOUCH (핀 드래그) ─── */
 document.addEventListener('DOMContentLoaded',()=>{
-  const mapArea=document.getElementById('map-area');
-  if(!mapArea) return;
-
-  let pinTouchId=null;
-  mapArea.addEventListener('touchstart',ev=>{
-    if(!pinDragActive||ev.touches.length!==1) return;
-    pinTouchId=ev.touches[0].identifier;
-  },{passive:true});
-
+  const mapArea=document.getElementById('map-area'); if(!mapArea) return;
+  let ptId=null;
+  mapArea.addEventListener('touchstart',ev=>{if(!pinDragActive||ev.touches.length!==1) return; ptId=ev.touches[0].identifier;},{passive:true});
   mapArea.addEventListener('touchmove',ev=>{
     if(!pinDragActive) return;
-    const t=Array.from(ev.touches).find(t=>t.identifier===pinTouchId||ev.touches.length===1);
-    if(!t) return;
-    ev.preventDefault();
+    const t=Array.from(ev.touches).find(t=>t.identifier===ptId||ev.touches.length===1); if(!t) return;
     const r=mapArea.getBoundingClientRect();
-    pinDragX=(t.clientX-r.left-ox)/scale;
-    pinDragY=(t.clientY-r.top-oy)/scale;
+    // map-area 범위 안에서의 터치만 처리 (패널/버튼 위 터치 무시)
+    if(t.clientX<r.left||t.clientX>r.right||t.clientY<r.top||t.clientY>r.bottom) return;
+    ev.preventDefault();
+    pinDragX=(t.clientX-r.left-ox)/scale; pinDragY=(t.clientY-r.top-oy)/scale;
     drawGPS();
   },{passive:false});
 });
 
-// ── 멀티맵 초기화 ────────────────────────────────────────────
-async function initMultiMap(){
-  loadSlotsMeta();
-  updateMapBadge();
-  renderMapSwitcher();
+/* ════════════════════════════════════════════════════════════
+   UTM Zone 설정 모달
+   PDF 로드 시 자동 감지 실패 or 알 수 없는 지도 → 사용자 입력
+════════════════════════════════════════════════════════════ */
 
-  // 마지막 활성 지도 복원
-  const lastId = localStorage.getItem('palmmap_cur_slot');
-  if(lastId&&mapSlots.find(s=>s.id===lastId)){
-    await switchToSlot(lastId);
-  } else if(mapSlots.length>0){
-    await switchToSlot(mapSlots[0].id);
+// 모달 상태
+let _utmPendingPdfDoc = null;
+let _utmPendingFile   = null;
+let _utmPendingSlot   = null;
+let _utmPendingCW     = 0;
+let _utmPendingCH     = 0;
+
+// UTM Zone 모달 열기
+function showUTMZoneModal(pdfDoc, file, slot, cW2, cH2) {
+  _utmPendingPdfDoc = pdfDoc;
+  _utmPendingFile   = file;
+  _utmPendingSlot   = slot;
+  _utmPendingCW     = cW2;
+  _utmPendingCH     = cH2;
+
+  // 파일명 표시
+  const fn = document.getElementById('utm-modal-filename');
+  if (fn) fn.textContent = '📄 ' + (file?.name||slot?.pdfName||'').substring(0, 45);
+
+  // 기본값 결정 우선순위:
+  // 1. 이 슬롯의 이전 설정값
+  // 2. GPS 현재 위치 (가장 정확)
+  // 3. 기본값 49S
+  let prevZone = slot?.geoPDFData?.utmZone || 49;
+  let prevNorth = slot?.geoPDFData?.isNorthern ?? false;
+  if (!slot?.geoPDFData && curPos && curPos.lat != null) {
+    // GPS 위치로 Zone+반구 추천
+    prevZone = Math.floor((curPos.lon + 180) / 6) + 1;
+    prevNorth = curPos.lat >= 0;
+    const fn2 = document.getElementById('utm-modal-filename');
+    if (fn2) fn2.textContent += ' (GPS 기반 추천: Zone ' + prevZone + (prevNorth?'N':'S') + ')';
   }
+  const zoneInput = document.getElementById('utm-zone-input');
+  if (zoneInput) zoneInput.value = prevZone;
+  const radios = document.querySelectorAll('input[name="utm-hemi"]');
+  radios.forEach(r => { r.checked = (r.value === (prevNorth ? 'N' : 'S')); });
+
+  document.getElementById('utm-zone-modal').style.display = 'flex';
 }
 
-// 지도 전환 시 curMapId 저장
-const _origSwitchToSlot = switchToSlot;
-// (이미 위에 정의됨)
+// 사용자가 Zone을 확정
+async function confirmUTMZone() {
+  const zoneNum = parseInt(document.getElementById('utm-zone-input').value);
+  const isNorth = document.querySelector('input[name="utm-hemi"]:checked')?.value === 'N';
 
-
-/* ─── GPS 오버레이 렌더링 (멀티맵 + 트랙 + 드래그 핀) ─── */
-function drawGPS(){
-  const svg=document.getElementById('gps-svg'); if(!svg) return;
-  svg.innerHTML='';
-  const slot=curSlot();
-  const S=scale||1;
-
-  /* ── 저장된 트랙 ────────────────────────────────────────── */
-  if(slot && calibPts.length>=2){
-    (slot.tracks||[]).filter(t=>t.visible&&(t.pts||[]).length>=2).forEach(t=>{
-      const pts=t.pts.map(p=>ll2c(p.lat,p.lon)).filter(Boolean);
-      if(pts.length<2) return;
-      const pa=mkSVG('path');
-      pa.setAttribute('d','M'+pts.map(p=>p.px+','+p.py).join('L'));
-      pa.setAttribute('fill','none');
-      pa.setAttribute('stroke',t.color||'#ff7814');
-      pa.setAttribute('stroke-width',String(3/S));
-      pa.setAttribute('stroke-linecap','round');
-      pa.setAttribute('stroke-linejoin','round');
-      pa.setAttribute('opacity','0.9');
-      svg.appendChild(pa);
-    });
+  if (isNaN(zoneNum) || zoneNum < 1 || zoneNum > 60) {
+    toast('⚠️ Zone은 1~60 사이 숫자를 입력하세요');
+    return;
   }
 
-  /* ── 현재 녹화 중 트랙 ──────────────────────────────────── */
-  if(trackOn && trkPts.length>=2 && calibPts.length>=2){
-    const pts=trkPts.map(p=>ll2c(p.lat,p.lon)).filter(Boolean);
-    if(pts.length>=2){
-      const pa=mkSVG('path');
-      pa.setAttribute('d','M'+pts.map(p=>p.px+','+p.py).join('L'));
-      pa.setAttribute('fill','none');
-      pa.setAttribute('stroke',trkCurrentColor||'#ff7814');
-      pa.setAttribute('stroke-width',String(3/S));
-      pa.setAttribute('stroke-linecap','round');
-      pa.setAttribute('stroke-dasharray',(8/S)+','+(4/S));
-      pa.setAttribute('opacity','0.95');
-      svg.appendChild(pa);
+  document.getElementById('utm-zone-modal').style.display = 'none';
+
+  // 선택한 Zone으로 GeoPDF 재파싱
+  const utmHint = { zone: zoneNum, northern: isNorth };
+  console.log('[UTM Modal] User selected Zone:', zoneNum, isNorth ? 'N' : 'S');
+
+  showLoad('🌐 Zone ' + zoneNum + (isNorth?'N':'S') + ' 로 보정 중...');
+  try {
+    // extractGeoPDFCoords에 Zone 힌트 주입
+    const savedInfo = _savedUtmInfoOverride;
+    _savedUtmInfoOverride = utmHint; // 전역 힌트 설정
+    const ok = await extractGeoPDFCoords(
+      _utmPendingPdfDoc, _utmPendingCW, _utmPendingCH,
+      _utmPendingFile?.name || _utmPendingSlot?.pdfName || ''
+    );
+    _savedUtmInfoOverride = null;
+
+    if (ok && _utmPendingSlot) {
+      _utmPendingSlot.calibPts  = calibPts.slice();
+      _utmPendingSlot.geoPDFData = geoPDFData;
+      saveSlotsMeta();
+      toast('✅ Zone ' + zoneNum + (isNorth?'N':'S') + ' 보정 완료!');
+    } else {
+      // NEATLINE 파싱 실패 → 수동 모서리 좌표 입력 패널 자동 열기
+      toast('⚠️ PDF에서 좌표를 읽지 못했습니다. 모서리 좌표를 직접 입력하세요.');
+      setTimeout(() => {
+        showPanel('calib-panel');
+        // 수동 탭으로 전환
+        if(typeof switchCalibTab === 'function') switchCalibTab('manual');
+      }, 600);
     }
-    const ep=document.getElementById('trk-pts'); if(ep) ep.textContent=trkPts.length;
-    const ed=document.getElementById('trk-dist'); if(ed) ed.textContent=Math.round(calcDist())+'m';
+  } catch(e) {
+    console.warn('[UTM Modal] error:', e);
+    toast('오류: ' + (e.message||e));
   }
-
-  /* ── 보정 마커 ───────────────────────────────────────────── */
-  calibPts.forEach((cp,i)=>{
-    const g=mkSVG('g');
-    const c=mkSVG('circle');
-    c.setAttribute('cx',String(cp.px)); c.setAttribute('cy',String(cp.py));
-    c.setAttribute('r',String(8/S)); c.setAttribute('class','calib-pin');
-    c.setAttribute('stroke-width',String(2/S));
-    const t=mkSVG('text');
-    t.setAttribute('x',String(cp.px)); t.setAttribute('y',String(cp.py));
-    t.setAttribute('class','calib-lbl');
-    t.setAttribute('font-size',String(8/S)); t.textContent=String(i+1);
-    g.appendChild(c); g.appendChild(t); svg.appendChild(g);
-  });
-
-  /* ── 메모 핀 ────────────────────────────────────────────── */
-  const memoList=slot?.memos||[];
-  memoList.forEach((m,i)=>{
-    let px=m.pinX, py=m.pinY;
-    if((px==null)&&m.lat&&calibPts.length>=2){
-      const c=ll2c(m.lat,m.lon); if(c){px=c.px;py=c.py;m.pinX=px;m.pinY=py;}
-    }
-    if(px==null){px=cW/2;py=cH/2;}
-    const pinR=11/S;
-    const g=mkSVG('g'); g.style.cursor='pointer';
-    g.setAttribute('data-memo-id',m.id);
-
-    // 핀 삼각형
-    const tri=mkSVG('polygon');
-    tri.setAttribute('points',(px-pinR*.5)+','+(py-pinR*.3)+' '+(px+pinR*.5)+','+(py-pinR*.3)+' '+px+','+(py+pinR*.5));
-    tri.setAttribute('fill','#ff7814');
-
-    // 핀 원
-    const circle=mkSVG('circle');
-    circle.setAttribute('cx',String(px)); circle.setAttribute('cy',String(py-pinR));
-    circle.setAttribute('r',String(pinR)); circle.setAttribute('fill','#ff7814');
-    circle.setAttribute('stroke','#fff'); circle.setAttribute('stroke-width',String(1.5/S));
-
-    // 번호
-    const num=mkSVG('text');
-    num.setAttribute('x',String(px)); num.setAttribute('y',String(py-pinR));
-    num.setAttribute('text-anchor','middle'); num.setAttribute('dominant-baseline','central');
-    num.setAttribute('font-size',String(7/S)); num.setAttribute('font-weight','700');
-    num.setAttribute('fill','#fff'); num.setAttribute('pointer-events','none');
-    num.textContent=String(i+1);
-
-    g.appendChild(tri); g.appendChild(circle); g.appendChild(num);
-
-    // 탭: 메모 보기
-    g.addEventListener('click',ev=>{
-      ev.stopPropagation();
-      toast('📍'+(i+1)+': '+m.text.substring(0,50));
-    });
-
-    // 터치 드래그: 핀 이동
-    g.addEventListener('touchstart',ev=>{
-      if(ev.touches.length!==1) return;
-      ev.stopPropagation();
-      const r=document.getElementById('map-area').getBoundingClientRect();
-      const startCX=ev.touches[0].clientX, startCY=ev.touches[0].clientY;
-      const startPx=m.pinX||px, startPy=m.pinY||py;
-      let moved=false;
-      function onMove(ev2){
-        if(ev2.touches.length!==1) return;
-        const dx=ev2.touches[0].clientX-startCX;
-        const dy=ev2.touches[0].clientY-startCY;
-        if(Math.hypot(dx,dy)>8){ moved=true; }
-        if(moved){
-          m.pinX=startPx+dx/S; m.pinY=startPy+dy/S;
-          if(calibPts.length>=2){
-            const a=calibPts[0],b=calibPts[1];
-            const dLon2=b.lon-a.lon, dLat2=b.lat-a.lat;
-            if(Math.abs(b.px-a.px)>0.01){
-              m.lon=a.lon+(m.pinX-a.px)*dLon2/(b.px-a.px);
-              m.lat=a.lat+(m.pinY-a.py)*dLat2/(b.py-a.py);
-            }
-          }
-          drawGPS();
-        }
-      }
-      function onEnd(){
-        document.removeEventListener('touchmove',onMove);
-        document.removeEventListener('touchend',onEnd);
-        if(moved){ saveMemos(); toast('📍 핀 위치 저장됨'); }
-        else{ toast('📍'+(i+1)+': '+m.text.substring(0,50)); }
-      }
-      document.addEventListener('touchmove',onMove,{passive:true});
-      document.addEventListener('touchend',onEnd);
-    },{passive:true});
-
-    svg.appendChild(g);
-  });
-
-  /* ── 새 메모 드래그 중인 임시 핀 ───────────────────────── */
-  if(pinDragActive){
-    const px3=pinDragX, py3=pinDragY, pinR2=12/S;
-    const g=mkSVG('g');
-    const tri=mkSVG('polygon');
-    tri.setAttribute('points',(px3-pinR2*.5)+','+(py3-pinR2*.3)+' '+(px3+pinR2*.5)+','+(py3-pinR2*.3)+' '+px3+','+(py3+pinR2*.5));
-    tri.setAttribute('fill','#ff4db8');
-    const circle=mkSVG('circle');
-    circle.setAttribute('cx',String(px3)); circle.setAttribute('cy',String(py3-pinR2));
-    circle.setAttribute('r',String(pinR2)); circle.setAttribute('fill','#ff4db8');
-    circle.setAttribute('stroke','#fff'); circle.setAttribute('stroke-width',String(1.5/S));
-    const lbl=mkSVG('text');
-    lbl.setAttribute('x',String(px3)); lbl.setAttribute('y',String(py3-pinR2));
-    lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('dominant-baseline','central');
-    lbl.setAttribute('font-size',String(9/S)); lbl.setAttribute('font-weight','700');
-    lbl.setAttribute('fill','#fff'); lbl.setAttribute('pointer-events','none');
-    lbl.textContent='✎';
-    g.appendChild(tri); g.appendChild(circle); g.appendChild(lbl);
-    svg.appendChild(g);
-  }
-
-  /* ── GPS 현재 위치 마커 ─────────────────────────────────── */
-  if(!curPos) return;
-  let px4=cW/2, py4=cH/2;
-  if(calibPts.length>=2){ const c=ll2c(curPos.lat,curPos.lon); if(c){px4=c.px;py4=c.py;} }
-
-  const CORE_PX=6, HALO_PX=11;
-  const coreR=CORE_PX/S, haloR=HALO_PX/S, strokeW=1.5/S;
-
-  let accR=30/S;
-  if(calibPts.length>=2&&cH>0){
-    const latRange=Math.abs(calibPts[1].lat-calibPts[0].lat);
-    const mPerPx=(latRange*111320)/cH;
-    if(mPerPx>0) accR=Math.min(60/S,Math.max(15/S,curPos.acc/mPerPx));
-  }
-
-  const ar=mkSVG('circle'); ar.setAttribute('cx',String(px4)); ar.setAttribute('cy',String(py4));
-  ar.setAttribute('r',String(accR)); ar.setAttribute('class','acc-ring'); ar.setAttribute('stroke-width',String(1/S));
-  svg.appendChild(ar);
-
-  const ha=mkSVG('circle'); ha.setAttribute('cx',String(px4)); ha.setAttribute('cy',String(py4));
-  ha.setAttribute('r',String(haloR*1.8)); ha.setAttribute('class','gps-pulse'); ha.setAttribute('stroke-width',String(1/S));
-  svg.appendChild(ha);
-
-  const ha2=mkSVG('circle'); ha2.setAttribute('cx',String(px4)); ha2.setAttribute('cy',String(py4));
-  ha2.setAttribute('r',String(haloR)); ha2.setAttribute('class','gps-halo');
-  svg.appendChild(ha2);
-
-  if(curPos.heading!=null&&!isNaN(curPos.heading)){
-    const rad=(curPos.heading-90)*Math.PI/180;
-    const aD=HALO_PX*1.4/S;
-    const poly=mkSVG('polygon');
-    poly.setAttribute('points',(px4+Math.cos(rad)*aD)+','+(py4+Math.sin(rad)*aD)+' '+(px4+Math.cos(rad-.45)*aD*.7)+','+(py4+Math.sin(rad-.45)*aD*.7)+' '+(px4+Math.cos(rad+.45)*aD*.7)+','+(py4+Math.sin(rad+.45)*aD*.7));
-    poly.setAttribute('fill','#ff4db8'); poly.setAttribute('opacity','.8');
-    svg.appendChild(poly);
-  }
-
-  const cd=mkSVG('circle'); cd.setAttribute('cx',String(px4)); cd.setAttribute('cy',String(py4));
-  cd.setAttribute('r',String(coreR)); cd.setAttribute('class','gps-core'); cd.setAttribute('stroke-width',String(strokeW));
-  svg.appendChild(cd);
-
-  const cs=haloR*.7, cstroke=0.8/S;
-  [[-cs,0],[cs,0],[0,-cs],[0,cs]].forEach(([dx,dy])=>{
-    const m2=cs*.25, line=mkSVG('line');
-    line.setAttribute('x1',String(px4+(dx>0?m2:dx<0?-m2:0)));
-    line.setAttribute('y1',String(py4+(dy>0?m2:dy<0?-m2:0)));
-    line.setAttribute('x2',String(px4+dx)); line.setAttribute('y2',String(py4+dy));
-    line.setAttribute('stroke','#ff4db8'); line.setAttribute('stroke-width',String(cstroke));
-    line.setAttribute('opacity','0.9');
-    svg.appendChild(line);
-  });
+  hideLoad();
+  _utmPendingPdfDoc = _utmPendingFile = _utmPendingSlot = null;
 }
+
+// 자동 감지로 진행 (모달 건너뜀)
+async function skipUTMZone() {
+  document.getElementById('utm-zone-modal').style.display = 'none';
+  showLoad('🔍 좌표 자동 감지 중...');
+  try {
+    const ok = await extractGeoPDFCoords(
+      _utmPendingPdfDoc, _utmPendingCW, _utmPendingCH,
+      _utmPendingFile?.name || _utmPendingSlot?.pdfName || ''
+    );
+    if (_utmPendingSlot) {
+      _utmPendingSlot.calibPts  = calibPts.length >= 2 ? calibPts.slice() : [];
+      _utmPendingSlot.geoPDFData = geoPDFData;
+      saveSlotsMeta();
+    }
+    if (ok) toast('✅ 자동 보정 완료!');
+    else {
+      toast('⚠️ 자동 감지 실패. 모서리 좌표를 직접 입력하세요.');
+      setTimeout(() => {
+        showPanel('calib-panel');
+        if(typeof switchCalibTab === 'function') switchCalibTab('manual');
+      }, 600);
+    }
+  } catch(e) { toast('오류: ' + (e.message||e)); }
+  hideLoad();
+  _utmPendingPdfDoc = _utmPendingFile = _utmPendingSlot = null;
+}
+
+// 취소 (지도 제거)
+function cancelUTMZone() {
+  document.getElementById('utm-zone-modal').style.display = 'none';
+  if (_utmPendingSlot) {
+    const sid = _utmPendingSlot.id;
+    mapSlots = mapSlots.filter(s => s.id !== sid);
+    deletePDFSlot(sid);
+    saveSlotsMeta(); renderMapSwitcher(); updateMapBadge();
+    if (curMapId === sid) _resetMapView();
+    toast('지도 취소됨');
+  }
+  _utmPendingPdfDoc = _utmPendingFile = _utmPendingSlot = null;
+}
+
+// extractGeoPDFCoords에서 참조할 전역 Zone 힌트
+let _savedUtmInfoOverride = null;
+
+// 슬롯별 GPS 거리/방향 정보 (지도 전환 시 갱신)
+// { slotId: { distM, bearStr, gpsLat, gpsLon, isInMap, isFarAway } }
+const slotGPSInfo = {};
+
 
 /* ─── INIT ─── */
 applyLang();
