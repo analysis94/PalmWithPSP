@@ -398,14 +398,14 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 
 <!-- 핀 이동 모드 안내 바 -->
 <div id="pin-move-bar">
-  <div style="font-size:12px;color:var(--green);font-weight:700">✋ 드래그로 핀 이동</div>
+  <div style="font-size:12px;color:var(--green);font-weight:700" id="t-pin-move-hint">✋ 드래그로 핀 이동</div>
   <div style="display:flex;gap:8px">
     <button onclick="confirmPinMove()"
-      style="background:var(--green);color:#fff;border:none;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">
+      id="t-pin-move-ok" style="background:var(--green);color:#fff;border:none;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">
       확인
     </button>
     <button onclick="cancelPinMove()"
-      style="background:var(--bg3);color:var(--text2);border:.5px solid var(--border);border-radius:7px;padding:6px 12px;font-size:12px;cursor:pointer">
+      id="t-pin-move-cancel" style="background:var(--bg3);color:var(--text2);border:.5px solid var(--border);border-radius:7px;padding:6px 12px;font-size:12px;cursor:pointer">
       취소
     </button>
   </div>
@@ -414,7 +414,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 <div id="map-area">
   <!-- GPS 원거리 배너 (B+D 전략) -->
   <div id="gps-far-banner">
-    <div class="far-title">📍 GPS 위치 — 이 지도 범위 밖</div>
+    <div class="far-title" id="t-far-banner-title">📍 GPS 위치 — 이 지도 범위 밖</div>
     <div class="far-coords" id="gps-far-coords">—</div>
     <div class="far-dist" id="gps-far-dist">—</div>
   </div>
@@ -599,7 +599,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 
   <!-- 핀 스타일 + 위치 이동 -->
   <div style="display:flex;gap:6px;margin-bottom:10px;align-items:center">
-    <span style="font-size:10px;color:var(--text3);white-space:nowrap">핀:</span>
+    <span style="font-size:10px;color:var(--text3);white-space:nowrap" id="t-pin-style-label">핀:</span>
     <button id="pin-style-pin" onclick="setMemoPinStyle('pin')"
       style="flex:1;padding:5px 6px;border-radius:6px;font-size:10px;cursor:pointer;border:.5px solid var(--border);background:var(--amber);color:#111;font-weight:700">
       📍 핀
@@ -693,7 +693,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
       <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M2 11v2h12v-2M8 2v8M5 7l3 3 3-3"/>
       </svg>
-      TXT 저장
+      <span id="t-txt-save">TXT 저장</span>
     </button>
   </div>
   <div id="memo-list-body"></div>
@@ -741,7 +741,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 <div id="utm-zone-modal" style="display:none;position:absolute;inset:0;z-index:750;background:rgba(0,0,0,.8);align-items:center;justify-content:center">
   <div style="background:var(--panel);border:.5px solid var(--border2);border-radius:14px;padding:20px 18px;margin:16px;max-width:360px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,.6)">
 
-    <div style="font-size:15px;font-weight:700;color:var(--amber);margin-bottom:4px">🌐 UTM Zone 설정</div>
+    <div style="font-size:15px;font-weight:700;color:var(--amber);margin-bottom:4px" id="t-utm-title">🌐 UTM Zone 설정</div>
     <div style="font-size:11px;color:var(--text3);margin-bottom:14px" id="utm-modal-filename"></div>
 
     <!-- Zone 번호 -->
@@ -792,11 +792,11 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 
     <!-- 버튼 -->
     <div style="display:flex;gap:8px">
-      <button onclick="confirmUTMZone()" style="flex:1;background:var(--amber);color:#111;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:700;cursor:pointer">✅ 이 Zone으로 보정</button>
-      <button onclick="skipUTMZone()" style="flex:1;background:var(--bg3);color:var(--text2);border:.5px solid var(--border);border-radius:8px;padding:11px;font-size:12px;cursor:pointer">자동 감지</button>
+      <button onclick="confirmUTMZone()" id="t-utm-confirm" style="flex:1;background:var(--amber);color:#111;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:700;cursor:pointer">✅ 이 Zone으로 보정</button>
+      <button onclick="skipUTMZone()" id="t-utm-auto" style="flex:1;background:var(--bg3);color:var(--text2);border:.5px solid var(--border);border-radius:8px;padding:11px;font-size:12px;cursor:pointer">자동 감지</button>
     </div>
     <div style="text-align:center;margin-top:8px">
-      <button onclick="cancelUTMZone()" style="background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;text-decoration:underline">취소 (지도 닫기)</button>
+      <button onclick="cancelUTMZone()" id="t-utm-cancel" style="background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;text-decoration:underline">취소 (지도 닫기)</button>
     </div>
   </div>
 </div>
@@ -977,6 +977,39 @@ ko: {
   pdf_restore_fail:'저장된 지도 로드 실패. 다시 불러와 주세요.',
   pdf_cleared:'지도가 삭제됐습니다.',
   pdf_change_btn:'지도 변경',
+  // 새로 추가된 UI 요소들
+  maps_btn:'지도',
+  no_loc:'위치 없음',
+  pdf_menu_title:'🗺 지도 관리',
+  pdf_change:'새 지도 불러오기',
+  pdf_delete:'🗑 지도 삭제',
+  pdf_menu_close:'닫기',
+  cancel2b:'닫기',
+  utm_title:'🌐 UTM Zone 설정',
+  utm_confirm:'✅ 이 Zone으로 보정',
+  utm_auto:'자동 감지',
+  utm_cancel:'취소 (지도 닫기)',
+  utm_zone_label:'UTM Zone 번호',
+  utm_hemi_label:'반구',
+  utm_hemi_s:'남반구 (S)',
+  utm_hemi_n:'북반구 (N)',
+  utm_hemi_s_desc:'인도네시아·칼리만탄',
+  utm_hemi_n_desc:'적도 이북 지역',
+  utm_ref_title:'📍 인도네시아 주요 Zone',
+  pin_style_label:'핀 스타일:',
+  pin_style_pin:'📍 핀 모양',
+  pin_style_num:'🔢 번호',
+  pin_move:'✋ 핀 이동',
+  pin_move_hint:'드래그로 핀 이동',
+  pin_move_ok:'확인',
+  pin_move_cancel:'취소',
+  txt_save:'TXT 저장',
+  far_banner_title:'📍 GPS 위치 — 이 지도 범위 밖',
+  far_banner_uncalib:'📍 GPS 위치 (지도 미보정)',
+  far_banner_uncalib_hint:'📐 보정 버튼으로 UTM Zone을 설정하세요',
+  map_del_confirm:'이 지도를 삭제하시겠습니까?',
+  map_del_yes:'삭제',
+  map_del_no:'취소',
 },
 en: {
   pdf:'PDF', layers:'Layers', calib:'Calibrate',
@@ -1027,6 +1060,38 @@ en: {
   pdf_restore_fail:'Failed to restore saved map. Please reload.',
   pdf_cleared:'Map deleted.',
   pdf_change_btn:'Change Map',
+  maps_btn:'Maps',
+  no_loc:'No Location',
+  pdf_menu_title:'🗺 Map Manager',
+  pdf_change:'Load New Map',
+  pdf_delete:'🗑 Delete Map',
+  pdf_menu_close:'Close',
+  cancel2b:'Close',
+  utm_title:'🌐 UTM Zone Setting',
+  utm_confirm:'✅ Apply This Zone',
+  utm_auto:'Auto Detect',
+  utm_cancel:'Cancel (Close Map)',
+  utm_zone_label:'UTM Zone Number',
+  utm_hemi_label:'Hemisphere',
+  utm_hemi_s:'Southern (S)',
+  utm_hemi_n:'Northern (N)',
+  utm_hemi_s_desc:'Indonesia · Kalimantan',
+  utm_hemi_n_desc:'North of equator',
+  utm_ref_title:'📍 Indonesia Main Zones',
+  pin_style_label:'Pin style:',
+  pin_style_pin:'📍 Pin shape',
+  pin_style_num:'🔢 Number',
+  pin_move:'✋ Move Pin',
+  pin_move_hint:'Drag to move pin',
+  pin_move_ok:'Confirm',
+  pin_move_cancel:'Cancel',
+  txt_save:'Save TXT',
+  far_banner_title:'📍 GPS — Outside Map Area',
+  far_banner_uncalib:'📍 GPS (Map not calibrated)',
+  far_banner_uncalib_hint:'Use 📐 Calibrate to set UTM Zone',
+  map_del_confirm:'Delete this map?',
+  map_del_yes:'Delete',
+  map_del_no:'Cancel',
 },
 id: {
   pdf:'PDF', layers:'Layer', calib:'Kalibrasi',
@@ -1077,6 +1142,38 @@ id: {
   pdf_restore_fail:'Gagal memuat peta tersimpan. Silakan muat ulang.',
   pdf_cleared:'Peta dihapus.',
   pdf_change_btn:'Ganti Peta',
+  maps_btn:'Peta',
+  no_loc:'Tanpa Lokasi',
+  pdf_menu_title:'🗺 Kelola Peta',
+  pdf_change:'Muat Peta Baru',
+  pdf_delete:'🗑 Hapus Peta',
+  pdf_menu_close:'Tutup',
+  cancel2b:'Tutup',
+  utm_title:'🌐 Pengaturan Zone UTM',
+  utm_confirm:'✅ Terapkan Zone Ini',
+  utm_auto:'Deteksi Otomatis',
+  utm_cancel:'Batal (Tutup Peta)',
+  utm_zone_label:'Nomor Zone UTM',
+  utm_hemi_label:'Belahan Bumi',
+  utm_hemi_s:'Selatan (S)',
+  utm_hemi_n:'Utara (N)',
+  utm_hemi_s_desc:'Indonesia · Kalimantan',
+  utm_hemi_n_desc:'Wilayah utara khatulistiwa',
+  utm_ref_title:'📍 Zone Utama Indonesia',
+  pin_style_label:'Gaya pin:',
+  pin_style_pin:'📍 Bentuk pin',
+  pin_style_num:'🔢 Nomor',
+  pin_move:'✋ Pindahkan Pin',
+  pin_move_hint:'Seret untuk memindahkan pin',
+  pin_move_ok:'Konfirmasi',
+  pin_move_cancel:'Batal',
+  txt_save:'Simpan TXT',
+  far_banner_title:'📍 GPS — Di Luar Area Peta',
+  far_banner_uncalib:'📍 GPS (Peta belum dikalibrasi)',
+  far_banner_uncalib_hint:'Gunakan 📐 Kalibrasi untuk mengatur Zone UTM',
+  map_del_confirm:'Hapus peta ini?',
+  map_del_yes:'Hapus',
+  map_del_no:'Batal',
 }
 };
 
@@ -1096,22 +1193,63 @@ const LANG_IDS = {
   't-import':'import','t-import-s':'import_s','t-demo':'demo',
   't-lp-m':'lp_memo','t-lp-n':'lp_nav',
   't-inst-title':'inst_title','t-inst-desc':'inst_desc','t-inst-btn':'inst_btn',
+  // 신규 UI 요소
+  't-maps':'maps_btn',
+  't-no-loc':'no_loc',
+  't-cancel2b':'cancel2b',
+  't-pdf-change-btn':'pdf_change_btn',
+  't-pdf-menu-title':'pdf_menu_title',
+  't-pdf-change':'pdf_change',
+  't-pdf-delete':'pdf_delete',
+  't-pdf-menu-close':'pdf_menu_close',
+  't-utm-title':'utm_title',
+  't-utm-confirm':'utm_confirm',
+  't-utm-auto':'utm_auto',
+  't-utm-cancel':'utm_cancel',
+  't-pin-move-hint':'pin_move_hint',
+  't-pin-move-ok':'pin_move_ok',
+  't-pin-move-cancel':'pin_move_cancel',
+  't-pin-style-label':'pin_style_label',
+  't-txt-save':'txt_save',
+  't-far-banner-title':'far_banner_title',
 };
 
 function applyLang() {
+  // 정적 요소 일괄 번역
   Object.entries(LANG_IDS).forEach(([id, key]) => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = T(key);
   });
-  document.getElementById('memo-input').placeholder = T('memo_ph');
+
+  // placeholder 개별 처리 (innerHTML 적용 불가)
+  const memoInput = document.getElementById('memo-input');
+  if (memoInput) memoInput.placeholder = T('memo_ph');
+
+  // GPS 상태 (비활성 시)
   if (!gpsOn) {
-    document.getElementById('gps-lbl').textContent = 'GPS';
-    document.getElementById('gps-val').textContent = T('gps_none');
+    const gpsLbl = document.getElementById('gps-lbl');
+    const gpsVal = document.getElementById('gps-val');
+    if (gpsLbl) gpsLbl.textContent = 'GPS';
+    if (gpsVal) gpsVal.textContent = T('gps_none');
   }
+
+  // GPS 원거리 배너 동적 텍스트 갱신
+  updateFarBanner();
+
+  // 핀 스타일 버튼 텍스트
+  const btnPin = document.getElementById('pin-style-pin');
+  const btnNum = document.getElementById('pin-style-num');
+  if (btnPin) btnPin.textContent = T('pin_style_pin');
+  if (btnNum) btnNum.textContent = T('pin_style_num');
+
+  // 언어 선택 버튼 활성 표시
   ['ko','en','id'].forEach(l => {
     const el = document.getElementById('lo-'+l);
     if (el) el.classList.toggle('sel', l === curLang);
   });
+
+  // html lang 속성 업데이트
+  document.documentElement.lang = curLang === 'id' ? 'id' : curLang === 'en' ? 'en' : 'ko';
 }
 
 function setLang(l) {
@@ -2198,9 +2336,9 @@ function drawGPS(){
         const ce=document.getElementById('gps-far-coords');
         const de=document.getElementById('gps-far-dist');
         const ft=fb.querySelector('.far-title');
-        if(ft) ft.textContent='📍 GPS 위치 (지도 미보정)';
+        if(ft) ft.textContent=T('far_banner_uncalib');
         if(ce) ce.textContent=curPos.lat.toFixed(5)+'°, '+curPos.lon.toFixed(5)+'°';
-        if(de) de.textContent='📐 보정 버튼으로 UTM Zone을 설정하세요';
+        if(de) de.textContent=T('far_banner_uncalib_hint');
         fb.style.display='block';
       }
     }
@@ -2677,9 +2815,9 @@ function updateFarBanner(){
   const distEl  = document.getElementById('gps-far-dist');
   const titleEl = farBanner.querySelector('.far-title');
 
-  if(titleEl) titleEl.textContent = '📍 GPS 위치 — 이 지도 범위 밖';
+  if(titleEl) titleEl.textContent = T('far_banner_title');
   if(coordEl) coordEl.textContent = info.gpsLat.toFixed(5)+'°, '+info.gpsLon.toFixed(5)+'°';
-  if(distEl)  distEl.textContent  = '이 지도에서 '+info.bearStr+' 방향 '+info.distTxt+' 떨어진 위치';
+  if(distEl)  distEl.textContent  = info.bearStr+' '+info.distTxt;
   farBanner.style.display='block';
 }
 
