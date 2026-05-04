@@ -453,6 +453,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
       <div id="gps-val" id="t-no-loc">위치 없음</div>
     </div>
     <div id="gps-acc-txt">—</div>
+    <div id="gps-alt-txt" style="display:none;font-size:9px;color:var(--amber)" title="GPS 고도 (WGS84)">↕--</div>
   </div>
   <button class="bbtn" id="btn-gps" onclick="handleGPS()">
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="3"/><path d="M10 1v3M10 16v3M1 10h3M16 10h3"/></svg>
@@ -1319,10 +1320,20 @@ function stopGPS(){
 
 function onGPSPos(p){
   hideLoad();
-  const{latitude:lat, longitude:lon, accuracy:acc, heading}=p.coords;
-  curPos={lat,lon,acc,heading};
+  const{latitude:lat, longitude:lon, accuracy:acc, heading,
+        altitude:alt, altitudeAccuracy:altAcc}=p.coords;
+  // alt: WGS84 타원체 고도(m), null이면 기기가 고도 미지원
+  curPos={lat, lon, acc, heading,
+          alt: alt!=null ? Math.round(alt*10)/10 : null,
+          altAcc: altAcc!=null ? Math.round(altAcc) : null};
   document.getElementById('gps-val').textContent=lat.toFixed(5)+', '+lon.toFixed(5);
   document.getElementById('gps-acc-txt').textContent='±'+Math.round(acc)+'m';
+  // 고도 표시 (기기가 지원할 때만)
+  const altEl = document.getElementById('gps-alt-txt');
+  if(altEl){
+    altEl.textContent = alt!=null ? Math.round(alt)+'m' : '--';
+    altEl.style.display = '';
+  }
   document.getElementById('gps-lbl').textContent = T('gps_active');
   document.getElementById('gps-dot').className = 'on';
   if(!gpsOn) setGPSActive(true);
@@ -2548,7 +2559,10 @@ function drawGPS(){
         moveDrag(ev2.touches[0].clientX, ev2.touches[0].clientY);
       }
       function onTE(){
-        if(!_dragActive) toast('📍'+(i+1)+': '+m.text.substring(0,60));
+        if(!_dragActive){
+        const altInfo = m.alt!=null ? ' (↕'+Math.round(m.alt)+'m)' : '';
+        toast('📍'+(i+1)+': '+m.text.substring(0,50)+altInfo);
+      }
         endDrag(); g.style.cursor='grab';
         document.removeEventListener('touchmove',onTM);
         document.removeEventListener('touchend',onTE);
@@ -3161,7 +3175,11 @@ function saveMemo(){
     const m=slot.memos.find(m=>m.id===pinDragMemoId);
     if(m){ m.pinX=pinDragX; m.pinY=pinDragY; m.lat=lat; m.lon=lon; m.text=txt; }
   } else {
-    slot.memos.push({ id:'memo_'+Date.now(), lat,lon,pinX:pinDragX,pinY:pinDragY,text:txt, date:now.toLocaleDateString(),time:now.toLocaleTimeString(),layerName:selFeat?.feat?.name||'' });
+    slot.memos.push({ id:'memo_'+Date.now(), lat,lon,
+      alt: curPos?.alt ?? null, altAcc: curPos?.altAcc ?? null,
+      pinX:pinDragX,pinY:pinDragY,text:txt,
+      date:now.toLocaleDateString(),time:now.toLocaleTimeString(),
+      layerName:selFeat?.feat?.name||'' });
   }
   saveMemos(); pinDragActive=false; pinDragMemoId=null;
   document.getElementById('memo-input').value='';
@@ -3296,6 +3314,12 @@ function exportMemosTXT(){
         // 소수점 형식
         lines.push(`  Lat  : ${latAbs} ${latDir}`);
         lines.push(`  Lon  : ${lonAbs} ${lonDir}`);
+        // 고도 (기기가 지원할 때만)
+        if(m.alt != null){
+          const altStr = Math.round(m.alt);
+          const altAccStr = m.altAcc != null ? ' (±'+m.altAcc+'m)' : '';
+          lines.push(`  Alt  : ${altStr} m${altAccStr} (WGS84)`);
+        }
         // DMS 형식 (도분초 - ASCII 기호만 사용)
         const toDMS = (deg) => {
           const d   = Math.floor(deg);
@@ -3367,7 +3391,8 @@ function renderMemoList(){
     const pinIcon=memoPinStyle==='number'
       ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#ff7814;color:#fff;font-size:9px;font-weight:700;flex-shrink:0">${idxMap[m.id]||'?'}</span>`
       : '📍';
-    return `<div class="memo-item" id="mi-${m.id}"><div class="memo-body" style="display:flex;gap:6px;align-items:flex-start">${pinIcon}<div>${m.lat?'<div class="memo-coords">'+m.lat.toFixed(5)+', '+m.lon.toFixed(5)+'</div>':''}<div class="memo-text">${escHTML(m.text)}</div></div></div><div style="display:flex;flex-direction:column;gap:4px"><button class="memo-del" onclick="tapMemoPinToEdit('${m.id}')" title="위치수정">✏️</button><button class="memo-del" onclick="delMemo('${m.id}')" title="삭제">🗑</button></div></div>`;
+    const altLabel = m.alt!=null ? ' ↕'+Math.round(m.alt)+'m' : '';
+    return `<div class="memo-item" id="mi-${m.id}"><div class="memo-body" style="display:flex;gap:6px;align-items:flex-start">${pinIcon}<div>${m.lat?'<div class="memo-coords">'+m.lat.toFixed(5)+', '+m.lon.toFixed(5)+altLabel+'</div>':''}<div class="memo-text">${escHTML(m.text)}</div></div></div><div style="display:flex;flex-direction:column;gap:4px"><button class="memo-del" onclick="tapMemoPinToEdit('${m.id}')" title="위치수정">✏️</button><button class="memo-del" onclick="delMemo('${m.id}')" title="삭제">🗑</button></div></div>`;
   }).join('')}</div>`).join('');
 }
 
