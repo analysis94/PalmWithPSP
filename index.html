@@ -18,11 +18,17 @@
 <link rel="apple-touch-icon" sizes="192x192" href="./icon-192.png">
 <style>
 :root{
-  --bg:#0f1a0f;--bg2:#162016;--bg3:#1e2d1e;--panel:#1a2a1a;
-  --border:rgba(120,180,80,.2);--border2:rgba(120,180,80,.45);
-  --green:#7ab450;--green2:#a3d46e;--gdim:rgba(122,180,80,.15);
+  /* 배경: 짙은 녹색 유지 (팜 농장 테마) */
+  --bg:#0d1610;--bg2:#141f14;--bg3:#1a291a;--panel:#162016;
+  /* 테두리: 약간 밝게 */
+  --border:rgba(140,200,100,.25);--border2:rgba(140,200,100,.55);
+  /* 강조색 */
+  --green:#5cba3c;--green2:#7dd45a;--gdim:rgba(92,186,60,.15);
   --amber:#e8a84a;--red:#e05555;--blue:#5ab4e8;
-  --text:#d4e8c0;--text2:#8aaa70;--text3:#5a7a50;
+  /* 텍스트: 흰색 계열로 대비 개선 */
+  --text:#f0f4f0;    /* 기본 텍스트: 거의 흰색 */
+  --text2:#b8cdb8;   /* 보조 텍스트: 밝은 회녹색 */
+  --text3:#7a9a7a;   /* 힌트 텍스트: 중간 회녹색 */
   --sans:system-ui,-apple-system,sans-serif;--mono:'Courier New',monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -453,7 +459,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
       <div id="gps-val" id="t-no-loc">위치 없음</div>
     </div>
     <div id="gps-acc-txt">—</div>
-    <div id="gps-alt-txt" style="display:none;font-size:9px;color:var(--amber)" title="GPS 고도 (WGS84)">↕--</div>
+    <div id="gps-alt-txt" style="display:none;font-size:9px;color:var(--amber)" title="GPS 고도 WGS84 (m)"></div>
   </div>
   <button class="bbtn" id="btn-gps" onclick="handleGPS()">
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="3"/><path d="M10 1v3M10 16v3M1 10h3M16 10h3"/></svg>
@@ -1331,8 +1337,16 @@ function onGPSPos(p){
   // 고도 표시 (기기가 지원할 때만)
   const altEl = document.getElementById('gps-alt-txt');
   if(altEl){
-    altEl.textContent = alt!=null ? Math.round(alt)+'m' : '--';
-    altEl.style.display = '';
+    if(alt != null){
+      // 고도 있을 때만 표시 (↕ 접두어 포함)
+      const altAccTxt = altAcc!=null ? '±'+Math.round(altAcc)+'m' : '';
+      altEl.textContent = '↕' + Math.round(alt) + 'm' +
+                          (altAccTxt ? ' '+altAccTxt : '');
+      altEl.style.display = '';
+    } else {
+      // 고도 미지원 기기: div 숨김
+      altEl.style.display = 'none';
+    }
   }
   document.getElementById('gps-lbl').textContent = T('gps_active');
   document.getElementById('gps-dot').className = 'on';
