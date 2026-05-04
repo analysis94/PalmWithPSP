@@ -370,7 +370,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 <!-- TOP BAR -->
 <div id="topbar">
   <div class="logo">🌴 PALM<em> MAP</em></div>
-  <div id="app-ver" style="font-size:8px;color:var(--text3);font-family:var(--mono);margin-left:2px;align-self:flex-end;padding-bottom:8px">v0.038</div>
+  <div id="app-ver" style="font-size:8px;color:var(--text3);font-family:var(--mono);margin-left:2px;align-self:flex-end;padding-bottom:8px">v0.039</div>
   <div id="ts"></div>
   <button class="tbtn" id="btn-maps" onclick="toggleMapSwitcher()">
     🗺 <span id="t-maps">지도</span>
@@ -503,9 +503,9 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 
   <!-- GeoPDF 자동 감지 결과 배너 -->
   <div id="geopdf-banner" style="display:none;background:rgba(122,180,80,.15);border:.5px solid rgba(122,180,80,.4);border-radius:8px;padding:10px 12px;margin-bottom:10px">
-    <div style="font-size:11px;font-weight:700;color:var(--green2);margin-bottom:4px">✅ GeoPDF 좌표 자동 감지됨</div>
+    <div style="font-size:11px;font-weight:700;color:var(--green2);margin-bottom:4px" id="t-calib-detected">✅ GeoPDF 좌표 자동 감지됨</div>
     <div id="geopdf-info" style="font-size:10px;color:var(--text2);font-family:var(--mono);line-height:1.6"></div>
-    <button onclick="applyGeoPDFCalib()" class="btn-green" style="width:100%;margin-top:8px;border:none">🎯 자동 보정 적용</button>
+    <button onclick="applyGeoPDFCalib()" class="btn-green" style="width:100%;margin-top:8px;border:none" id="t-calib-apply-btn">🎯 자동 보정 적용</button>
   </div>
 
   <!-- 탭 전환 -->
@@ -540,7 +540,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     </div>
     <!-- 수동 좌표 직접 입력 -->
     <div style="margin-top:10px;background:var(--bg3);border:.5px solid var(--border);border-radius:8px;padding:10px">
-      <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:8px">📌 좌표 직접 입력 (지도 모서리 위경도 아는 경우)</div>
+      <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:8px" id="t-calib-manual-coord">📌 좌표 직접 입력 (지도 모서리 위경도 아는 경우)</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
         <div>
           <div style="font-size:9px;color:var(--text3);margin-bottom:3px">좌상단 위도 (Lat NW)</div>
@@ -563,7 +563,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
             style="width:100%;background:var(--bg2);border:.5px solid var(--border);color:var(--text);font-size:11px;padding:5px 7px;border-radius:5px;outline:none;font-family:var(--mono)">
         </div>
       </div>
-      <button onclick="applyCornerCalib()" class="btn-amber" style="width:100%;border:none">📐 모서리 좌표로 보정</button>
+      <button onclick="applyCornerCalib()" class="btn-amber" style="width:100%;border:none" id="t-calib-corner-btn">📐 모서리 좌표로 보정</button>
       <div style="font-size:9px;color:var(--text3);margin-top:6px;line-height:1.5;font-family:var(--mono)">
         💡 QGIS 확인값 (Peta Tahun Tanam 2026 SKDE SGUE TM TBM):<br>
         NW: 0.01665°, 110.63431° | SE: -0.16959°, 110.89603°<br>
@@ -630,12 +630,12 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
   <div id="track-recording-info" style="display:none;background:rgba(255,120,20,.12);border:.5px solid rgba(255,120,20,.4);border-radius:8px;padding:9px 12px;margin-bottom:10px">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
       <div style="width:8px;height:8px;border-radius:50%;background:#ff7814;animation:pulse 1s infinite"></div>
-      <span style="font-size:12px;color:#ff7814;font-weight:700">녹화 중</span>
+      <span id="t-trk-recording" style="font-size:12px;color:#ff7814;font-weight:700">녹화 중</span>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
-      <div style="font-size:10px;color:var(--text3)">포인트: <span id="trk-pts" style="color:var(--text);font-family:var(--mono)">0</span></div>
-      <div style="font-size:10px;color:var(--text3)">거리: <span id="trk-dist" style="color:var(--text);font-family:var(--mono)">0m</span></div>
-      <div style="font-size:10px;color:var(--text3)">시작: <span id="trk-start" style="color:var(--text);font-family:var(--mono)">—</span></div>
+      <div style="font-size:10px;color:var(--text3)" id="t-tpts-lbl">포인트: <span id="trk-pts" style="color:var(--text);font-family:var(--mono)">0</span></div>
+      <div style="font-size:10px;color:var(--text3)" id="t-tdist-lbl">거리: <span id="trk-dist" style="color:var(--text);font-family:var(--mono)">0m</span></div>
+      <div style="font-size:10px;color:var(--text3)" id="t-tstart-lbl">시작: <span id="trk-start" style="color:var(--text);font-family:var(--mono)">—</span></div>
     </div>
     <!-- 트랙 색상 선택 -->
     <div style="font-size:10px;color:var(--text3);margin-top:8px;margin-bottom:4px">트랙 색상:</div>
@@ -648,12 +648,12 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
       <div class="color-swatch" style="background:#ffffff" data-color="#ffffff" onclick="selectTrackColor(this)"></div>
     </div>
     <div class="btn-row" style="margin-top:8px">
-      <button class="btn-red" onclick="stopAndSaveTrack()" style="flex:1">⏹ 정지 & 저장</button>
-      <button class="btn-grey" onclick="discardTrack()">버리기</button>
+      <button class="btn-red" onclick="stopAndSaveTrack()" style="flex:1" id="t-trk-stop-btn">⏹ 정지 & 저장</button>
+      <button class="btn-grey" onclick="discardTrack()" id="t-trk-discard">버리기</button>
     </div>
   </div>
   <!-- 저장된 트랙 목록 -->
-  <div style="font-size:11px;color:var(--text3);margin-bottom:8px;font-family:var(--mono)">저장된 트랙</div>
+  <div style="font-size:11px;color:var(--text3);margin-bottom:8px;font-family:var(--mono)" id="t-trk-saved-header">저장된 트랙</div>
   <div id="track-list-body"><!-- JS --></div>
   <button class="btn-grey" onclick="hidePanel('track-panel')" style="width:100%;margin-top:6px">닫기</button>
 </div>
@@ -753,7 +753,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
           style="width:80px;background:var(--bg2);border:.5px solid var(--amber);color:var(--text);font-size:16px;font-weight:700;padding:8px 10px;border-radius:8px;outline:none;font-family:var(--mono);text-align:center">
         <div style="font-size:11px;color:var(--text3)">
           1~60 범위<br>
-          <span style="color:var(--text2)">인도네시아: 46~54</span>
+          <span style="color:var(--text2)" id="t-utm-indo-range">인도네시아: 46~54</span>
         </div>
       </div>
     </div>
@@ -812,20 +812,20 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     <div id="map-del-stats" style="font-size:11px;color:var(--text2);background:var(--bg3);border:.5px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:14px;line-height:2"></div>
 
     <!-- 선택지 -->
-    <div style="font-size:12px;color:var(--text2);margin-bottom:10px">삭제 범위를 선택하세요:</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:10px" id="t-del-scope-title">삭제 범위를 선택하세요:</div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
       <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;background:var(--bg3);border:.5px solid var(--border);border-radius:8px;padding:10px 12px">
         <input type="radio" name="del-scope" value="all" checked style="margin-top:2px;accent-color:var(--red)">
         <div>
-          <div style="font-size:12px;font-weight:700;color:var(--red)">지도 + 트랙 + 메모 모두 삭제</div>
-          <div style="font-size:10px;color:var(--text3);margin-top:2px">이 지도의 모든 데이터를 완전히 제거합니다</div>
+          <div style="font-size:12px;font-weight:700;color:var(--red)" id="t-del-all-btn">지도 + 트랙 + 메모 모두 삭제</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px" id="t-del-all-desc">이 지도의 모든 데이터를 완전히 제거합니다</div>
         </div>
       </label>
       <label id="del-keep-data-label" style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;background:var(--bg3);border:.5px solid var(--border);border-radius:8px;padding:10px 12px">
         <input type="radio" name="del-scope" value="pdf-only" style="margin-top:2px;accent-color:var(--amber)">
         <div>
-          <div style="font-size:12px;font-weight:700;color:var(--amber)">지도 PDF만 삭제 (트랙·메모 보존)</div>
-          <div style="font-size:10px;color:var(--text3);margin-top:2px">PDF를 제거하되 트랙과 메모 데이터는 유지합니다.<br>나중에 같은 지도를 다시 불러오면 복원됩니다.</div>
+          <div style="font-size:12px;font-weight:700;color:var(--amber)" id="t-del-pdf-btn">지도 PDF만 삭제 (트랙·메모 보존)</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px" id="t-del-pdf-desc">PDF를 제거하되 트랙과 메모 데이터는 유지합니다.<br>나중에 같은 지도를 다시 불러오면 복원됩니다.</div>
         </div>
       </label>
     </div>
@@ -978,10 +978,75 @@ ko: {
   pdf_restore_fail:'저장된 지도 로드 실패. 다시 불러와 주세요.',
   pdf_cleared:'지도가 삭제됐습니다.',
   pdf_change_btn:'지도 변경',
+  trk_del_toast:'트랙 삭제됨',
+  // === 추가 번역 키 ===
+  calib_no_data:'보정 데이터 없음. PDF를 다시 불러오세요.',
+  calib_auto_ok:'✅ 자동 보정 적용됨!',
+  calib_bad_coords:'올바른 위경도를 입력하세요.',
+  calib_need_pdf:'먼저 PDF를 불러오세요.',
+  calib_corner_ok:'✅ 모서리 좌표 보정 완료!',
+  calib_qgis_ok:'✅ QGIS 좌표 보정 완료!',
+  calib_tap_hint:'지도를 탭해서 보정점을 찍으세요 (최소 2개)',
+  calib_few_pts:'보정점이 부족합니다.',
+  calib_complete:'✅ GPS 보정 완료',
+  calib_fail:'⚠️ 좌표 자동 감지 실패',
+  calib_hint:'보정 버튼(📐) → 아래 방법 중 하나를 선택하세요.',
+  calib_auto_tab:'🤖 자동 (GeoPDF)',
+  calib_manual_tab:'👆 수동 (2점 탭)',
+  calib_auto_desc:'PDF를 불러오면 GeoPDF 좌표를 자동 감지합니다.',
+  calib_detected:'✅ GeoPDF 좌표 자동 감지됨',
+  calib_apply_btn:'🎯 자동 보정 적용',
+  calib_not_detected:'감지 안 되면',
+  calib_manual_coord:'📌 좌표 직접 입력 (지도 모서리 위경도 아는 경우)',
+  calib_lat_nw:'좌상단 위도 (Lat NW)',
+  calib_lon_nw:'좌상단 경도 (Lon NW)',
+  calib_lat_se:'우하단 위도 (Lat SE)',
+  calib_lon_se:'우하단 경도 (Lon SE)',
+  calib_corner_btn:'📐 모서리 좌표로 보정',
+  calib_qgis_hint:'💡 QGIS 확인값',
+  calib_qgis_btn:'🎯 QGIS 확인값으로 즉시 보정',
+  layer_del:'레이어 삭제됨',
+  layer_none:'레이어 없음',
+  trk_color_lbl:'트랙 색상:',
+  trk_stop_btn:'⏹ 정지 & 저장',
+  trk_discard:'버리기',
+  trk_saved_header:'저장된 트랙',
+  trk_none_data:'저장된 트랙·메모 없음',
+  pin_move_toast:'✋ 핀을 손가락으로 드래그하여 위치 조정',
+  map_no_slot:'지도를 찾을 수 없습니다.',
+  map_pdf_del:'📄 PDF 삭제됨 — 트랙·메모 보존',
+  map_cancelled:'지도 취소됨',
+  utm_range:'1~60 범위',
+  utm_indo_range:'인도네시아: 46~54',
+  utm_zone_warn:'⚠️ Zone은 1~60 사이 숫자를 입력하세요',
+  utm_parse_fail:'⚠️ PDF에서 좌표를 읽지 못했습니다. 모서리 좌표를 직접 입력하세요.',
+  utm_auto_ok:'✅ 자동 보정 완료!',
+  utm_auto_fail:'⚠️ 자동 감지 실패. 모서리 좌표를 직접 입력하세요.',
+  dir_n:'북',
+  dir_ne:'북동',
+  dir_e:'동',
+  dir_se:'남동',
+  dir_s:'남',
+  dir_sw:'남서',
+  dir_w:'서',
+  dir_nw:'북서',
+  out_of_map:'▶ 지도 밖',
+  del_scope_title:'삭제 범위를 선택하세요:',
+  del_all_btn:'지도 + 트랙 + 메모 모두 삭제',
+  del_all_desc:'이 지도의 모든 데이터를 완전히 제거합니다',
+  del_pdf_btn:'지도 PDF만 삭제 (트랙·메모 보존)',
+  del_pdf_desc:'PDF를 제거하되 트랙과 메모 데이터는 유지합니다.',
   // 새로 추가된 UI 요소들
   // 트래킹 관련
   trk_none:'저장된 트랙 없음',
   trk_date_none:'날짜 없음',
+  // 트래킹 UI 레이블
+  trk_recording:'🔴 녹화 중',
+  trk_pts_lbl:'포인트',
+  trk_dist_lbl:'거리',
+  trk_start_lbl:'시작',
+  trk_saved:'트랙 저장됨',
+  trk_few_pts:'트랙 포인트 부족',
   trk_count:'개',
   trk_vis_title:'표시/숨김',
   trk_gpx_title:'GPX 내보내기',
@@ -1074,10 +1139,75 @@ en: {
   pdf_restore_fail:'Failed to restore saved map. Please reload.',
   pdf_cleared:'Map deleted.',
   pdf_change_btn:'Change Map',
+  trk_del_toast:'Track deleted',
+  // === 추가 번역 키 ===
+  calib_no_data:'No calibration data. Please reload PDF.',
+  calib_auto_ok:'✅ Auto calibration applied!',
+  calib_bad_coords:'Please enter valid lat/lon values.',
+  calib_need_pdf:'Please load a PDF first.',
+  calib_corner_ok:'✅ Corner coordinates calibrated!',
+  calib_qgis_ok:'✅ QGIS coordinates applied!',
+  calib_tap_hint:'Tap calibration points on map (min. 2)',
+  calib_few_pts:'Not enough calibration points.',
+  calib_complete:'✅ GPS Calibrated',
+  calib_fail:'⚠️ Auto-detection failed',
+  calib_hint:'Tap 📐 Calibrate → choose a method below.',
+  calib_auto_tab:'🤖 Auto (GeoPDF)',
+  calib_manual_tab:'👆 Manual (2-tap)',
+  calib_auto_desc:'GeoPDF coordinates are detected automatically when PDF is loaded.',
+  calib_detected:'✅ GeoPDF coordinates detected',
+  calib_apply_btn:'🎯 Apply Auto Calibration',
+  calib_not_detected:'If not detected',
+  calib_manual_coord:'📌 Enter coordinates (if you know map corner lat/lon)',
+  calib_lat_nw:'Top-left Latitude (Lat NW)',
+  calib_lon_nw:'Top-left Longitude (Lon NW)',
+  calib_lat_se:'Bottom-right Latitude (Lat SE)',
+  calib_lon_se:'Bottom-right Longitude (Lon SE)',
+  calib_corner_btn:'📐 Calibrate with Corner Coords',
+  calib_qgis_hint:'💡 QGIS verified values',
+  calib_qgis_btn:'🎯 Apply QGIS Values Now',
+  layer_del:'Layer deleted',
+  layer_none:'No layers',
+  trk_color_lbl:'Track color:',
+  trk_stop_btn:'⏹ Stop & Save',
+  trk_discard:'Discard',
+  trk_saved_header:'Saved Tracks',
+  trk_none_data:'No tracks or memos saved',
+  pin_move_toast:'✋ Drag pin to desired location',
+  map_no_slot:'Map not found.',
+  map_pdf_del:'📄 PDF deleted — tracks & memos preserved',
+  map_cancelled:'Map cancelled',
+  utm_range:'Range: 1–60',
+  utm_indo_range:'Indonesia: 46–54',
+  utm_zone_warn:'⚠️ Zone must be 1–60',
+  utm_parse_fail:'⚠️ Could not read PDF coordinates. Enter corner coords manually.',
+  utm_auto_ok:'✅ Auto calibration done!',
+  utm_auto_fail:'⚠️ Auto-detect failed. Enter corner coords manually.',
+  dir_n:'N',
+  dir_ne:'NE',
+  dir_e:'E',
+  dir_se:'SE',
+  dir_s:'S',
+  dir_sw:'SW',
+  dir_w:'W',
+  dir_nw:'NW',
+  out_of_map:'▶ Outside Map',
+  del_scope_title:'Select deletion scope:',
+  del_all_btn:'Delete map + tracks + memos',
+  del_all_desc:'Completely removes all data for this map',
+  del_pdf_btn:'Delete PDF only (keep tracks & memos)',
+  del_pdf_desc:'Removes the PDF but keeps track and memo data.',
   maps_btn:'Maps',
   // 트래킹 관련
   trk_none:'No saved tracks',
   trk_date_none:'Unknown date',
+  // 트래킹 UI 레이블
+  trk_recording:'🔴 Recording',
+  trk_pts_lbl:'Points',
+  trk_dist_lbl:'Distance',
+  trk_start_lbl:'Start',
+  trk_saved:'Track saved',
+  trk_few_pts:'Not enough track points',
   trk_count:'',
   trk_vis_title:'Show/Hide',
   trk_gpx_title:'Export GPX',
@@ -1169,10 +1299,75 @@ id: {
   pdf_restore_fail:'Gagal memuat peta tersimpan. Silakan muat ulang.',
   pdf_cleared:'Peta dihapus.',
   pdf_change_btn:'Ganti Peta',
+  trk_del_toast:'Trek dihapus',
+  // === 추가 번역 키 ===
+  calib_no_data:'Data kalibrasi tidak ada. Muat ulang PDF.',
+  calib_auto_ok:'✅ Kalibrasi otomatis diterapkan!',
+  calib_bad_coords:'Masukkan nilai lat/lon yang valid.',
+  calib_need_pdf:'Muat PDF terlebih dahulu.',
+  calib_corner_ok:'✅ Kalibrasi koordinat pojok selesai!',
+  calib_qgis_ok:'✅ Koordinat QGIS diterapkan!',
+  calib_tap_hint:'Ketuk titik kalibrasi di peta (min. 2)',
+  calib_few_pts:'Titik kalibrasi tidak cukup.',
+  calib_complete:'✅ GPS Terkalibrasi',
+  calib_fail:'⚠️ Deteksi otomatis gagal',
+  calib_hint:'Ketuk 📐 Kalibrasi → pilih metode di bawah.',
+  calib_auto_tab:'🤖 Otomatis (GeoPDF)',
+  calib_manual_tab:'👆 Manual (2 ketukan)',
+  calib_auto_desc:'Koordinat GeoPDF dideteksi otomatis saat PDF dimuat.',
+  calib_detected:'✅ Koordinat GeoPDF terdeteksi',
+  calib_apply_btn:'🎯 Terapkan Kalibrasi Otomatis',
+  calib_not_detected:'Jika tidak terdeteksi',
+  calib_manual_coord:'📌 Masukkan koordinat (jika tahu lat/lon pojok peta)',
+  calib_lat_nw:'Lintang Kiri Atas (Lat NW)',
+  calib_lon_nw:'Bujur Kiri Atas (Lon NW)',
+  calib_lat_se:'Lintang Kanan Bawah (Lat SE)',
+  calib_lon_se:'Bujur Kanan Bawah (Lon SE)',
+  calib_corner_btn:'📐 Kalibrasi dengan Koordinat Pojok',
+  calib_qgis_hint:'💡 Nilai terverifikasi QGIS',
+  calib_qgis_btn:'🎯 Terapkan Nilai QGIS Sekarang',
+  layer_del:'Layer dihapus',
+  layer_none:'Belum ada layer',
+  trk_color_lbl:'Warna trek:',
+  trk_stop_btn:'⏹ Berhenti & Simpan',
+  trk_discard:'Buang',
+  trk_saved_header:'Trek Tersimpan',
+  trk_none_data:'Belum ada trek atau memo',
+  pin_move_toast:'✋ Seret pin ke lokasi yang diinginkan',
+  map_no_slot:'Peta tidak ditemukan.',
+  map_pdf_del:'📄 PDF dihapus — trek & memo dipertahankan',
+  map_cancelled:'Peta dibatalkan',
+  utm_range:'Rentang: 1–60',
+  utm_indo_range:'Indonesia: 46–54',
+  utm_zone_warn:'⚠️ Zone harus 1–60',
+  utm_parse_fail:'⚠️ Gagal membaca koordinat PDF. Masukkan koordinat pojok secara manual.',
+  utm_auto_ok:'✅ Kalibrasi otomatis selesai!',
+  utm_auto_fail:'⚠️ Deteksi otomatis gagal. Masukkan koordinat pojok secara manual.',
+  dir_n:'U',
+  dir_ne:'TL',
+  dir_e:'T',
+  dir_se:'TG',
+  dir_s:'S',
+  dir_sw:'BD',
+  dir_w:'B',
+  dir_nw:'BL',
+  out_of_map:'▶ Di Luar Peta',
+  del_scope_title:'Pilih cakupan penghapusan:',
+  del_all_btn:'Hapus peta + trek + memo',
+  del_all_desc:'Menghapus semua data peta ini sepenuhnya',
+  del_pdf_btn:'Hapus PDF saja (simpan trek & memo)',
+  del_pdf_desc:'Menghapus PDF tetapi menyimpan data trek dan memo.',
   maps_btn:'Peta',
   // 트래킹 관련
   trk_none:'Belum ada trek tersimpan',
   trk_date_none:'Tanggal tidak diketahui',
+  // 트래킹 UI 레이블
+  trk_recording:'🔴 Merekam',
+  trk_pts_lbl:'Titik',
+  trk_dist_lbl:'Jarak',
+  trk_start_lbl:'Mulai',
+  trk_saved:'Trek tersimpan',
+  trk_few_pts:'Titik trek tidak cukup',
   trk_count:'',
   trk_vis_title:'Tampilkan/Sembunyikan',
   trk_gpx_title:'Ekspor GPX',
@@ -1252,6 +1447,29 @@ const LANG_IDS = {
   't-pin-style-label':'pin_style_label',
   't-txt-save':'txt_save',
   't-far-banner-title':'far_banner_title',
+  't-trk-recording':'trk_recording',
+  't-tpts-lbl':'trk_pts_lbl',
+  't-tdist-lbl':'trk_dist_lbl',
+  't-tstart-lbl':'trk_start_lbl',
+  't-calib-auto-tab':'calib_auto_tab',
+  't-calib-manual-tab':'calib_manual_tab',
+  't-calib-detected':'calib_detected',
+  't-calib-apply-btn':'calib_apply_btn',
+  't-calib-not-detected':'calib_not_detected',
+  't-calib-manual-coord':'calib_manual_coord',
+  't-calib-corner-btn':'calib_corner_btn',
+  't-calib-qgis-btn':'calib_qgis_btn',
+  't-trk-stop-btn':'trk_stop_btn',
+  't-trk-discard':'trk_discard',
+  't-trk-saved-header':'trk_saved_header',
+  't-del-scope-title':'del_scope_title',
+  't-del-all-btn':'del_all_btn',
+  't-del-all-desc':'del_all_desc',
+  't-del-pdf-btn':'del_pdf_btn',
+  't-del-pdf-desc':'del_pdf_desc',
+  't-utm-range':'utm_range',
+  't-utm-indo-range':'utm_indo_range',
+  't-trk-none-data':'trk_none_data',
 };
 
 function applyLang() {
@@ -2191,7 +2409,7 @@ function showGeoPDFBanner(data, cW2, cH2) {
   b.style.background='rgba(122,180,80,.15)';
   b.style.border='.5px solid rgba(122,180,80,.4)';
   const title=b.querySelector('div');
-  if(title) title.textContent='✅ GPS 보정 완료';
+  if(title) title.textContent=T('calib_complete');
   b.style.display='block';
 }
 
@@ -2203,16 +2421,16 @@ function showGeoPDFFailBanner() {
   b.style.background='rgba(232,168,74,.15)';
   b.style.border='.5px solid rgba(232,168,74,.4)';
   const title=b.querySelector('div');
-  if(title) title.textContent='⚠️ 좌표 자동 감지 실패';
+  if(title) title.textContent=T('calib_fail');
   inf.innerHTML='보정 버튼(📐) → 아래 방법 중 하나를 선택하세요.';
   b.style.display='block';
 }
 
 // ── UI 버튼 핸들러 ────────────────────────────────────────────
 function applyGeoPDFCalib() {
-  if(!geoPDFData||!cW||!cH){toast('보정 데이터 없음. PDF를 다시 불러오세요.');return;}
+  if(!geoPDFData||!cW||!cH){toast(T('calib_no_data'));return;}
   applyGeoPDFToCalib(geoPDFData,cW,cH);
-  toast('✅ 자동 보정 적용됨!');
+  toast(T('calib_auto_ok'));
   hidePanel('calib-panel');
 }
 
@@ -2222,18 +2440,18 @@ function applyCornerCalib() {
   const latSE=parseFloat(document.getElementById('ci-lat-se').value);
   const lonSE=parseFloat(document.getElementById('ci-lon-se').value);
   if(!isValidLatLon(latNW,lonNW)||!isValidLatLon(latSE,lonSE)){
-    toast('올바른 위경도를 입력하세요.');return;
+    toast(T('calib_bad_coords'));return;
   }
-  if(!cW||!cH){toast('먼저 PDF를 불러오세요.');return;}
+  if(!cW||!cH){toast(T('calib_need_pdf'));return;}
   geoPDFData={latNW,lonNW,latSE,lonSE,source:'manual-input'};
   applyGeoPDFToCalib(geoPDFData,cW,cH);
   showGeoPDFBanner(geoPDFData,cW,cH);
-  toast('✅ 모서리 좌표 보정 완료!');
+  toast(T('calib_corner_ok'));
   hidePanel('calib-panel');
 }
 
 function applyQGISValues() {
-  if(!cW||!cH){toast('먼저 PDF를 불러오세요.');return;}
+  if(!cW||!cH){toast(T('calib_need_pdf'));return;}
   geoPDFData={
     latNW:0.016645,lonNW:110.634313,
     latSE:-0.169585,lonSE:110.896035,
@@ -2241,7 +2459,7 @@ function applyQGISValues() {
   };
   applyGeoPDFToCalib(geoPDFData,cW,cH);
   showGeoPDFBanner(geoPDFData,cW,cH);
-  toast('✅ QGIS 좌표 보정 완료!');
+  toast(T('calib_qgis_ok'));
   hidePanel('calib-panel');
 }
 
@@ -2467,7 +2685,7 @@ function drawGPS(){
     });
 
     const lbl=document.getElementById('gps-lbl');
-    if(lbl&&lbl.textContent==='▶ 지도 밖'){ lbl.textContent=T('gps_active'); lbl.style.color=''; }
+    if(lbl&&lbl.textContent===T('out_of_map')){ lbl.textContent=T('gps_active'); lbl.style.color=''; }
 
     // 지도 범위 안: GPS 정보 저장 (배너 숨김)
     if(curMapId) slotGPSInfo[curMapId] = {
@@ -2937,8 +3155,8 @@ function _bearing(lat1,lon1,lat2,lon2){
 
 // ── 방위각 → 방위 문자 변환 ──────────────────────────────────
 function _bearingToCardinal(deg){
-  const dirs=['북','북동','동','남동','남','남서','서','북서'];
-  return dirs[Math.round(deg/45)%8];
+  const keys=['dir_n','dir_ne','dir_e','dir_se','dir_s','dir_sw','dir_w','dir_nw'];
+  return T(keys[Math.round(deg/45)%8]);
 }
 
 // _drawGPSMarker → 인라인으로 통합됨
@@ -2951,7 +3169,7 @@ function _bearingToCardinal(deg){
 function _showOutOfMapLabel(){
   const lbl=document.getElementById('gps-lbl');
   if(lbl){
-    lbl.textContent='▶ 지도 밖';
+    lbl.textContent=T('out_of_map');
     lbl.style.color='#ff4db8';
   }
 }
@@ -2991,13 +3209,13 @@ function loadCalibFromStorage(){
 function startCalib(){
   calibDrawMode=true; calibPts=[];
   document.getElementById('calib-draw-hint')?.classList.add('show');
-  toast('지도를 탭해서 보정점을 찍으세요 (최소 2개)');
+  toast(T('calib_tap_hint'));
 }
 function endCalib(){
   calibDrawMode=false;
   document.getElementById('calib-draw-hint')?.classList.remove('show');
   if(calibPts.length>=2){ saveCalib(); drawGPS(); toast('✅ 보정 완료! ('+calibPts.length+'점)'); }
-  else { calibPts=[]; toast('보정점이 부족합니다.'); }
+  else { calibPts=[]; toast(T('calib_few_pts')); }
 }
 
 /* ─── LAYER SVG ─── */
@@ -3116,7 +3334,7 @@ function toggleLayerVisible(id){
   const l=layers.find(x=>x.id===id); if(l){ l.visible=!l.visible; saveLayers(); drawLayerSVG(); renderLayerList(); }
 }
 function deleteLayer(id){
-  layers=layers.filter(x=>x.id!==id); saveLayers(); drawLayerSVG(); renderLayerList(); toast('레이어 삭제됨');
+  layers=layers.filter(x=>x.id!==id); saveLayers(); drawLayerSVG(); renderLayerList(); toast(T('layer_del'));
 }
 
 /* ─── CENTER GPS ─── */
@@ -3262,18 +3480,31 @@ function selectTrackColor(el){
 }
 function toggleTrack(){
   if(!trackOn){
+    // ── 트래킹 시작 ─────────────────────────────────────────
     if(!gpsOn){ toast(T('need_gps')); return; }
     trackOn=true; trkStart=new Date(); trkPts=[];
     trkCurrentColor='#ff7814';
     document.getElementById('btn-track')?.classList.add('on');
     document.getElementById('track-recording-info').style.display='block';
+    // 트랙 시작 시간 표시
+    const pad2=n=>String(n).padStart(2,'0');
+    const st=trkStart;
+    const timeStr=pad2(st.getHours())+':'+pad2(st.getMinutes())+':'+pad2(st.getSeconds());
+    const el=document.getElementById('trk-start'); if(el) el.textContent=timeStr;
     showPanel('track-panel');
     toast(T('track_on'));
-  } else { showPanel('track-panel'); }
+    // 3초 후 패널 자동 닫기 (녹화는 계속)
+    setTimeout(()=>{
+      hidePanel('track-panel');
+    }, 3000);
+  } else {
+    // ── 녹화 중 재클릭 → 즉시 정지+저장 ───────────────────
+    stopAndSaveTrack();
+  }
 }
 function stopAndSaveTrack(){
-  if(!trackOn||trkPts.length<2){ toast('트랙 포인트 부족'); trackOn=false; document.getElementById('btn-track')?.classList.remove('on'); document.getElementById('track-recording-info').style.display='none'; hidePanel('track-panel'); return; }
-  const slot=curSlot(); if(!slot){ toast('지도를 먼저 불러오세요'); return; }
+  if(!trackOn||trkPts.length<2){ toast(T('trk_few_pts')); trackOn=false; document.getElementById('btn-track')?.classList.remove('on'); document.getElementById('track-recording-info').style.display='none'; hidePanel('track-panel'); return; }
+  const slot=curSlot(); if(!slot){ toast(T('no_map')); return; }
   // 자동 이름: YYYY-MM-DD_NNN (날짜별 일련번호)
   const _trkDate = trkStart.toISOString().slice(0,10); // 2026-05-03
   const _pad3 = n => String(n).padStart(3,'0');
@@ -3296,8 +3527,11 @@ function stopAndSaveTrack(){
   saveSlotsMeta(); trackOn=false; trkPts=[];
   document.getElementById('btn-track')?.classList.remove('on');
   document.getElementById('track-recording-info').style.display='none';
-  drawGPS(); renderTrackList(); hidePanel('track-panel');
-  toast('✅ 트랙 저장됨');
+  drawGPS();
+  // 저장 후 트랙 목록 패널 열어서 결과 확인
+  renderTrackList();
+  showPanel('track-panel');
+  toast('✅ ' + _trkName + ' ' + T('track_off'));
 }
 function discardTrack(){
   trackOn=false; trkPts=[];
@@ -3305,7 +3539,7 @@ function discardTrack(){
   document.getElementById('track-recording-info').style.display='none';
   hidePanel('track-panel'); toast(T('track_clr'));
 }
-function deleteTrack(trkId){ const slot=curSlot(); if(!slot) return; slot.tracks=slot.tracks.filter(t=>t.id!==trkId); saveSlotsMeta(); drawGPS(); renderTrackList(); toast('트랙 삭제됨'); }
+function deleteTrack(trkId){ const slot=curSlot(); if(!slot) return; slot.tracks=slot.tracks.filter(t=>t.id!==trkId); saveSlotsMeta(); drawGPS(); renderTrackList(); toast(T('trk_del_toast')); }
 function toggleTrackVisible(trkId){ const slot=curSlot(); if(!slot) return; const t=slot.tracks.find(t=>t.id===trkId); if(t){ t.visible=!t.visible; saveSlotsMeta(); drawGPS(); renderTrackList(); } }
 function renderTrackList(){
   const body=document.getElementById('track-list-body'); if(!body) return;
@@ -3571,7 +3805,7 @@ function enterPinMoveMode(){
   if(ma) ma.style.bottom = '126px'; // bottombar(74) + 안내바(52)
   // 드래그 힌트
   document.getElementById('memo-drag-hint')?.classList.add('show');
-  toast('✋ 핀을 손가락으로 드래그하여 위치 조정');
+  toast(T('pin_move_toast'));
 }
 
 function confirmPinMove(){
@@ -3617,9 +3851,9 @@ function openMemoList(){ renderMemoList(); document.getElementById('memo-list-pa
 /* ─── 메모 TXT 내보내기 ─── */
 function exportMemosTXT(){
   const slot = curSlot();
-  if(!slot){ toast('지도를 먼저 불러오세요.'); return; }
+  if(!slot){ toast(T('no_map')); return; }
   const memos = slot.memos || [];
-  if(!memos.length){ toast('저장된 메모가 없습니다.'); return; }
+  if(!memos.length){ toast(T('memo_none')); return; }
 
   const mapName = slot.name || slot.pdfName || 'map';
   const now = new Date();
@@ -3831,7 +4065,7 @@ async function switchToSlot(slotId){
 
   curMapId=slotId;
   const slot=curSlot();
-  if(!slot){ toast('지도를 찾을 수 없습니다.'); return; }
+  if(!slot){ toast(T('map_no_slot')); return; }
 
   showLoad('🗺 '+slot.name+' 불러오는 중...');
 
@@ -3949,7 +4183,7 @@ function deleteMapSlot(slotId,e){
   const tc=(slot.tracks||[]).length, mc=(slot.memos||[]).length;
   const td=(slot.tracks||[]).reduce((s,t)=>s+(t.dist||0),0);
   let stats='';
-  if(tc===0&&mc===0){ stats='<span style="color:var(--text3)">저장된 트랙·메모 없음</span>'; document.getElementById('del-keep-data-label').style.opacity='0.4'; document.getElementById('del-keep-data-label').style.pointerEvents='none'; document.querySelector('input[value="all"]').checked=true; }
+  if(tc===0&&mc===0){ stats='<span style="color:var(--text3)" id="t-trk-none-data">저장된 트랙·메모 없음</span>'; document.getElementById('del-keep-data-label').style.opacity='0.4'; document.getElementById('del-keep-data-label').style.pointerEvents='none'; document.querySelector('input[value="all"]').checked=true; }
   else{ document.getElementById('del-keep-data-label').style.opacity='1'; document.getElementById('del-keep-data-label').style.pointerEvents=''; if(tc) stats+=`🛣 트랙 <b style="color:var(--text)">${tc}개</b> · 총 ${Math.round(td/1000*10)/10}km<br>`; if(mc) stats+=`📍 메모 <b style="color:var(--text)">${mc}개</b>`; }
   document.getElementById('map-del-stats').innerHTML=stats;
   document.querySelector('input[value="all"]').checked=true;
@@ -3962,7 +4196,7 @@ async function confirmDeleteSlot(){
   cancelDeleteSlot();
   if(!slot) return;
   if(scope==='all'){ await deletePDFSlot(slotId); mapSlots=mapSlots.filter(s=>s.id!==slotId); toast('🗑 "'+slot.name+'" 지도와 모든 데이터 삭제됨'); }
-  else{ await deletePDFSlot(slotId); slot.pdfName=null; slot.name=slot.name+' (PDF없음)'; toast('📄 PDF 삭제됨 — 트랙·메모 보존'); }
+  else{ await deletePDFSlot(slotId); slot.pdfName=null; slot.name=slot.name+' (PDF없음)'; toast(T('map_pdf_del')); }
   if(curMapId===slotId){ if(scope==='all'){ _resetMapView(); if(mapSlots.length>0) await switchToSlot(mapSlots[mapSlots.length-1].id); } else{ pdfDoc=null; cW=0; cH=0; document.getElementById('pdf-canvas').width=0; document.getElementById('layer-svg').innerHTML=''; document.getElementById('gps-svg').innerHTML=''; document.getElementById('empty-state').style.display=''; document.getElementById('page-nav').classList.remove('show'); document.getElementById('pdf-map-info').style.display='none'; document.getElementById('map-area').style.top='50px'; drawGPS(); } }
   saveSlotsMeta(); renderMapSwitcher(); updateMapBadge();
 }
@@ -4117,7 +4351,7 @@ async function confirmUTMZone() {
   const isNorth = document.querySelector('input[name="utm-hemi"]:checked')?.value === 'N';
 
   if (isNaN(zoneNum) || zoneNum < 1 || zoneNum > 60) {
-    toast('⚠️ Zone은 1~60 사이 숫자를 입력하세요');
+    toast(T('utm_zone_warn'));
     return;
   }
 
@@ -4145,7 +4379,7 @@ async function confirmUTMZone() {
       toast('✅ Zone ' + zoneNum + (isNorth?'N':'S') + ' 보정 완료!');
     } else {
       // NEATLINE 파싱 실패 → 수동 모서리 좌표 입력 패널 자동 열기
-      toast('⚠️ PDF에서 좌표를 읽지 못했습니다. 모서리 좌표를 직접 입력하세요.');
+      toast(T('utm_parse_fail'));
       setTimeout(() => {
         showPanel('calib-panel');
         // 수동 탭으로 전환
@@ -4174,9 +4408,9 @@ async function skipUTMZone() {
       _utmPendingSlot.geoPDFData = geoPDFData;
       saveSlotsMeta();
     }
-    if (ok) toast('✅ 자동 보정 완료!');
+    if (ok) toast(T('utm_auto_ok'));
     else {
-      toast('⚠️ 자동 감지 실패. 모서리 좌표를 직접 입력하세요.');
+      toast(T('utm_auto_fail'));
       setTimeout(() => {
         showPanel('calib-panel');
         if(typeof switchCalibTab === 'function') switchCalibTab('manual');
@@ -4196,7 +4430,7 @@ function cancelUTMZone() {
     deletePDFSlot(sid);
     saveSlotsMeta(); renderMapSwitcher(); updateMapBadge();
     if (curMapId === sid) _resetMapView();
-    toast('지도 취소됨');
+    toast(T('map_cancelled'));
   }
   _utmPendingPdfDoc = _utmPendingFile = _utmPendingSlot = null;
 }
