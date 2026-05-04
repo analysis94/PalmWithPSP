@@ -978,6 +978,19 @@ ko: {
   pdf_cleared:'지도가 삭제됐습니다.',
   pdf_change_btn:'지도 변경',
   // 새로 추가된 UI 요소들
+  // 트래킹 관련
+  trk_none:'저장된 트랙 없음',
+  trk_date_none:'날짜 없음',
+  trk_count:'개',
+  trk_vis_title:'표시/숨김',
+  trk_gpx_title:'GPX 내보내기',
+  trk_txt_title:'TXT 내보내기',
+  trk_del_title:'삭제',
+  trk_all_gpx:'📤 전체 GPX',
+  trk_all_txt:'📄 전체 TXT',
+  trk_not_found:'트랙을 찾을 수 없습니다.',
+  trk_none_save:'저장된 트랙이 없습니다.',
+  trk_exported:'개 트랙',
   maps_btn:'지도',
   no_loc:'위치 없음',
   pdf_menu_title:'🗺 지도 관리',
@@ -1061,6 +1074,19 @@ en: {
   pdf_cleared:'Map deleted.',
   pdf_change_btn:'Change Map',
   maps_btn:'Maps',
+  // 트래킹 관련
+  trk_none:'No saved tracks',
+  trk_date_none:'Unknown date',
+  trk_count:'',
+  trk_vis_title:'Show/Hide',
+  trk_gpx_title:'Export GPX',
+  trk_txt_title:'Export TXT',
+  trk_del_title:'Delete',
+  trk_all_gpx:'📤 All GPX',
+  trk_all_txt:'📄 All TXT',
+  trk_not_found:'Track not found.',
+  trk_none_save:'No tracks saved.',
+  trk_exported:'track(s)',
   no_loc:'No Location',
   pdf_menu_title:'🗺 Map Manager',
   pdf_change:'Load New Map',
@@ -1143,6 +1169,19 @@ id: {
   pdf_cleared:'Peta dihapus.',
   pdf_change_btn:'Ganti Peta',
   maps_btn:'Peta',
+  // 트래킹 관련
+  trk_none:'Belum ada trek tersimpan',
+  trk_date_none:'Tanggal tidak diketahui',
+  trk_count:'',
+  trk_vis_title:'Tampilkan/Sembunyikan',
+  trk_gpx_title:'Ekspor GPX',
+  trk_txt_title:'Ekspor TXT',
+  trk_del_title:'Hapus',
+  trk_all_gpx:'📤 Semua GPX',
+  trk_all_txt:'📄 Semua TXT',
+  trk_not_found:'Trek tidak ditemukan.',
+  trk_none_save:'Belum ada trek tersimpan.',
+  trk_exported:'trek',
   no_loc:'Tanpa Lokasi',
   pdf_menu_title:'🗺 Kelola Peta',
   pdf_change:'Muat Peta Baru',
@@ -3234,7 +3273,25 @@ function toggleTrack(){
 function stopAndSaveTrack(){
   if(!trackOn||trkPts.length<2){ toast('트랙 포인트 부족'); trackOn=false; document.getElementById('btn-track')?.classList.remove('on'); document.getElementById('track-recording-info').style.display='none'; hidePanel('track-panel'); return; }
   const slot=curSlot(); if(!slot){ toast('지도를 먼저 불러오세요'); return; }
-  slot.tracks.push({ id:'trk_'+Date.now(), name:new Date(trkStart).toLocaleString(), color:trkCurrentColor, visible:true, pts:trkPts.slice(), startTime:trkStart.toISOString(), dist:calcDist() });
+  // 자동 이름: YYYY-MM-DD_NNN (날짜별 일련번호)
+  const _trkDate = trkStart.toISOString().slice(0,10); // 2026-05-03
+  const _pad3 = n => String(n).padStart(3,'0');
+  const _sameDayCount = (slot.tracks||[]).filter(t=>
+    (t.startTime||'').slice(0,10) === _trkDate
+  ).length + 1;
+  const _trkName = _trkDate + '_' + _pad3(_sameDayCount); // 2026-05-03_001
+  slot.tracks.push({
+    id: 'trk_'+Date.now(),
+    name: _trkName,
+    date: _trkDate,
+    seq: _sameDayCount,
+    color: trkCurrentColor,
+    visible: true,
+    pts: trkPts.slice(),
+    startTime: trkStart.toISOString(),
+    endTime: new Date().toISOString(),
+    dist: calcDist()
+  });
   saveSlotsMeta(); trackOn=false; trkPts=[];
   document.getElementById('btn-track')?.classList.remove('on');
   document.getElementById('track-recording-info').style.display='none';
@@ -3245,16 +3302,171 @@ function discardTrack(){
   trackOn=false; trkPts=[];
   document.getElementById('btn-track')?.classList.remove('on');
   document.getElementById('track-recording-info').style.display='none';
-  hidePanel('track-panel'); toast('트랙 삭제됨');
+  hidePanel('track-panel'); toast(T('track_clr'));
 }
 function deleteTrack(trkId){ const slot=curSlot(); if(!slot) return; slot.tracks=slot.tracks.filter(t=>t.id!==trkId); saveSlotsMeta(); drawGPS(); renderTrackList(); toast('트랙 삭제됨'); }
 function toggleTrackVisible(trkId){ const slot=curSlot(); if(!slot) return; const t=slot.tracks.find(t=>t.id===trkId); if(t){ t.visible=!t.visible; saveSlotsMeta(); drawGPS(); renderTrackList(); } }
 function renderTrackList(){
   const body=document.getElementById('track-list-body'); if(!body) return;
   const tracks=curSlot()?.tracks||[];
-  if(!tracks.length){ body.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0">저장된 트랙 없음</div>'; return; }
-  body.innerHTML=tracks.slice().reverse().map(t=>`<div class="track-item"><div class="track-color-swatch" style="background:${t.color}" onclick="toggleTrackVisible('${t.id}')"></div><div class="track-item-info"><div class="track-item-name">${escHTML(t.name)}</div><div class="track-item-meta">${Math.round(t.dist||0)}m · ${(t.pts||[]).length}pts</div></div><button class="track-vis-btn ${t.visible?'on':''}" onclick="toggleTrackVisible('${t.id}')">${t.visible?'👁':'🚫'}</button><button class="track-del-btn" onclick="deleteTrack('${t.id}')">🗑</button></div>`).join('')+`<button class="btn-green" onclick="exportGPXAll()" style="width:100%;border:none;margin-top:6px">📤 GPX 내보내기</button>`;
+  if(!tracks.length){
+    body.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0">'+T('trk_none')+'</div>';
+    return;
+  }
+
+  // 날짜별 그룹화
+  const grps={};
+  tracks.slice().reverse().forEach(t=>{
+    const d = t.date || (t.startTime||'').slice(0,10) || T('trk_date_none');
+    if(!grps[d]) grps[d]=[];
+    grps[d].push(t);
+  });
+
+  let html2 = '';
+  Object.keys(grps).forEach(date=>{
+    html2 += `<div style="font-size:10px;color:var(--text3);padding:4px 2px 2px;font-family:var(--mono)">${date} (${grps[date].length}${T('trk_count')})</div>`;
+    html2 += grps[date].map(t=>`
+      <div class="track-item">
+        <div class="track-color-swatch" style="background:${t.color}" onclick="toggleTrackVisible('${t.id}')"></div>
+        <div class="track-item-info">
+          <div class="track-item-name">${escHTML(t.name)}</div>
+          <div class="track-item-meta">${Math.round(t.dist||0)}m &middot; ${(t.pts||[]).length}pts
+            ${t.endTime ? ' &middot; ' + _trkDuration(t.startTime,t.endTime) : ''}</div>
+        </div>
+        <button class="track-vis-btn ${t.visible?'on':''}" onclick="toggleTrackVisible('${t.id}')" title="${T('trk_vis_title')}">${t.visible?'👁':'🚫'}</button>
+        <button onclick="exportTrackGPX('${t.id}')" title="${T('trk_gpx_title')}"
+          style="background:var(--bg3);color:var(--green);border:.5px solid var(--border);border-radius:5px;padding:4px 6px;font-size:10px;cursor:pointer;margin-left:2px">GPX</button>
+        <button onclick="exportTrackTXT('${t.id}')" title="${T('trk_txt_title')}"
+          style="background:var(--bg3);color:var(--amber);border:.5px solid var(--border);border-radius:5px;padding:4px 6px;font-size:10px;cursor:pointer;margin-left:2px">TXT</button>
+        <button class="track-del-btn" onclick="deleteTrack('${t.id}')" title="${T('trk_del_title')}">🗑</button>
+      </div>`).join('');
+  });
+
+  // 전체 내보내기 버튼
+  html2 += `<div style="display:flex;gap:6px;margin-top:8px">
+    <button class="btn-green" onclick="exportGPXAll()"
+      style="flex:1;border:none;font-size:11px;padding:8px">${T('trk_all_gpx')}</button>
+    <button onclick="exportAllTracksTXT()"
+      style="flex:1;background:var(--amber);color:#111;border:none;border-radius:8px;font-size:11px;padding:8px;cursor:pointer;font-weight:700">${T('trk_all_txt')}</button>
+  </div>`;
+  body.innerHTML = html2;
 }
+
+// 트랙 소요 시간 계산
+function _trkDuration(start, end){
+  if(!start||!end) return '';
+  const ms = new Date(end) - new Date(start);
+  const m = Math.floor(ms/60000);
+  const h = Math.floor(m/60);
+  return h>0 ? h+'h'+('0'+m%60).slice(-2)+'m' : m+'m';
+}
+/* ─── 트랙 Export 함수 ─── */
+
+// 단일 트랙 TXT 내보내기
+function exportTrackTXT(trkId){
+  const slot = curSlot(); if(!slot) return;
+  const t = (slot.tracks||[]).find(t=>t.id===trkId);
+  if(!t){ toast(T('trk_not_found')); return; }
+  _doExportTrackTXT([t], slot.name||'map', t.name);
+}
+
+// 전체 트랙 TXT 내보내기
+function exportAllTracksTXT(){
+  const slot = curSlot(); if(!slot) return;
+  const tracks = (slot.tracks||[]).filter(t=>(t.pts||[]).length>=2);
+  if(!tracks.length){ toast(T('trk_none_save')); return; }
+  const now = new Date();
+  const dateTag = now.toISOString().slice(0,10);
+  _doExportTrackTXT(tracks, slot.name||'map', 'ALL_'+dateTag);
+}
+
+// 단일 트랙 GPX 내보내기
+function exportTrackGPX(trkId){
+  const slot = curSlot(); if(!slot) return;
+  const t = (slot.tracks||[]).find(t=>t.id===trkId);
+  if(!t||(t.pts||[]).length<2){ toast(T('gpx_few')); return; }
+  const gpx = '<?xml version="1.0"?>\n<gpx version="1.1" creator="PalmFarmMap">\n'
+    + `  <trk><name>${escHTML(t.name)}</name><trkseg>\n`
+    + t.pts.map(p=>`    <trkpt lat="${p.lat}" lon="${p.lon}"><time>${p.time}</time></trkpt>`).join('\n')
+    + `\n  </trkseg></trk>\n</gpx>`;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([gpx],{type:'application/gpx+xml'}));
+  a.download = (slot.name||'track').replace(/[^\w가-힣a-zA-Z0-9_-]/g,'_').substring(0,20)
+             + '_' + t.name + '.gpx';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); document.body.removeChild(a); },1000);
+  toast(T('gpx_ok'));
+}
+
+// TXT 파일 생성 핵심 함수
+function _doExportTrackTXT(tracks, mapName, fileTag){
+  const now = new Date();
+  const pad2 = n => String(n).padStart(2,'0');
+  const dateStr = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}`;
+  const timeStr = `${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`;
+
+  const SEP1 = '='.repeat(54);
+  const SEP2 = '-'.repeat(54);
+  const lines = [];
+
+  lines.push(SEP1);
+  lines.push('  Palm Farm Field Map - Track Report');
+  lines.push(SEP1);
+  lines.push(`Map      : ${mapName}`);
+  lines.push(`Exported : ${dateStr} ${timeStr}`);
+  lines.push(`Tracks   : ${tracks.length}`);
+  const totalDist = tracks.reduce((s,t)=>s+(t.dist||0),0);
+  lines.push(`Total    : ${(totalDist/1000).toFixed(2)} km`);
+  lines.push('');
+
+  tracks.forEach((t, ti) => {
+    lines.push(SEP2);
+    lines.push(`  Track  : ${t.name}`);
+    lines.push(SEP2);
+    lines.push(`  ID     : ${t.id}`);
+    lines.push(`  Date   : ${(t.startTime||'').slice(0,10)}`);
+    lines.push(`  Start  : ${(t.startTime||'').replace('T',' ').slice(0,19)} UTC`);
+    lines.push(`  End    : ${(t.endTime||'').replace('T',' ').slice(0,19)} UTC`);
+    if(t.startTime && t.endTime){
+      lines.push(`  Duration: ${_trkDuration(t.startTime, t.endTime)}`);
+    }
+    lines.push(`  Distance: ${(t.dist||0).toFixed(0)} m (${((t.dist||0)/1000).toFixed(2)} km)`);
+    lines.push(`  Points : ${(t.pts||[]).length}`);
+    lines.push('');
+
+    // 포인트 목록
+    lines.push('  No.   Latitude        Longitude       Time (UTC)');
+    lines.push('  ' + '-'.repeat(50));
+    (t.pts||[]).forEach((p, pi) => {
+      const num = String(pi+1).padStart(4,' ');
+      const lat = p.lat.toFixed(6).padStart(11,' ');
+      const lon = p.lon.toFixed(6).padStart(12,' ');
+      const tm  = (p.time||'').replace('T',' ').slice(0,19);
+      lines.push(`  ${num}  ${lat}      ${lon}   ${tm}`);
+    });
+    lines.push('');
+  });
+
+  lines.push(SEP1);
+  lines.push('  End of Report');
+  lines.push(SEP1);
+
+  const content = lines.join('\r\n');
+  const blob = new Blob(['\uFEFF' + content], { type: 'text/plain' });
+
+  const safeMap = mapName.replace(/[^\w가-힣a-zA-Z0-9_-]/g,'_').substring(0,20);
+  const safeTag = fileTag.replace(/[^\w가-힣a-zA-Z0-9_-]/g,'_').substring(0,20);
+  const filename = `track_${safeMap}_${safeTag}.txt`;
+
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 1500);
+  toast('✅ ' + filename + ' (' + tracks.length + ' ' + T('trk_exported') + ', ' + (totalDist/1000).toFixed(2) + 'km)');
+}
+
+
 function exportGPXAll(){
   const slot=curSlot(); if(!slot) return;
   const vis=slot.tracks.filter(t=>t.visible&&(t.pts||[]).length>=2);
