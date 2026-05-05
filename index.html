@@ -371,7 +371,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 <!-- TOP BAR -->
 <div id="topbar">
   <div class="logo">🌴 PALM<em> MAP</em></div>
-  <div id="app-ver" style="font-size:8px;color:var(--text3);font-family:var(--mono);margin-left:2px;align-self:flex-end;padding-bottom:8px">v0.055</div>
+  <div id="app-ver" style="font-size:8px;color:var(--text3);font-family:var(--mono);margin-left:2px;align-self:flex-end;padding-bottom:8px">v0.057</div>
   <div id="ts"></div>
   <button class="tbtn" id="btn-maps" onclick="toggleMapSwitcher()">
     🗺 <span id="t-maps">지도</span>
@@ -838,7 +838,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
   <div class="import-zone" onclick="triggerTiff()" style="margin-top:8px;border-color:rgba(232,168,74,.5)">
     <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="6" width="24" height="20" rx="2"/><path d="M4 12h24M10 6v6M16 6v6M22 6v6"/><circle cx="22" cy="22" r="4" fill="rgba(232,168,74,.3)" stroke="rgba(232,168,74,.9)"/><path d="M20 22h4M22 20v4" stroke="rgba(232,168,74,.9)"/></svg>
     <p id="t-tiff-import" style="color:var(--amber)">GeoTIFF 베이스맵 불러오기</p>
-    <small id="t-tiff-import-s">위성사진·항공사진 배경 지도 (.tif)</small>
+    <small id="t-tiff-import-s">위성사진·항공사진 배경 지도 (.tif) · TFW 함께 선택 가능</small>
     <small id="tiff-cache-status" style="font-size:9.5px;margin-top:3px;display:block;cursor:help" onclick="checkTiffCacheStatus()">📷 캐시 상태 확인...</small>
   </div>
   <div id="tiff-status" style="display:none;font-size:11px;color:var(--amber);padding:8px 10px;background:rgba(232,168,74,.1);border-radius:8px;margin-bottom:8px;border:.5px solid rgba(232,168,74,.3)">
@@ -1019,8 +1019,8 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 <div id="toast"></div>
 
 <input type="file" id="pdf-input" accept=".pdf,application/pdf" style="display:none" onchange="loadPDF(this)">
-<input type="file" id="geo-input" accept=".geojson,.json,.csv,.gpkg" style="display:none" onchange="loadGeo(this)">
-<input type="file" id="tiff-input" accept=".tif,.tiff" style="display:none" onchange="loadGeoTIFF(this)">
+<input type="file" id="geo-input" accept=".geojson,.json,.csv,.gpkg" style="display:none" onchange="loadGeo(this)" multiple>
+<input type="file" id="tiff-input" accept=".tif,.tiff,.tfw" style="display:none" onchange="loadGeoTIFF(this)" multiple>
 
 <!-- ══════════════════════════════════════════════════════════
      SERVICE WORKER 등록 + PWA 고급 기능 초기화
@@ -5304,14 +5304,62 @@ function triggerTiff() {
 }
 
 // GeoTIFF 파일 로드 핸들러
+// ── TFW 파일 파싱 헬퍼 ─────────────────────────────────────
+// TFW World File 6줄 형식:
+//   line1: 픽셀 너비 (x방향 해상도)
+//   line2: 회전 x (보통 0)
+//   line3: 회전 y (보통 0)
+//   line4: 픽셀 높이 (y방향 해상도, 음수)
+//   line5: 좌상단 픽셀 중심 X 좌표
+//   line6: 좌상단 픽셀 중심 Y 좌표
+function parseTFW(text) {
+  const nums = text.trim().split(/\s+/).map(Number).filter(v => !isNaN(v));
+  if (nums.length < 6) return null;
+  return {
+    pixelW: nums[0],  // x 해상도 (양수)
+    rotX:   nums[1],
+    rotY:   nums[2],
+    pixelH: nums[3],  // y 해상도 (음수)
+    originX: nums[4], // 좌상단 X
+    originY: nums[5], // 좌상단 Y
+  };
+}
+
+// TFW로부터 BBox 계산 (픽셀 수 필요)
+function tfw2BBox(tfw, width, height) {
+  // 좌상단 픽셀 중심 → 모서리 좌표
+  const halfPW = Math.abs(tfw.pixelW) / 2;
+  const halfPH = Math.abs(tfw.pixelH) / 2;
+  const minX = tfw.originX - halfPW;
+  const maxX = tfw.originX + tfw.pixelW * (width - 1) + halfPW;
+  const maxY = tfw.originY + halfPH;
+  const minY = tfw.originY + tfw.pixelH * (height - 1) - halfPH;
+  return [minX, Math.min(minY, maxY), maxX, Math.max(minY, maxY)];
+}
+
 async function loadGeoTIFF(input) {
-  const file = input.files?.[0];
-  if (!file) return;
-  input.value = '';
+  // 파일 목록에서 TIF와 TFW 분리
+  const files   = Array.from(input.files || []);
+  input.value   = '';
+  const tifFile = files.find(f => /\.(tif|tiff)$/i.test(f.name));
+  const tfwFile = files.find(f => /\.tfw$/i.test(f.name));
+
+  if (!tifFile) { toast(T('tiff_error') + ': TIF 파일 없음'); return; }
+
+  // TFW 텍스트 읽기 (있으면)
+  let tfwData = null;
+  if (tfwFile) {
+    try {
+      const tfwText = await tfwFile.text();
+      tfwData = parseTFW(tfwText);
+      if (tfwData) console.log('[TFW] 로드됨:', tfwData);
+      else console.warn('[TFW] 파싱 실패');
+    } catch(e) { console.warn('[TFW] 읽기 오류:', e); }
+  }
 
   // 200MB 경고
-  if (file.size > 200 * 1024 * 1024) {
-    if (!confirm(T('tiff_too_large') + `\n${(file.size/1024/1024).toFixed(0)}MB`)) return;
+  if (tifFile.size > 200 * 1024 * 1024) {
+    if (!confirm(T('tiff_too_large') + `\n${(tifFile.size/1024/1024).toFixed(0)}MB`)) return;
   }
 
   showLoad(T('tiff_loading'));
@@ -5320,59 +5368,110 @@ async function loadGeoTIFF(input) {
     const GeoTIFF = await loadGeoTIFFLib();
     if (!GeoTIFF) { toast(T('tiff_error') + ': 라이브러리 없음'); hideLoad(); return; }
 
-    // 2. 파일 읽기
-    const buf = await file.arrayBuffer();
-    const tiff = await GeoTIFF.fromArrayBuffer(buf);
+    // 2. TIF 파일 읽기
+    const buf   = await tifFile.arrayBuffer();
+    const tiff  = await GeoTIFF.fromArrayBuffer(buf);
     const image = await tiff.getImage();
 
-    const width  = image.getWidth();
-    const height = image.getHeight();
-    const geoKeys = image.getGeoKeys() || {};
+    const width           = image.getWidth();
+    const height          = image.getHeight();
+    const geoKeys         = image.getGeoKeys() || {};
     const samplesPerPixel = image.getSamplesPerPixel();
 
-    // 3. EPSG 코드 추출 (여러 geoKey 조합)
+    // 3. EPSG 코드 추출
     const epsg = geoKeys.ProjectedCSTypeGeoKey  ||
                  geoKeys.GeographicTypeGeoKey   ||
                  geoKeys.GeogGeodeticDatumGeoKey || 0;
 
-    // 4. BBox 추출
-    const bbox = image.getBoundingBox(); // [minX, minY, maxX, maxY]
+    // 4. BBox 결정: TFW 우선 → GeoTIFF 내장 → 폴백
     let minLon, minLat, maxLon, maxLat;
+    let bboxSource = '';
 
-    const isUTM = epsg >= 32600 && epsg <= 32799;
-    const isWGS = epsg === 4326 || epsg === 4269 || epsg === 0 ||
-                  (Math.abs(bbox[0]) <= 180 && Math.abs(bbox[1]) <= 90 &&
-                   Math.abs(bbox[2]) <= 180 && Math.abs(bbox[3]) <= 90);
+    // ── 4-A: TFW가 있으면 TFW 우선 사용 ────────────────────
+    if (tfwData) {
+      const [bx0, by0, bx1, by1] = tfw2BBox(tfwData, width, height);
+      console.log('[TFW] BBox:', bx0, by0, bx1, by1);
 
-    if (isUTM) {
-      const zone  = epsg >= 32700 ? epsg - 32700 : epsg - 32600;
-      const north = epsg < 32700;
-      try {
-        const [lon0, lat0] = utmToWGS84(bbox[0], bbox[1], zone, north);
-        const [lon1, lat1] = utmToWGS84(bbox[2], bbox[3], zone, north);
-        minLon = Math.min(lon0, lon1); maxLon = Math.max(lon0, lon1);
-        minLat = Math.min(lat0, lat1); maxLat = Math.max(lat0, lat1);
-      } catch(e) {
-        toast(T('tiff_no_geo') + ': UTM 변환 실패');
-        [minLon, minLat, maxLon, maxLat] = [bbox[0], bbox[1], bbox[2], bbox[3]];
+      // TFW 좌표가 UTM인지 WGS84인지 판별
+      const tfwIsUTM = Math.abs(bx0) > 180 || Math.abs(by0) > 90;
+
+      if (tfwIsUTM) {
+        // UTM → WGS84 변환
+        // Zone은 EPSG에서, 없으면 좌표로 추정
+        let zone = null, north = false;
+        if (epsg >= 32600 && epsg <= 32799) {
+          zone  = epsg >= 32700 ? epsg - 32700 : epsg - 32600;
+          north = epsg < 32700;
+        } else {
+          // 좌표값으로 Zone 추정 (칼리만탄 기본: 49S)
+          if (calibPts.length >= 2 || curPos) {
+            const refLon = curPos?.lon || 111.0;
+            zone  = Math.floor((refLon + 180) / 6) + 1;
+            north = (curPos?.lat || -0.1) >= 0;
+          } else {
+            zone = 49; north = false;
+          }
+        }
+        try {
+          const [lon0, lat0] = utmToWGS84(bx0, by0, zone, north);
+          const [lon1, lat1] = utmToWGS84(bx1, by1, zone, north);
+          minLon = Math.min(lon0, lon1); maxLon = Math.max(lon0, lon1);
+          minLat = Math.min(lat0, lat1); maxLat = Math.max(lat0, lat1);
+          bboxSource = 'TFW+UTM';
+          console.log('[TFW] UTM→WGS84 변환 완료. zone=' + zone + (north?'N':'S'));
+        } catch(e) {
+          console.warn('[TFW] UTM 변환 실패:', e);
+        }
+      } else {
+        // WGS84 직접 사용
+        minLon = bx0; maxLon = bx1;
+        minLat = by0; maxLat = by1;
+        bboxSource = 'TFW+WGS84';
       }
-    } else if (isWGS) {
-      // WGS84 직접 사용
-      minLon = bbox[0]; minLat = bbox[1];
-      maxLon = bbox[2]; maxLat = bbox[3];
-    } else {
-      // 알 수 없는 좌표계 → calibPts 기반 추정
-      toast(T('tiff_no_geo'));
-      if (calibPts.length >= 2) {
-        const refLL = calibPts.map(p => c2ll(p.px, p.py)).filter(Boolean);
-        if (refLL.length >= 2) {
-          minLon = Math.min(...refLL.map(p=>p.lon));
-          maxLon = Math.max(...refLL.map(p=>p.lon));
-          minLat = Math.min(...refLL.map(p=>p.lat));
-          maxLat = Math.max(...refLL.map(p=>p.lat));
+    }
+
+    // ── 4-B: TFW 없거나 실패 → GeoTIFF 내장 BBox ──────────
+    if (minLon == null) {
+      const bbox   = image.getBoundingBox();
+      const isUTM  = epsg >= 32600 && epsg <= 32799;
+      const isWGS  = epsg === 4326 || epsg === 4269 || epsg === 0 ||
+                     (Math.abs(bbox[0]) <= 180 && Math.abs(bbox[1]) <= 90 &&
+                      Math.abs(bbox[2]) <= 180 && Math.abs(bbox[3]) <= 90);
+
+      if (isUTM) {
+        const zone  = epsg >= 32700 ? epsg - 32700 : epsg - 32600;
+        const north = epsg < 32700;
+        try {
+          const [lon0, lat0] = utmToWGS84(bbox[0], bbox[1], zone, north);
+          const [lon1, lat1] = utmToWGS84(bbox[2], bbox[3], zone, north);
+          minLon = Math.min(lon0, lon1); maxLon = Math.max(lon0, lon1);
+          minLat = Math.min(lat0, lat1); maxLat = Math.max(lat0, lat1);
+          bboxSource = 'GeoTIFF+UTM';
+        } catch(e) {
+          [minLon, minLat, maxLon, maxLat] = [bbox[0], bbox[1], bbox[2], bbox[3]];
+          bboxSource = 'GeoTIFF+raw';
+        }
+      } else if (isWGS) {
+        minLon = bbox[0]; minLat = bbox[1];
+        maxLon = bbox[2]; maxLat = bbox[3];
+        bboxSource = 'GeoTIFF+WGS84';
+      } else {
+        // 마지막 폴백: calibPts 기반 추정
+        toast(T('tiff_no_geo'));
+        if (calibPts.length >= 2) {
+          const refLL = calibPts.map(p => c2ll(p.px, p.py)).filter(Boolean);
+          if (refLL.length >= 2) {
+            minLon = Math.min(...refLL.map(p=>p.lon));
+            maxLon = Math.max(...refLL.map(p=>p.lon));
+            minLat = Math.min(...refLL.map(p=>p.lat));
+            maxLat = Math.max(...refLL.map(p=>p.lat));
+            bboxSource = 'calibPts';
+          }
         }
       }
     }
+
+    console.log('[GeoTIFF] BBox source:', bboxSource, minLon, minLat, maxLon, maxLat);
 
     // 좌표 유효성 최종 검사
     if (minLon == null || isNaN(minLon)) {
@@ -5453,11 +5552,12 @@ async function loadGeoTIFF(input) {
       canvas: offCanvas,
       bbox: { minLon, minLat, maxLon, maxLat },
       width: rW, height: rH,
-      filename: file.name,
+      filename: tifFile.name,
       opacity: 0.85,
       epsg,
       resolution: resText,
-      fileSizeMB: (file.size / 1024 / 1024).toFixed(1)
+      tfwSource: bboxSource,
+      fileSizeMB: (tifFile.size / 1024 / 1024).toFixed(1)
     };
 
     renderGeoTIFF();
@@ -5691,9 +5791,11 @@ function updateTIFFStatus() {
   }
   const st = geoTIFFState;
   statusDiv.style.display = '';
+  const tfwBadge = st.tfwSource?.startsWith('TFW') ? ' 📄TFW' : '';
   textEl.textContent = `🗺 ${st.filename.replace(/\.[^.]+$/,'')} · ${st.width}×${st.height}px`
     + (st.resolution ? ` · ${st.resolution}` : '')
-    + ` · ${st.fileSizeMB}MB`;
+    + ` · ${st.fileSizeMB}MB`
+    + tfwBadge;
 }
 
 // renderPg / drawGPS 호출 후 GeoTIFF 재렌더링 훅
@@ -5770,33 +5872,37 @@ function triggerGeo() {
 
 // 파일 입력 핸들러 — 확장자별 분기
 async function loadGeo(input) {
-  const file = input.files?.[0];
-  if (!file) return;
+  const files = Array.from(input.files || []);
+  if (!files.length) return;
   input.value = ''; // 동일 파일 재선택 허용
 
-  const fname = file.name.toLowerCase();
-  const ext = fname.split('.').pop();
-
-  showLoad(T('gpkg_loading'));
-  try {
-    if (ext === 'gpkg') {
-      const buf = await file.arrayBuffer();
-      await loadGPKG(buf, file.name);
-    } else if (ext === 'geojson' || ext === 'json') {
-      const text = await file.text();
-      const gj = JSON.parse(text);
-      importGeoJSON(gj, file.name);
-      toast(T('gpkg_ok'));
-    } else if (ext === 'csv') {
-      const text = await file.text();
-      importCSV(text, file.name);
-      toast(T('gpkg_ok'));
-    } else {
-      toast('❌ ' + ext + ' 포맷 미지원');
+  // 다중 파일 순차 처리 (GPKG 5개까지 지원)
+  let totalLoaded = 0;
+  for (const file of files) {
+    const fname = file.name.toLowerCase();
+    const ext   = fname.split('.').pop();
+    showLoad(T('gpkg_loading') + (files.length > 1 ? ` (${totalLoaded+1}/${files.length})` : ''));
+    try {
+      if (ext === 'gpkg') {
+        const buf = await file.arrayBuffer();
+        await loadGPKG(buf, file.name);
+        totalLoaded++;
+      } else if (ext === 'geojson' || ext === 'json') {
+        const text = await file.text();
+        const gj = JSON.parse(text);
+        importGeoJSON(gj, file.name);
+        toast(T('gpkg_ok')); totalLoaded++;
+      } else if (ext === 'csv') {
+        const text = await file.text();
+        importCSV(text, file.name);
+        toast(T('gpkg_ok')); totalLoaded++;
+      } else {
+        toast('❌ ' + ext + ' 포맷 미지원');
+      }
+    } catch(e) {
+      console.error('loadGeo error:', file.name, e);
+      toast(T('gpkg_error') + ' [' + file.name.substring(0,20) + ']: ' + (e.message||'').substring(0,40));
     }
-  } catch(e) {
-    console.error('loadGeo error:', e);
-    toast(T('gpkg_error') + ': ' + e.message.substring(0,50));
   }
   hideLoad();
 }
@@ -5836,16 +5942,24 @@ async function loadGPKG(buf, fname) {
   }
 
   // 3. 좌표계 (EPSG) 확인
-  // srs_id로 EPSG 코드 매핑
-  let epsgCode = 4326; // 기본값 WGS84
+  // srs_id: gpkg_contents → 없으면 gpkg_geometry_columns → 없으면 gpkg_spatial_ref_sys 전체
+  let epsgCode = 4326;
   try {
-    if (tables[0].srsId) {
+    let srsId = tables[0].srsId;
+    // gpkg_contents.srs_id가 비어있는 경우 gpkg_geometry_columns에서 시도
+    if (!srsId) {
+      const gcRes = db.exec(
+        `SELECT srs_id FROM gpkg_geometry_columns WHERE table_name='${tables[0].table}' LIMIT 1`
+      );
+      if (gcRes.length && gcRes[0].values.length) srsId = gcRes[0].values[0][0];
+    }
+    if (srsId) {
       const srsRes = db.exec(
-        `SELECT organization, organization_coordsys_id FROM gpkg_spatial_ref_sys WHERE srs_id=${tables[0].srsId}`
+        `SELECT organization, organization_coordsys_id FROM gpkg_spatial_ref_sys WHERE srs_id=${srsId}`
       );
       if (srsRes.length && srsRes[0].values.length) {
         const [org, orgId] = srsRes[0].values[0];
-        if (org.toUpperCase() === 'EPSG') epsgCode = parseInt(orgId);
+        if (org && org.toUpperCase() === 'EPSG') epsgCode = parseInt(orgId);
       }
     }
   } catch(e) { /* SRS 읽기 실패 시 기본값 사용 */ }
@@ -5880,10 +5994,21 @@ async function loadGPKG(buf, fname) {
       if (!colRes.length) continue;
       const cols = colRes[0].values.map(r => r[1]); // name column
 
-      // geom 컬럼 찾기
-      const geomCol = cols.find(c =>
-        ['geom','geometry','GEOM','GEOMETRY','the_geom','shape'].includes(c)
-      ) || cols[0];
+      // geom 컬럼 찾기: gpkg_geometry_columns 우선, 없으면 대소문자 불문 탐색
+      let geomCol = null;
+      try {
+        const gcr = db.exec(
+          `SELECT column_name FROM gpkg_geometry_columns WHERE table_name='${tbl.table}' LIMIT 1`
+        );
+        if (gcr.length && gcr[0].values.length) geomCol = gcr[0].values[0][0];
+      } catch(_) {}
+      if (!geomCol) {
+        // 대소문자 불문 매칭 (SHAPE, Shape, GEOM, geom 등 모두 처리)
+        geomCol = cols.find(c => {
+          const cl = c.toLowerCase();
+          return cl==='geom' || cl==='geometry' || cl==='the_geom' || cl==='shape' || cl==='wkb_geometry';
+        }) || cols[0];
+      }
 
       // 속성 컬럼 (geom 제외)
       const attrCols = cols.filter(c => c !== geomCol);
@@ -5959,12 +6084,19 @@ function parseWKB(wkbRaw, utmZone, utmNorth) {
     // 헤더: 'GP' (2바이트) + version(1) + flags(1) + srs_id(4) + [envelope]
     let offset = 0;
     if (bytes[0] === 0x47 && bytes[1] === 0x50) {
-      // GPKG 헤더
+      // GPKG 헤더:
+      //   byte0-1: 'GP' magic
+      //   byte2:   version
+      //   byte3:   flags
+      //     bits1-3: envelope indicator (0=없음,1=2D,2=3D,3=3DM,4=3DZM)
+      //   byte4-7: srs_id (int32)
+      //   byte8+:  envelope (optional)
       const flags = bytes[3];
-      const envelopeCode = (flags >> 1) & 0x07;
+      const envCode = (flags >> 1) & 0x07;
+      // 0→0B, 1→32B(4×8), 2→48B(6×8), 3→48B(6×8), 4→64B(8×8)
       const envelopeSizes = [0, 32, 48, 48, 64];
-      const envelopeSize = envelopeCode < envelopeSizes.length ? envelopeSizes[envelopeCode] : 0;
-      offset = 8 + envelopeSize; // 헤더 8바이트 + envelope
+      const envelopeSize  = envCode < envelopeSizes.length ? envelopeSizes[envCode] : 32;
+      offset = 8 + envelopeSize;
     }
 
     // ISO WKB 파싱
@@ -5980,7 +6112,15 @@ function parseISOWKB(bytes, offset, utmZone, utmNorth) {
   const le = byteOrder === 1;
   offset++;
 
-  const wkbType = view.getUint32(offset, le) % 1000; // 타입 (Z,M 플래그 제거)
+  // wkbTypeRaw: 1~7(2D), 1001~1007(Z), 2001~2007(M), 3001~3007(ZM)
+  const wkbTypeRaw = view.getUint32(offset, le);
+  const wkbType    = wkbTypeRaw % 1000; // 순수 geometry type (1~7)
+  // Z/M 포함 여부
+  const hasZ = (wkbTypeRaw >= 1001 && wkbTypeRaw <= 1007)
+             || (wkbTypeRaw >= 3001 && wkbTypeRaw <= 3007)
+             || (wkbTypeRaw & 0x80000000) !== 0;  // ISO WKB Z flag
+  const hasM = (wkbTypeRaw >= 2001 && wkbTypeRaw <= 2007)
+             || (wkbTypeRaw >= 3001 && wkbTypeRaw <= 3007);
   offset += 4;
 
   const readDouble = () => {
@@ -5993,24 +6133,24 @@ function parseISOWKB(bytes, offset, utmZone, utmNorth) {
   // 좌표 변환 함수 (UTM → WGS84 또는 이미 WGS84)
   const toLatLon = (x, y) => {
     if (utmZone) {
-      // UTM → WGS84 역변환
       return utmToWGS84(x, y, utmZone, utmNorth);
     }
-    // WGS84 직접 사용 (lon, lat)
     return [x, y]; // GeoJSON 형식 [lon, lat]
   };
 
   const readPoint = () => {
     const x = readDouble(), y = readDouble();
-    if (wkbType === 1001 || wkbType === 3001) { readDouble(); } // Z
-    return toLatLon(x, y); // [lon, lat]
+    if (hasZ) readDouble(); // Z 스킵
+    if (hasM) readDouble(); // M 스킵
+    return toLatLon(x, y);
   };
 
   const readRing = (n) => {
     const pts = [];
     for (let i = 0; i < n; i++) {
       const x = readDouble(), y = readDouble();
-      if (wkbType > 1000) readDouble(); // Z 값 스킵
+      if (hasZ) readDouble(); // Z 스킵
+      if (hasM) readDouble(); // M 스킵
       pts.push(toLatLon(x, y));
     }
     return pts;
