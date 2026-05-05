@@ -371,7 +371,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 <!-- TOP BAR -->
 <div id="topbar">
   <div class="logo">🌴 PALM<em> MAP</em></div>
-  <div id="app-ver" style="font-size:8px;color:var(--text3);font-family:var(--mono);margin-left:2px;align-self:flex-end;padding-bottom:8px">v0.053</div>
+  <div id="app-ver" style="font-size:8px;color:var(--text3);font-family:var(--mono);margin-left:2px;align-self:flex-end;padding-bottom:8px">v0.055</div>
   <div id="ts"></div>
   <button class="tbtn" id="btn-maps" onclick="toggleMapSwitcher()">
     🗺 <span id="t-maps">지도</span>
@@ -2676,15 +2676,20 @@ async function extractGeoPDFCoords(pdfDocument, canvasW, canvasH, pdfFileName) {
                 if (bboxM && canvasW > 0 && canvasH > 0) {
                   const b = bboxM[1].trim().split(/\s+/).map(Number);
                   if (b.length >= 4) {
-                    // PDF 좌표계: 원점=좌하단, y위증가
-                    // 화면 좌표계: 원점=좌상단, y아래증가
-                    // ArcGIS BBox 형식: [x_left, y_bottom, x_right, y_top]
+                    // ★ PDF 좌표계: 원점=좌하단, y위증가
+                    // ★ ArcGIS PDF /VP /BBox 실제 순서: [xMin, yTop, xMax, yBottom]
+                    //   b[0]=xMin  (왼쪽 x)
+                    //   b[1]=yTop  (PDF y 상단=북쪽, 큰값)
+                    //   b[2]=xMax  (오른쪽 x)
+                    //   b[3]=yBot  (PDF y 하단=남쪽, 작은값)
+                    // 화면 y변환: screenY = pdfH - pdfY
+                    //   screenYNorth = pdfH - b[1] (b[1]=yTop→작은 screenY=위=북쪽) ✅
+                    //   screenYSouth = pdfH - b[3] (b[3]=yBot→큰 screenY=아래=남쪽) ✅
                     const pdfW = canvasW, pdfH = canvasH;
-                    const bLeft        = b[0];           // 지도 왼쪽 x
-                    const bRight       = b[2];           // 지도 오른쪽 x
-                    // PDF y → 화면 y 변환: screenY = pdfH - pdfY
-                    const screenYNorth = pdfH - b[3];   // 화면 위쪽(북) = 작은 값
-                    const screenYSouth = pdfH - b[1];   // 화면 아래쪽(남) = 큰 값
+                    const bLeft        = b[0];                   // 지도 왼쪽 x
+                    const bRight       = b[2];                   // 지도 오른쪽 x
+                    const screenYNorth = pdfH - b[1];   // 북쪽 화면y (작은값=위쪽)
+                    const screenYSouth = pdfH - b[3];   // 남쪽 화면y (큰값=아래쪽)
                     // 검증: 북쪽y < 남쪽y, 범위 내
                     // 안전장치: 전체 페이지와 동일한 BBox는 무시 (Form XObject 오파싱 방지)
                     const isFullPage = (bLeft < 1 && screenYNorth < 1 &&
@@ -2796,14 +2801,16 @@ async function extractGeoPDFCoords(pdfDocument, canvasW, canvasH, pdfFileName) {
 }
 
 // ── PDF 원시 데이터 추출 (강화) ──────────────────────────────
-async function getPDFRawTextV3(pdfDoc, maxBytes=2000000) {
+async function getPDFRawTextV3(pdfDoc, maxBytes=4000000) {
+  // GPTS/VP는 ArcGIS PDF 파일 끝 ~4KB에 위치
+  // _bytesToAscii가 head+tail 방식으로 60KB tail 확보
   // 방법 1: PDF.js 공식 API - getData() (PDF.js 2.x+)
   try {
     const data = await pdfDoc.getData();
     if (data && data.length > 100) {
       const text = _bytesToAscii(data, maxBytes);
       if (text.includes('%PDF')) {
-        console.log('[GeoPDF] getData() success, len:', text.length);
+        console.log('[GeoPDF] getData() success, len:', data.length, 'bytes');
         return text;
       }
     }
@@ -2833,10 +2840,24 @@ async function getPDFRawTextV3(pdfDoc, maxBytes=2000000) {
 // ── 바이트 배열 → ASCII 문자열 변환 ──────────────────────────
 function _bytesToAscii(src, maxBytes=2000000) {
   const bytes = new Uint8Array(src.buffer || src);
+  const len   = bytes.length;
+  // GPTS/VP는 ArcGIS GeoPDF의 파일 끝 ~10KB에 항상 위치함
+  // 파일이 maxBytes보다 크면 앞(WKT용) + 끝(GPTS/BBox용)을 합쳐서 반환
+  const TAIL  = 60000; // 마지막 60KB (GPTS/VP 확보용)
+  const toNum = (n) => { let t=''; for(let i=0;i<n;i++){ const c=bytes[i]; t+=(c>=32&&c<127)?String.fromCharCode(c):' '; } return t; };
+  if (len <= maxBytes) {
+    return toNum(len);
+  }
+  // 앞 (maxBytes-TAIL) + 뒤 TAIL 합치기
+  const headLen = Math.max(0, maxBytes - TAIL);
   let text = '';
-  for (let i=0; i<Math.min(bytes.length, maxBytes); i++) {
-    const c = bytes[i];
-    text += (c>=32&&c<127) ? String.fromCharCode(c) : ' ';
+  for (let i=0; i<headLen; i++) {
+    const c = bytes[i]; text += (c>=32&&c<127)?String.fromCharCode(c):' ';
+  }
+  text += ' [PDF_TAIL] ';
+  const tailStart = Math.max(headLen, len - TAIL);
+  for (let i=tailStart; i<len; i++) {
+    const c = bytes[i]; text += (c>=32&&c<127)?String.fromCharCode(c):' ';
   }
   return text;
 }
