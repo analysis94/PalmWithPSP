@@ -47,6 +47,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 #map-area{position:absolute;top:50px;left:0;right:0;bottom:74px;overflow:hidden;background:var(--bg);touch-action:none}
 #map-wrap{position:absolute;transform-origin:0 0;will-change:transform}
 #pdf-canvas{display:block;image-rendering:crisp-edges;image-rendering:-webkit-optimize-contrast}
+#measure-svg{position:absolute;top:0;left:0;pointer-events:none;z-index:85;overflow:visible}
 #layer-svg{position:absolute;top:0;left:0;overflow:visible;pointer-events:all}
 /* gps-svg: map-wrap 안, 캔버스와 동일 좌표계 (transform 자동 적용) */
 #gps-svg{position:absolute;top:0;left:0;overflow:visible;pointer-events:none;}
@@ -370,7 +371,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 <!-- TOP BAR -->
 <div id="topbar">
   <div class="logo">🌴 PALM<em> MAP</em></div>
-  <div id="app-ver" style="font-size:8px;color:var(--text3);font-family:var(--mono);margin-left:2px;align-self:flex-end;padding-bottom:8px">v0.039</div>
+  <div id="app-ver" style="font-size:8px;color:var(--text3);font-family:var(--mono);margin-left:2px;align-self:flex-end;padding-bottom:8px">v0.053</div>
   <div id="ts"></div>
   <button class="tbtn" id="btn-maps" onclick="toggleMapSwitcher()">
     🗺 <span id="t-maps">지도</span>
@@ -384,7 +385,25 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2"/></svg>
     <span id="t-calib">보정</span>
   </button>
-  <button class="tbtn" onclick="toggleLangPicker()" id="lang-btn">🌐</button>
+  <button class="tbtn" onclick="showPanel('measure-panel');initMeasure()" title="Measure">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M2 14L14 2M5 11l2-2M8 8l2-2M11 5l2-2"/>
+      <path d="M2 14l3-1-2-2z" fill="currentColor" stroke="none"/>
+    </svg>
+    <span id="t-tool-measure-btn" style="font-size:9px">📐</span>
+  </button>
+  <button class="tbtn" onclick="showPanel('bookmark-panel');renderBookmarkList()" title="Bookmark">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M3 2h10v13l-5-3-5 3V2z"/>
+    </svg>
+  </button>
+  <button class="tbtn" onclick="toggleLangPicker()" id="lang-btn"
+    style="font-size:13px;font-weight:700;min-width:36px;padding:0 6px;
+           background:rgba(122,180,80,.18);border:.5px solid rgba(122,180,80,.4);
+           border-radius:6px;color:var(--green2);letter-spacing:.5px"
+    title="Language / 언어 / Bahasa">
+    <span id="lang-btn-label">🌐</span>
+  </button>
   <button id="fs-btn" onclick="toggleFullscreen()" title="전체화면">⛶</button>
 </div>
 
@@ -420,6 +439,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     <div class="far-dist" id="gps-far-dist">—</div>
   </div>
   <div id="map-wrap">
+    <canvas id="geotiff-canvas" style="display:none;position:absolute;top:0;left:0;image-rendering:crisp-edges;image-rendering:-webkit-optimize-contrast"></canvas>
     <canvas id="pdf-canvas"></canvas>
     <svg id="layer-svg"></svg>
     <svg id="gps-svg"></svg>
@@ -442,6 +462,19 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
   <button class="zbtn" onclick="zoomBy(1.25)">+</button>
   <button class="zbtn" onclick="zoomBy(1/1.25)">−</button>
 </div>
+<button id="wl-btn" onclick="toggleWakeLock()"
+  style="position:absolute;right:10px;bottom:216px;width:32px;height:32px;
+         border-radius:8px;background:rgba(90,90,90,.15);
+         border:.5px solid rgba(120,120,120,.3);color:var(--text3);
+         font-size:13px;cursor:pointer;display:flex;align-items:center;
+         justify-content:center;z-index:90"
+  title="화면 꺼짐 방지">
+  <svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5">
+    <rect x="4" y="3" width="12" height="14" rx="2"/>
+    <circle cx="10" cy="13" r="1.5" fill="currentColor"/>
+    <line x1="10" y1="7" x2="10" y2="10"/>
+  </svg>
+</button>
 <button id="loc-btn" onclick="centerGPS()" title="내 위치">
   <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="3"/><path d="M10 1v3M10 16v3M1 10h3M16 10h3"/></svg>
 </button>
@@ -480,6 +513,77 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
   </button>
 </div>
 
+
+<!-- ══ 측정 도구 패널 ══ -->
+<div class="fpanel" id="measure-panel">
+  <button class="panel-close" onclick="closeMeasure()">×</button>
+  <h3 style="color:var(--amber);font-size:13px;font-weight:700;margin-bottom:12px">📐 <span id="t-tool-measure">측정</span></h3>
+
+  <!-- 탭 선택 -->
+  <div style="display:flex;gap:6px;margin-bottom:10px">
+    <button id="msr-dist-tab" onclick="setMeasureMode('dist')"
+      style="flex:1;padding:7px;border-radius:7px;font-size:11.5px;font-weight:700;
+             cursor:pointer;background:var(--amber);color:#111;border:none" id="t-msr-dist-tab">
+      <span id="t-tool-dist">거리 측정</span>
+    </button>
+    <button id="msr-area-tab" onclick="setMeasureMode('area')"
+      style="flex:1;padding:7px;border-radius:7px;font-size:11.5px;cursor:pointer;
+             background:var(--bg3);color:var(--text2);border:.5px solid var(--border)">
+      <span id="t-tool-area">면적 측정</span>
+    </button>
+  </div>
+
+  <!-- 안내 텍스트 -->
+  <div id="msr-hint" style="font-size:11px;color:var(--text3);margin-bottom:8px;
+       background:var(--bg3);padding:7px 10px;border-radius:7px;line-height:1.5">
+    <span id="t-tool-dist-hint">지도를 탭하여 측정점 추가</span>
+  </div>
+
+  <!-- 결과 표시 -->
+  <div id="msr-result" style="display:none;background:rgba(122,180,80,.12);
+       border:.5px solid rgba(122,180,80,.4);border-radius:8px;padding:10px 12px;margin-bottom:10px">
+    <div style="font-size:12px;font-weight:700;color:var(--green2)" id="msr-result-label">거리</div>
+    <div style="font-size:22px;font-weight:700;color:var(--text);font-family:var(--mono)" id="msr-result-val">—</div>
+    <div style="font-size:10px;color:var(--text3);margin-top:2px" id="msr-points-info">0점</div>
+  </div>
+
+  <!-- 버튼 행 -->
+  <div style="display:flex;gap:6px">
+    <button onclick="clearMeasure()"
+      style="flex:1;background:var(--bg3);color:var(--text2);border:.5px solid var(--border);
+             border-radius:7px;padding:8px;font-size:11.5px;cursor:pointer">
+      <span id="t-tool-clear">초기화</span>
+    </button>
+    <button onclick="closeMeasure()"
+      style="flex:1;background:var(--bg3);color:var(--text2);border:.5px solid var(--border);
+             border-radius:7px;padding:8px;font-size:11.5px;cursor:pointer">
+      <span id="t-tool-close">닫기</span>
+    </button>
+  </div>
+</div>
+
+<!-- ══ 북마크 패널 ══ -->
+<div class="fpanel" id="bookmark-panel">
+  <button class="panel-close" onclick="hidePanel('bookmark-panel')">×</button>
+  <h3 style="color:var(--amber);font-size:13px;font-weight:700;margin-bottom:10px">⭐ <span id="t-bm-title">북마크</span></h3>
+
+  <!-- 저장 입력 -->
+  <div style="display:flex;gap:6px;margin-bottom:10px">
+    <input id="bm-name-input" type="text" maxlength="40"
+      style="flex:1;background:var(--bg3);border:.5px solid var(--border2);color:var(--text);
+             font-size:12px;padding:7px 10px;border-radius:7px;outline:none"
+      placeholder="">
+    <button onclick="addBookmark()"
+      style="background:var(--amber);color:#111;border:none;border-radius:7px;
+             padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">
+      ⭐ <span id="t-bm-add">저장</span>
+    </button>
+  </div>
+
+  <!-- 목록 -->
+  <div id="bm-list-body"></div>
+</div>
+
 <!-- ══ GPS SETUP PANEL ══ -->
 <div class="panel panel-bot" id="gps-panel">
   <button class="panel-close" onclick="hidePanel('gps-panel')">×</button>
@@ -513,12 +617,12 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     <button id="calib-tab-auto" onclick="switchCalibTab('auto')"
       style="flex:1;padding:6px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;
              background:var(--amber);color:#111;border:none">
-      🤖 자동 (GeoPDF)
+      <span id="t-calib-auto-tab-lbl">🤖 자동 (GeoPDF)</span>
     </button>
     <button id="calib-tab-manual" onclick="switchCalibTab('manual')"
       style="flex:1;padding:6px;border-radius:6px;font-size:11px;cursor:pointer;
              background:var(--bg3);color:var(--text2);border:.5px solid var(--border)">
-      👆 수동 (2점 탭)
+      <span id="t-calib-manual-tab-lbl">👆 수동 (2점 탭)</span>
     </button>
   </div>
 
@@ -527,15 +631,15 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     <div class="gps-steps">
       <div class="gps-step">
         <div class="step-num" style="background:var(--green)">1</div>
-        <div class="step-txt">PDF를 불러오면 GeoPDF 좌표를 <strong>자동으로 검색</strong>합니다</div>
+        <div class="step-txt" id="t-calib-step1">PDF를 불러오면 GeoPDF 좌표를 <strong>자동으로 검색</strong>합니다</div>
       </div>
       <div class="gps-step">
         <div class="step-num" style="background:var(--green)">2</div>
-        <div class="step-txt">감지되면 위의 배너가 나타납니다 → <strong>"자동 보정 적용"</strong> 탭</div>
+        <div class="step-txt" id="t-calib-step2">감지되면 위의 배너가 나타납니다 → <strong>"자동 보정 적용"</strong> 탭</div>
       </div>
       <div class="gps-step">
         <div class="step-num" style="background:var(--green)">3</div>
-        <div class="step-txt">감지 안 되면 <strong>수동 탭</strong>으로 전환하거나 좌표를 직접 입력하세요</div>
+        <div class="step-txt" id="t-calib-step3">감지 안 되면 <strong>수동 탭</strong>으로 전환하거나 좌표를 직접 입력하세요</div>
       </div>
     </div>
     <!-- 수동 좌표 직접 입력 -->
@@ -543,22 +647,22 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
       <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:8px" id="t-calib-manual-coord">📌 좌표 직접 입력 (지도 모서리 위경도 아는 경우)</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
         <div>
-          <div style="font-size:9px;color:var(--text3);margin-bottom:3px">좌상단 위도 (Lat NW)</div>
+          <div style="font-size:9px;color:var(--text3);margin-bottom:3px" id="t-calib-lat-nw">좌상단 위도 (Lat NW)</div>
           <input id="ci-lat-nw" type="number" step="0.00001" placeholder="0.01665"
             style="width:100%;background:var(--bg2);border:.5px solid var(--border);color:var(--text);font-size:11px;padding:5px 7px;border-radius:5px;outline:none;font-family:var(--mono)">
         </div>
         <div>
-          <div style="font-size:9px;color:var(--text3);margin-bottom:3px">좌상단 경도 (Lon NW)</div>
+          <div style="font-size:9px;color:var(--text3);margin-bottom:3px" id="t-calib-lon-nw">좌상단 경도 (Lon NW)</div>
           <input id="ci-lon-nw" type="number" step="0.00001" placeholder="110.63431"
             style="width:100%;background:var(--bg2);border:.5px solid var(--border);color:var(--text);font-size:11px;padding:5px 7px;border-radius:5px;outline:none;font-family:var(--mono)">
         </div>
         <div>
-          <div style="font-size:9px;color:var(--text3);margin-bottom:3px">우하단 위도 (Lat SE)</div>
+          <div style="font-size:9px;color:var(--text3);margin-bottom:3px" id="t-calib-lat-se">우하단 위도 (Lat SE)</div>
           <input id="ci-lat-se" type="number" step="0.00001" placeholder="-0.16959"
             style="width:100%;background:var(--bg2);border:.5px solid var(--border);color:var(--text);font-size:11px;padding:5px 7px;border-radius:5px;outline:none;font-family:var(--mono)">
         </div>
         <div>
-          <div style="font-size:9px;color:var(--text3);margin-bottom:3px">우하단 경도 (Lon SE)</div>
+          <div style="font-size:9px;color:var(--text3);margin-bottom:3px" id="t-calib-lon-se">우하단 경도 (Lon SE)</div>
           <input id="ci-lon-se" type="number" step="0.00001" placeholder="110.89603"
             style="width:100%;background:var(--bg2);border:.5px solid var(--border);color:var(--text);font-size:11px;padding:5px 7px;border-radius:5px;outline:none;font-family:var(--mono)">
         </div>
@@ -570,7 +674,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
         CRS: EPSG:32749 (UTM Zone 49S) → 자동 변환됨
       </div>
       <button onclick="applyQGISValues()" class="btn-green" style="width:100%;border:none;margin-top:8px">
-        🎯 QGIS 확인값으로 즉시 보정 (현재 지도용)
+        <span id="t-calib-qgis-btn-lbl">🎯 QGIS 확인값으로 즉시 보정 (현재 지도용)</span>
       </button>
     </div>
   </div>
@@ -615,6 +719,28 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     </button>
   </div>
 
+  <!-- 사진 첨부 -->
+  <input type="file" id="photo-input" accept="image/*" capture="environment"
+    style="display:none" onchange="attachPhoto(this)">
+  <div id="photo-preview-area" style="display:none;margin-bottom:8px">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+      <span style="font-size:10px;color:var(--text3)" id="t-photo-count">사진 0장</span>
+      <button onclick="clearPhotos()"
+        style="background:none;border:none;color:var(--red);font-size:10px;cursor:pointer">✕</button>
+    </div>
+    <div id="photo-thumbs" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+  </div>
+  <button onclick="document.getElementById('photo-input').click()"
+    style="width:100%;background:var(--bg3);border:.5px solid var(--border);border-radius:7px;
+           padding:7px;font-size:11px;color:var(--amber);cursor:pointer;margin-bottom:8px;
+           display:flex;align-items:center;justify-content:center;gap:5px" id="t-photo-btn-wrap">
+    <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5">
+      <rect x="2" y="5" width="16" height="12" rx="2"/>
+      <circle cx="10" cy="11" r="3"/>
+      <path d="M7 5l1-2h4l1 2"/>
+    </svg>
+    <span id="t-photo-btn">📷 사진 첨부</span>
+  </button>
   <textarea class="memo-txt-input" id="memo-input" placeholder="이 위치에 대한 메모를 입력하세요..."></textarea>
   <div class="btn-row" style="margin-top:8px">
     <button class="btn-green" onclick="saveMemo()" id="t-save">저장</button>
@@ -638,7 +764,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
       <div style="font-size:10px;color:var(--text3)" id="t-tstart-lbl">시작: <span id="trk-start" style="color:var(--text);font-family:var(--mono)">—</span></div>
     </div>
     <!-- 트랙 색상 선택 -->
-    <div style="font-size:10px;color:var(--text3);margin-top:8px;margin-bottom:4px">트랙 색상:</div>
+    <div id="t-trk-color-lbl" style="font-size:10px;color:var(--text3);margin-top:8px;margin-bottom:4px">트랙 색상:</div>
     <div class="color-palette" id="track-color-picker">
       <div class="color-swatch sel" style="background:#ff7814" data-color="#ff7814" onclick="selectTrackColor(this)"></div>
       <div class="color-swatch" style="background:#ffdd00" data-color="#ffdd00" onclick="selectTrackColor(this)"></div>
@@ -706,10 +832,58 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
   <h2 id="t-lmgr">레이어 관리</h2>
   <div class="import-zone" onclick="triggerGeo()">
     <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 24V10l10-6 10 6v14l-10 6-10-6z"/><path d="M16 4v22M6 10l10 6 10-6"/></svg>
-    <p id="t-import">GeoJSON / CSV 불러오기</p>
+    <p id="t-import">GeoJSON / CSV / GPKG 불러오기</p>
     <small id="t-import-s">Block, Division, Estate, 도로 레이어</small>
   </div>
+  <div class="import-zone" onclick="triggerTiff()" style="margin-top:8px;border-color:rgba(232,168,74,.5)">
+    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="6" width="24" height="20" rx="2"/><path d="M4 12h24M10 6v6M16 6v6M22 6v6"/><circle cx="22" cy="22" r="4" fill="rgba(232,168,74,.3)" stroke="rgba(232,168,74,.9)"/><path d="M20 22h4M22 20v4" stroke="rgba(232,168,74,.9)"/></svg>
+    <p id="t-tiff-import" style="color:var(--amber)">GeoTIFF 베이스맵 불러오기</p>
+    <small id="t-tiff-import-s">위성사진·항공사진 배경 지도 (.tif)</small>
+    <small id="tiff-cache-status" style="font-size:9.5px;margin-top:3px;display:block;cursor:help" onclick="checkTiffCacheStatus()">📷 캐시 상태 확인...</small>
+  </div>
+  <div id="tiff-status" style="display:none;font-size:11px;color:var(--amber);padding:8px 10px;background:rgba(232,168,74,.1);border-radius:8px;margin-bottom:8px;border:.5px solid rgba(232,168,74,.3)">
+    <!-- 파일명 + 제거 -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+      <span id="tiff-status-text" style="font-size:10.5px;font-family:var(--mono)">—</span>
+      <button onclick="removeGeoTIFF()" style="background:rgba(220,60,60,.15);border:.5px solid rgba(220,60,60,.3);color:var(--red);cursor:pointer;font-size:10px;padding:2px 6px;border-radius:4px" id="t-tiff-remove">✕ 제거</button>
+    </div>
+    <!-- GeoPDF 표시 모드 선택 -->
+    <div style="display:flex;gap:4px;margin-bottom:7px" id="tiff-mode-row">
+      <button id="tiff-mode-blend" onclick="setTIFFMode('blend')"
+        style="flex:1;font-size:10px;padding:4px 2px;border-radius:5px;cursor:pointer;
+               background:var(--amber);color:#111;border:none;font-weight:700" id="t-tiff-mode-blend">
+        🗺+📷 GeoPDF+위성
+      </button>
+      <button id="tiff-mode-solo" onclick="setTIFFMode('solo')"
+        style="flex:1;font-size:10px;padding:4px 2px;border-radius:5px;cursor:pointer;
+               background:var(--bg3);color:var(--text2);border:.5px solid var(--border)">
+        📷 위성만
+      </button>
+      <button id="tiff-mode-pdf" onclick="setTIFFMode('pdf')"
+        style="flex:1;font-size:10px;padding:4px 2px;border-radius:5px;cursor:pointer;
+               background:var(--bg3);color:var(--text2);border:.5px solid var(--border)">
+        🗺 PDF만
+      </button>
+    </div>
+    <!-- 투명도 슬라이더 -->
+    <div style="display:flex;align-items:center;gap:6px">
+      <span id="t-tiff-opacity-lbl" style="font-size:10px;color:var(--text3);white-space:nowrap">투명도</span>
+      <input type="range" min="0.1" max="1" step="0.05" value="0.85"
+        style="flex:1;height:3px"
+        oninput="setTIFFOpacity(this.value)">
+      <span id="tiff-opacity-val" style="font-size:10px;color:var(--amber);width:28px;text-align:right">85%</span>
+    </div>
+  </div>
   <div id="layer-list-body"></div>
+  <button onclick="exportKML()"
+    style="width:100%;background:var(--bg3);border:.5px solid var(--border);border-radius:7px;
+           padding:8px;font-size:12px;color:var(--green2);cursor:pointer;margin-bottom:6px;
+           display:flex;align-items:center;justify-content:center;gap:6px">
+    <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M8 2v9M5 8l3 3 3-3"/><path d="M3 13h10"/>
+    </svg>
+    <span id="t-kml-export">KML 내보내기</span>
+  </button>
   <button class="demo-btn" onclick="loadDemo()">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6M8 5v6"/></svg>
     <span id="t-demo">샘플 레이어 불러오기 (데모)</span>
@@ -735,7 +909,10 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 </div>
 
 <!-- PDF 지도 이름 표시 바 -->
-<div id="pdf-map-info" style="display:none;position:absolute;top:50px;left:0;right:0;background:rgba(22,32,22,.94);border-bottom:.5px solid var(--border);padding:4px 10px;z-index:95;align-items:center;gap:8px"><span id="pdf-map-name" style="font-size:11px;color:var(--text2);font-family:var(--mono);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span><button onclick="showPDFMenu()" style="background:none;border:.5px solid var(--border);color:var(--text3);font-size:10px;padding:2px 8px;border-radius:4px;cursor:pointer;white-space:nowrap" id="t-pdf-change-btn">지도 변경</button></div>
+<div id="pdf-map-info" style="display:none;position:absolute;top:50px;left:0;right:0;background:rgba(22,32,22,.94);border-bottom:.5px solid var(--border);padding:4px 10px;z-index:95;align-items:center;gap:8px"><span id="pdf-map-name" style="font-size:11px;color:var(--text2);font-family:var(--mono);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+  <span id="pdf-res-info" style="display:none;font-size:9.5px;color:var(--text3);font-family:var(--mono);white-space:nowrap;padding:0 4px"></span>
+  <span id="pdf-calib-badge" style="display:none;font-size:9px;padding:1px 5px;border-radius:3px;white-space:nowrap"></span>
+  <button onclick="showPDFMenu()" style="background:none;border:.5px solid var(--border);color:var(--text3);font-size:10px;padding:2px 8px;border-radius:4px;cursor:pointer;white-space:nowrap" id="t-pdf-change-btn">지도 변경</button></div>
 <!-- PDF 지도 관리 메뉴 -->
 <div class="panel panel-top" id="pdf-menu-panel"><button class="panel-close" onclick="hidePanel('pdf-menu-panel')">×</button><h3 id="t-pdf-menu-title" style="color:var(--green2)">🗺 지도 관리</h3><div id="pdf-menu-info" style="background:var(--bg3);border:.5px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px"><div style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-bottom:4px">현재 저장된 지도</div><div id="pdf-menu-fname" style="font-size:13px;color:var(--text);word-break:break-all"></div><div id="pdf-menu-fdate" style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px"></div></div><button class="btn-green" onclick="replacePDF()" style="width:100%;margin-bottom:8px;border:none" id="t-pdf-change">새 지도 불러오기</button><button class="btn-red" onclick="clearPDF()" style="width:100%;margin-bottom:8px" id="t-pdf-delete">🗑 지도 삭제</button><button class="btn-grey" onclick="hidePanel('pdf-menu-panel')" style="width:100%" id="t-pdf-menu-close">닫기</button></div>
 <!-- ══ UTM Zone 설정 모달 ══ -->
@@ -842,7 +1019,8 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 <div id="toast"></div>
 
 <input type="file" id="pdf-input" accept=".pdf,application/pdf" style="display:none" onchange="loadPDF(this)">
-<input type="file" id="geo-input" accept=".geojson,.json,.csv" style="display:none" onchange="loadGeo(this)">
+<input type="file" id="geo-input" accept=".geojson,.json,.csv,.gpkg" style="display:none" onchange="loadGeo(this)">
+<input type="file" id="tiff-input" accept=".tif,.tiff" style="display:none" onchange="loadGeoTIFF(this)">
 
 <!-- ══════════════════════════════════════════════════════════
      SERVICE WORKER 등록 + PWA 고급 기능 초기화
@@ -931,7 +1109,14 @@ const LANG_DATA = {
 ko: {
   pdf:'PDF', layers:'레이어', calib:'보정',
   es_h:'지도 파일을 열어주세요', es_p:'GIS에서 내보낸 팜 농장 PDF 지도를 선택하면 여기에 표시됩니다.', es_btn:'PDF 지도 열기',
-  gps_btn:'GPS', track_btn:'트랙', memo_btn:'메모', list_btn:'목록',
+  gps_btn:'GPS',
+  cancel_btn:'취소',
+  save_btn:'저장',
+  close_btn:'닫기',
+  list_btn:'목록',
+  memo_btn:'메모',
+  track_btn:'트랙',
+  cancel_btn:'취소', track_btn:'트랙', memo_btn:'메모', list_btn:'목록',
   gps_title:'📡 GPS 설정 안내',
   gs1:'브라우저에서 위치 권한을 <strong>허용</strong>하세요',
   gs2:'설정 → Chrome → 위치: <strong>앱 사용 중 허용</strong>',
@@ -978,6 +1163,85 @@ ko: {
   pdf_restore_fail:'저장된 지도 로드 실패. 다시 불러와 주세요.',
   pdf_cleared:'지도가 삭제됐습니다.',
   pdf_change_btn:'지도 변경',
+  // 측정/KML/북마크
+  tool_measure:'측정',
+  tool_dist:'거리 측정',
+  tool_area:'면적 측정',
+  tool_clear:'측정 초기화',
+  tool_dist_hint:'지도를 탭하여 측정점 추가 · 두 번 탭하면 완료',
+  tool_area_hint:'지도를 탭하여 꼭짓점 추가 · 시작점 탭하면 완료',
+  tool_dist_result:'거리',
+  tool_area_result:'면적',
+  tool_close:'닫기',
+  kml_export:'KML 내보내기',
+  kml_ok:'✅ KML 저장됨',
+  kml_empty:'KML로 내보낼 데이터가 없습니다',
+  bm_title:'북마크',
+  bm_add:'현재 위치 저장',
+  bm_empty:'저장된 북마크 없음',
+  bm_added:'✅ 북마크 저장됨',
+  bm_deleted:'북마크 삭제됨',
+  bm_goto:'이동',
+  bm_name_ph:'북마크 이름 (선택)',
+  // 사진/편집/WakeLock
+  photo_btn:'📷 사진 첨부',
+  photo_loading:'사진 처리 중...',
+  photo_added:'사진 추가됨',
+  photo_count:'사진',
+  photo_unit:'장',
+  memo_edit_title:'메모 편집',
+  memo_edit_ok:'✅ 메모 수정됨',
+  memo_empty_warn:'메모 내용을 입력하세요',
+  memo_move_pin:'위치 수정',
+  wl_on:'🔆 화면 꺼짐 방지 켜짐',
+  wl_off:'화면 꺼짐 방지 꺼짐',
+  wl_off_hint:'화면 꺼짐 방지 (탭하여 켜기)',
+  wl_unsupported:'이 브라우저는 화면 고정 미지원',
+  // GeoTIFF 베이스맵
+  tiff_import:'GeoTIFF 베이스맵 불러오기',
+  tiff_import_s:'위성사진·항공사진 배경 지도 (.tif)',
+  tiff_loading:'GeoTIFF 읽는 중...',
+  tiff_rendering:'GeoTIFF 렌더링 중...',
+  tiff_ok:'✅ GeoTIFF 베이스맵 로드됨',
+  tiff_error:'⚠️ GeoTIFF 로드 실패',
+  tiff_no_geo:'⚠️ 좌표 정보 없는 TIFF — 지도 범위와 수동 정렬 필요',
+  tiff_too_large:'⚠️ 파일이 너무 큽니다 (최대 200MB 권장)',
+  tiff_remove:'✕ 제거',
+  tiff_removed:'베이스맵 제거됨',
+  tiff_resolution:'해상도',
+  tiff_size:'크기',
+  tiff_crs:'좌표계',
+  tiff_opacity_lbl:'투명도',
+  tiff_mode_blend:'🗺+📷 GeoPDF+위성',
+  tiff_mode_solo:'📷 위성만',
+  tiff_mode_pdf:'🗺 PDF만',
+  tiff_mode_label:'GeoTIFF 표시 모드',
+  // GeoTIFF 에러 메시지
+  tiff_err_cdn:'CDN 로드 실패 — 인터넷 연결 확인',
+  tiff_err_cdn_hint:'온라인 환경에서 앱을 먼저 실행하면 캐싱됩니다',
+  tiff_err_mem:'메모리 부족 — 파일이 너무 큼',
+  tiff_err_mem_hint:'ArcGIS에서 5m/px 해상도로 다시 내보내세요',
+  tiff_err_crs:'좌표계(CRS) 인식 실패',
+  tiff_err_crs_hint:'EPSG:32749(UTM 49S) 또는 EPSG:4326으로 저장하세요',
+  tiff_err_band:'밴드/래스터 데이터 읽기 실패',
+  tiff_err_band_hint:'Force RGB 체크 후 LZW 압축으로 다시 내보내세요',
+  tiff_err_format:'TIFF 파일 형식 오류 — 파일이 손상됐거나 GeoTIFF가 아님',
+  tiff_err_format_hint:'ArcGIS에서 TIFF 형식으로 다시 내보내세요',
+  tiff_err_generic_hint:'ArcGIS Export Raster → TIFF, LZW, Force RGB 설정 확인',
+  // GPKG 레이어
+  import_title:'GeoJSON / CSV / GPKG 불러오기',
+  import_hint:'Block, Division, Estate, 도로, 하천 레이어',
+  gpkg_loading:'GPKG 파싱 중...',
+  gpkg_ok:'✅ GPKG 레이어 불러옴',
+  gpkg_empty:'GPKG에 피처가 없습니다.',
+  gpkg_error:'⚠️ GPKG 파싱 오류',
+  gpkg_no_calib:'⚠️ 지도 보정 후 GPKG를 로드하세요',
+  gpkg_crs_warn:'⚠️ 좌표계 자동 감지 실패 — UTM49 기본 적용',
+  gpkg_layer_count:'개 레이어',
+  gpkg_feat_count:'개 피처',
+  layer_type_lbl:'유형',
+  layer_vis_on:'표시',
+  layer_vis_off:'숨김',
   trk_del_toast:'트랙 삭제됨',
   // === 추가 번역 키 ===
   calib_no_data:'보정 데이터 없음. PDF를 다시 불러오세요.',
@@ -992,6 +1256,14 @@ ko: {
   calib_fail:'⚠️ 좌표 자동 감지 실패',
   calib_hint:'보정 버튼(📐) → 아래 방법 중 하나를 선택하세요.',
   calib_auto_tab:'🤖 자동 (GeoPDF)',
+  calib_step1:'PDF를 불러오면 GeoPDF 좌표를 <strong>자동으로 검색</strong>합니다',
+  calib_step2:'감지되면 위의 배너가 나타납니다 → <strong>"자동 보정 적용"</strong> 탭',
+  calib_step3:'감지 안 되면 <strong>수동 탭</strong>으로 전환하거나 좌표를 직접 입력하세요',
+  calib_qgis_btn_lbl:'🎯 QGIS 확인값으로 즉시 보정 (현재 지도용)',
+  calib_lat_nw:'좌상단 위도 (Lat NW)',
+  calib_lon_nw:'좌상단 경도 (Lon NW)',
+  calib_lat_se:'우하단 위도 (Lat SE)',
+  calib_lon_se:'우하단 경도 (Lon SE)',
   calib_manual_tab:'👆 수동 (2점 탭)',
   calib_auto_desc:'PDF를 불러오면 GeoPDF 좌표를 자동 감지합니다.',
   calib_detected:'✅ GeoPDF 좌표 자동 감지됨',
@@ -1093,7 +1365,7 @@ ko: {
 en: {
   pdf:'PDF', layers:'Layers', calib:'Calibrate',
   es_h:'Open a map file', es_p:'Select a GIS-exported PDF map to display it here.', es_btn:'Open PDF Map',
-  gps_btn:'GPS', track_btn:'Track', memo_btn:'Memo', list_btn:'List',
+  gps_btn:'GPS', track_btn:'Track', memo_btn:'Memo', list_btn:'List', close_btn:'Close', save_btn:'Save', cancel_btn:'Cancel',
   gps_title:'📡 GPS Setup Guide',
   gs1:'Allow location permission in your <strong>browser</strong>',
   gs2:'Settings → Chrome → Location: <strong>Allow while using app</strong>',
@@ -1139,6 +1411,85 @@ en: {
   pdf_restore_fail:'Failed to restore saved map. Please reload.',
   pdf_cleared:'Map deleted.',
   pdf_change_btn:'Change Map',
+  // 측정/KML/북마크
+  tool_measure:'Measure',
+  tool_dist:'Distance',
+  tool_area:'Area',
+  tool_clear:'Clear',
+  tool_dist_hint:'Tap map to add points · Double-tap to finish',
+  tool_area_hint:'Tap map to add vertices · Tap start to close',
+  tool_dist_result:'Distance',
+  tool_area_result:'Area',
+  tool_close:'Close',
+  kml_export:'Export KML',
+  kml_ok:'✅ KML saved',
+  kml_empty:'No data to export as KML',
+  bm_title:'Bookmarks',
+  bm_add:'Save current view',
+  bm_empty:'No bookmarks saved',
+  bm_added:'✅ Bookmark saved',
+  bm_deleted:'Bookmark deleted',
+  bm_goto:'Go',
+  bm_name_ph:'Bookmark name (optional)',
+  // 사진/편집/WakeLock
+  photo_btn:'📷 Attach Photo',
+  photo_loading:'Processing photo...',
+  photo_added:'Photo added',
+  photo_count:'Photo',
+  photo_unit:'',
+  memo_edit_title:'Edit Memo',
+  memo_edit_ok:'✅ Memo updated',
+  memo_empty_warn:'Please enter memo text',
+  memo_move_pin:'Move pin',
+  wl_on:'🔆 Screen lock active',
+  wl_off:'Screen lock off',
+  wl_off_hint:'Prevent screen off (tap to enable)',
+  wl_unsupported:'Screen lock not supported in this browser',
+  // GeoTIFF 베이스맵
+  tiff_import:'Load GeoTIFF Basemap',
+  tiff_import_s:'Satellite/aerial photo background (.tif)',
+  tiff_loading:'Reading GeoTIFF...',
+  tiff_rendering:'Rendering GeoTIFF...',
+  tiff_ok:'✅ GeoTIFF basemap loaded',
+  tiff_error:'⚠️ GeoTIFF load failed',
+  tiff_no_geo:'⚠️ No georeferencing — manual alignment needed',
+  tiff_too_large:'⚠️ File too large (max 200MB recommended)',
+  tiff_remove:'✕ Remove',
+  tiff_removed:'Basemap removed',
+  tiff_resolution:'Resolution',
+  tiff_size:'Size',
+  tiff_crs:'CRS',
+  tiff_opacity_lbl:'Opacity',
+  tiff_mode_blend:'🗺+📷 PDF+Satellite',
+  tiff_mode_solo:'📷 Satellite only',
+  tiff_mode_pdf:'🗺 PDF only',
+  tiff_mode_label:'GeoTIFF display mode',
+  // GeoTIFF 에러 메시지
+  tiff_err_cdn:'CDN load failed — check internet connection',
+  tiff_err_cdn_hint:'Run the app online first to cache geotiff.js',
+  tiff_err_mem:'Out of memory — file too large',
+  tiff_err_mem_hint:'Re-export from ArcGIS at 5m/px resolution',
+  tiff_err_crs:'CRS (coordinate system) not recognized',
+  tiff_err_crs_hint:'Save as EPSG:32749 (UTM 49S) or EPSG:4326',
+  tiff_err_band:'Failed to read raster bands',
+  tiff_err_band_hint:'Check Force RGB and use LZW compression',
+  tiff_err_format:'Invalid TIFF format — file may be corrupt or not a GeoTIFF',
+  tiff_err_format_hint:'Re-export as TIFF from ArcGIS',
+  tiff_err_generic_hint:'Check ArcGIS Export Raster: TIFF, LZW, Force RGB',
+  // GPKG 레이어
+  import_title:'GeoJSON / CSV / GPKG Import',
+  import_hint:'Block, Division, Estate, Road, River layers',
+  gpkg_loading:'Parsing GPKG...',
+  gpkg_ok:'✅ GPKG layers loaded',
+  gpkg_empty:'No features found in GPKG.',
+  gpkg_error:'⚠️ GPKG parse error',
+  gpkg_no_calib:'⚠️ Calibrate map first, then load GPKG',
+  gpkg_crs_warn:'⚠️ CRS auto-detect failed — using UTM49 default',
+  gpkg_layer_count:'layer(s)',
+  gpkg_feat_count:'feature(s)',
+  layer_type_lbl:'Type',
+  layer_vis_on:'Visible',
+  layer_vis_off:'Hidden',
   trk_del_toast:'Track deleted',
   // === 추가 번역 키 ===
   calib_no_data:'No calibration data. Please reload PDF.',
@@ -1153,6 +1504,14 @@ en: {
   calib_fail:'⚠️ Auto-detection failed',
   calib_hint:'Tap 📐 Calibrate → choose a method below.',
   calib_auto_tab:'🤖 Auto (GeoPDF)',
+  calib_step1:'When PDF is loaded, GeoPDF coordinates are <strong>automatically detected</strong>',
+  calib_step2:'If detected, the banner above appears → tap <strong>"Apply Auto Calibration"</strong>',
+  calib_step3:'If not detected, switch to <strong>Manual tab</strong> or enter coordinates directly',
+  calib_qgis_btn_lbl:'🎯 Apply QGIS Values Now (current map)',
+  calib_lat_nw:'Top-left Latitude (Lat NW)',
+  calib_lon_nw:'Top-left Longitude (Lon NW)',
+  calib_lat_se:'Bottom-right Latitude (Lat SE)',
+  calib_lon_se:'Bottom-right Longitude (Lon SE)',
   calib_manual_tab:'👆 Manual (2-tap)',
   calib_auto_desc:'GeoPDF coordinates are detected automatically when PDF is loaded.',
   calib_detected:'✅ GeoPDF coordinates detected',
@@ -1253,7 +1612,7 @@ en: {
 id: {
   pdf:'PDF', layers:'Layer', calib:'Kalibrasi',
   es_h:'Buka file peta', es_p:'Pilih peta PDF perkebunan kelapa sawit yang diekspor dari GIS.', es_btn:'Buka Peta PDF',
-  gps_btn:'GPS', track_btn:'Lacak', memo_btn:'Memo', list_btn:'Daftar',
+  gps_btn:'GPS', track_btn:'Lacak', memo_btn:'Memo', list_btn:'Daftar', close_btn:'Tutup', save_btn:'Simpan', cancel_btn:'Batal',
   gps_title:'📡 Panduan GPS',
   gs1:'Izinkan akses lokasi di <strong>browser</strong> Anda',
   gs2:'Pengaturan → Chrome → Lokasi: <strong>Izinkan saat menggunakan aplikasi</strong>',
@@ -1299,6 +1658,85 @@ id: {
   pdf_restore_fail:'Gagal memuat peta tersimpan. Silakan muat ulang.',
   pdf_cleared:'Peta dihapus.',
   pdf_change_btn:'Ganti Peta',
+  // 측정/KML/북마크
+  tool_measure:'Ukur',
+  tool_dist:'Ukur Jarak',
+  tool_area:'Ukur Luas',
+  tool_clear:'Hapus Ukuran',
+  tool_dist_hint:'Ketuk peta untuk tambah titik · Ketuk dua kali untuk selesai',
+  tool_area_hint:'Ketuk peta untuk tambah simpul · Ketuk titik awal untuk tutup',
+  tool_dist_result:'Jarak',
+  tool_area_result:'Luas',
+  tool_close:'Tutup',
+  kml_export:'Ekspor KML',
+  kml_ok:'✅ KML tersimpan',
+  kml_empty:'Tidak ada data untuk diekspor sebagai KML',
+  bm_title:'Bookmark',
+  bm_add:'Simpan tampilan saat ini',
+  bm_empty:'Belum ada bookmark',
+  bm_added:'✅ Bookmark tersimpan',
+  bm_deleted:'Bookmark dihapus',
+  bm_goto:'Pergi',
+  bm_name_ph:'Nama bookmark (opsional)',
+  // 사진/편집/WakeLock
+  photo_btn:'📷 Lampirkan Foto',
+  photo_loading:'Memproses foto...',
+  photo_added:'Foto ditambahkan',
+  photo_count:'Foto',
+  photo_unit:'',
+  memo_edit_title:'Edit Memo',
+  memo_edit_ok:'✅ Memo diperbarui',
+  memo_empty_warn:'Masukkan teks memo',
+  memo_move_pin:'Pindah pin',
+  wl_on:'🔆 Kunci layar aktif',
+  wl_off:'Kunci layar nonaktif',
+  wl_off_hint:'Cegah layar mati (ketuk untuk aktifkan)',
+  wl_unsupported:'Kunci layar tidak didukung browser ini',
+  // GeoTIFF 베이스맵
+  tiff_import:'Muat Basemap GeoTIFF',
+  tiff_import_s:'Foto satelit/udara sebagai latar peta (.tif)',
+  tiff_loading:'Membaca GeoTIFF...',
+  tiff_rendering:'Merender GeoTIFF...',
+  tiff_ok:'✅ Basemap GeoTIFF dimuat',
+  tiff_error:'⚠️ Gagal memuat GeoTIFF',
+  tiff_no_geo:'⚠️ Tidak ada georeferensi — perlu selaraskan manual',
+  tiff_too_large:'⚠️ File terlalu besar (maks 200MB disarankan)',
+  tiff_remove:'✕ Hapus',
+  tiff_removed:'Basemap dihapus',
+  tiff_resolution:'Resolusi',
+  tiff_size:'Ukuran',
+  tiff_crs:'CRS',
+  tiff_opacity_lbl:'Transparansi',
+  tiff_mode_blend:'🗺+📷 PDF+Satelit',
+  tiff_mode_solo:'📷 Satelit saja',
+  tiff_mode_pdf:'🗺 PDF saja',
+  tiff_mode_label:'Mode tampilan GeoTIFF',
+  // GeoTIFF 에러 메시지
+  tiff_err_cdn:'CDN gagal dimuat — periksa koneksi internet',
+  tiff_err_cdn_hint:'Buka aplikasi saat online agar geotiff.js ter-cache',
+  tiff_err_mem:'Memori kurang — file terlalu besar',
+  tiff_err_mem_hint:'Ekspor ulang dari ArcGIS dengan resolusi 5m/px',
+  tiff_err_crs:'Sistem koordinat (CRS) tidak dikenali',
+  tiff_err_crs_hint:'Simpan sebagai EPSG:32749 (UTM 49S) atau EPSG:4326',
+  tiff_err_band:'Gagal membaca data raster band',
+  tiff_err_band_hint:'Centang Force RGB dan gunakan kompresi LZW',
+  tiff_err_format:'Format TIFF tidak valid — file rusak atau bukan GeoTIFF',
+  tiff_err_format_hint:'Ekspor ulang sebagai TIFF dari ArcGIS',
+  tiff_err_generic_hint:'Periksa: ArcGIS Export Raster → TIFF, LZW, Force RGB',
+  // GPKG 레이어
+  import_title:'Impor GeoJSON / CSV / GPKG',
+  import_hint:'Blok, Divisi, Estate, Jalan, Sungai layer',
+  gpkg_loading:'Memproses GPKG...',
+  gpkg_ok:'✅ Layer GPKG dimuat',
+  gpkg_empty:'Tidak ada fitur di GPKG.',
+  gpkg_error:'⚠️ Kesalahan parsing GPKG',
+  gpkg_no_calib:'⚠️ Kalibrasi peta dulu, lalu muat GPKG',
+  gpkg_crs_warn:'⚠️ Deteksi CRS gagal — pakai UTM49 default',
+  gpkg_layer_count:'layer',
+  gpkg_feat_count:'fitur',
+  layer_type_lbl:'Tipe',
+  layer_vis_on:'Tampil',
+  layer_vis_off:'Sembunyikan',
   trk_del_toast:'Trek dihapus',
   // === 추가 번역 키 ===
   calib_no_data:'Data kalibrasi tidak ada. Muat ulang PDF.',
@@ -1313,6 +1751,14 @@ id: {
   calib_fail:'⚠️ Deteksi otomatis gagal',
   calib_hint:'Ketuk 📐 Kalibrasi → pilih metode di bawah.',
   calib_auto_tab:'🤖 Otomatis (GeoPDF)',
+  calib_step1:'Saat PDF dimuat, koordinat GeoPDF <strong>otomatis terdeteksi</strong>',
+  calib_step2:'Jika terdeteksi, banner di atas muncul → ketuk <strong>"Terapkan Kalibrasi Otomatis"</strong>',
+  calib_step3:'Jika tidak terdeteksi, beralih ke <strong>tab Manual</strong> atau masukkan koordinat secara langsung',
+  calib_qgis_btn_lbl:'🎯 Terapkan Nilai QGIS Sekarang (peta aktif)',
+  calib_lat_nw:'Lintang Kiri Atas (Lat NW)',
+  calib_lon_nw:'Bujur Kiri Atas (Lon NW)',
+  calib_lat_se:'Lintang Kanan Bawah (Lat SE)',
+  calib_lon_se:'Bujur Kanan Bawah (Lon SE)',
   calib_manual_tab:'👆 Manual (2 ketukan)',
   calib_auto_desc:'Koordinat GeoPDF dideteksi otomatis saat PDF dimuat.',
   calib_detected:'✅ Koordinat GeoPDF terdeteksi',
@@ -1422,10 +1868,10 @@ const LANG_IDS = {
   't-gps-title':'gps_title','t-gs1':'gs1','t-gs2':'gs2','t-gs3':'gs3','t-gps-start':'gps_start',
   't-calib-title':'calib_title','t-calib-desc':'calib_desc','t-cs1':'cs1','t-cs2':'cs2','t-cs3':'cs3','t-calib-start':'calib_start',
   't-memo-title':'memo_title',
-  't-save':'save','t-cancel':'cancel','t-cancel2':'cancel','t-cancel3':'cancel','t-close':'close',
+  't-save':'save_btn','t-cancel':'cancel_btn','t-cancel2':'cancel_btn','t-cancel3':'cancel_btn','t-close':'close_btn',
   't-track-title':'track_title','t-tpts':'tpts','t-tdist':'tdist','t-tstart':'tstart','t-gpx':'gpx','t-clr':'clr','t-tclose':'close',
-  't-mlist':'mlist','t-mclose':'close','t-lmgr':'lmgr','t-lclose':'close',
-  't-import':'import','t-import-s':'import_s','t-demo':'demo',
+  't-mlist':'mlist','t-mclose':'close_btn','t-lmgr':'lmgr','t-lclose':'close_btn',
+  't-import':'import_title','t-import-s':'import_hint','t-demo':'demo',
   't-lp-m':'lp_memo','t-lp-n':'lp_nav',
   't-inst-title':'inst_title','t-inst-desc':'inst_desc','t-inst-btn':'inst_btn',
   // 신규 UI 요소
@@ -1448,7 +1894,12 @@ const LANG_IDS = {
   't-txt-save':'txt_save',
   't-far-banner-title':'far_banner_title',
   't-trk-recording':'trk_recording',
+  't-trk-color-lbl':'trk_color_lbl',
   't-tpts-lbl':'trk_pts_lbl',
+  't-tiff-import':'tiff_import',
+  't-tiff-import-s':'tiff_import_s',
+  't-tiff-remove':'tiff_remove',
+  't-tiff-opacity-lbl':'tiff_opacity_lbl',
   't-tdist-lbl':'trk_dist_lbl',
   't-tstart-lbl':'trk_start_lbl',
   't-calib-auto-tab':'calib_auto_tab',
@@ -1459,6 +1910,16 @@ const LANG_IDS = {
   't-calib-manual-coord':'calib_manual_coord',
   't-calib-corner-btn':'calib_corner_btn',
   't-calib-qgis-btn':'calib_qgis_btn',
+  't-calib-auto-tab-lbl':'calib_auto_tab',
+  't-calib-manual-tab-lbl':'calib_manual_tab',
+  't-calib-step1':'calib_step1',
+  't-calib-step2':'calib_step2',
+  't-calib-step3':'calib_step3',
+  't-calib-qgis-btn-lbl':'calib_qgis_btn_lbl',
+  't-calib-lat-nw':'calib_lat_nw',
+  't-calib-lon-nw':'calib_lon_nw',
+  't-calib-lat-se':'calib_lat_se',
+  't-calib-lon-se':'calib_lon_se',
   't-trk-stop-btn':'trk_stop_btn',
   't-trk-discard':'trk_discard',
   't-trk-saved-header':'trk_saved_header',
@@ -1470,6 +1931,15 @@ const LANG_IDS = {
   't-utm-range':'utm_range',
   't-utm-indo-range':'utm_indo_range',
   't-trk-none-data':'trk_none_data',
+  't-tool-measure':'tool_measure',
+  't-tool-dist':'tool_dist',
+  't-tool-area':'tool_area',
+  't-tool-clear':'tool_clear',
+  't-tool-dist-hint':'tool_dist_hint',
+  't-tool-close':'tool_close',
+  't-kml-export':'kml_export',
+  't-bm-title':'bm_title',
+  't-bm-add':'bm_add',
 };
 
 function applyLang() {
@@ -1508,13 +1978,24 @@ function applyLang() {
 
   // html lang 속성 업데이트
   document.documentElement.lang = curLang === 'id' ? 'id' : curLang === 'en' ? 'en' : 'ko';
+  // 언어 버튼 이니셜 갱신
+  _updateLangBtn(curLang);
 }
 
 function setLang(l) {
   curLang = l;
   localStorage.setItem('palmmap_lang', l);
   applyLang();
+  _updateLangBtn(l);
   document.getElementById('lang-picker').classList.remove('show');
+}
+
+// 언어 버튼 이니셜 업데이트
+function _updateLangBtn(l) {
+  const label = document.getElementById('lang-btn-label');
+  if (!label) return;
+  const initials = { ko: 'KR', en: 'GM', id: 'ID' };
+  label.textContent = initials[l] || '🌐';
 }
 
 function toggleLangPicker() {
@@ -1525,7 +2006,7 @@ function toggleLangPicker() {
 /* ─── STATE ─── */
 let pdfDoc=null, curPg=1, totalPgs=1;
 let scale=1, ox=0, oy=0, cW=0, cH=0;
-const DPR = Math.min(window.devicePixelRatio||1, 2);
+const DPR = Math.min(window.devicePixelRatio||1, 1.5); // 성능 최적화: 2→1.5
 let dragging=false, dsx=0, dsy=0, lastPinch=null;
 let gpsOn=false, watchId=null, curPos=null;
 let calibDrawMode=false, calibPts=[];
@@ -1552,11 +2033,11 @@ let memoPinStyle = localStorage.getItem('palmmap_pin_style') || 'pin';
 function setMemoPinStyle(s){ memoPinStyle=s; localStorage.setItem('palmmap_pin_style',s); drawGPS(); }
 
 const TYPE_META = {
-  estate:  {stroke:'rgba(122,180,80,.85)',  fill:'rgba(122,180,80,.12)',  lw:2.5, ls:14, badgeCls:'b-estate',  lKey:'ly_est'},
-  division:{stroke:'rgba(232,168,74,.85)',  fill:'rgba(232,168,74,.10)',  lw:2,   ls:12, badgeCls:'b-division',lKey:'ly_div'},
+  estate:  {stroke:'rgba(10,10,10,.95)',    fill:'rgba(10,10,10,.06)',    lw:3.5, ls:14, badgeCls:'b-estate',  lKey:'ly_est'},
+  division:{stroke:'rgba(0,255,80,.95)',    fill:'rgba(0,255,80,.08)',    lw:2,   ls:12, badgeCls:'b-division',lKey:'ly_div'},
   block:   {stroke:'rgba(90,180,232,.85)',  fill:'rgba(90,180,232,.10)', lw:1.5, ls:10, badgeCls:'b-block',   lKey:'ly_blk'},
   road:    {stroke:'rgba(200,184,144,.9)',  fill:'none',                  lw:2.5, ls:10, badgeCls:'b-road',   lKey:'ly_road'},
-  other:   {stroke:'rgba(160,160,160,.7)', fill:'rgba(160,160,160,.08)', lw:1,   ls:10, badgeCls:'b-other',  lKey:'ly_oth'},
+  other:   {stroke:'rgba(90,200,232,.80)',  fill:'rgba(90,200,232,.10)', lw:1.5, ls:9, badgeCls:'b-block', lKey:'ly_other'},
 };
 
 /* ─── PAN/ZOOM ─── */
@@ -1567,6 +2048,8 @@ function applyTx(){
   MW.style.transform = `translate(${ox}px,${oy}px) scale(${scale})`;
   // GPS 마커 크기를 scale에 맞게 재계산 (화면 고정 크기 유지)
   if(curPos) drawGPS();
+  // GeoTIFF는 map-wrap transform에 포함되므로 별도 재렌더링 불필요
+  // (geotiff-canvas가 map-wrap 안에 있어서 자동 transform 적용됨)
 }
 function clamp(){
   if(!cW) return;
@@ -1667,7 +2150,7 @@ function handleTap(cx, cy){
 function handleGPS(){ if(gpsOn) stopGPS(); else showPanel('gps-panel'); }
 
 function startGPS(){
-  hidePanel('gps-panel');
+  hidePanel('gps-panel'); requestWakeLock();
   document.getElementById('gps-err-box').classList.remove('show');
 
   if(!('geolocation' in navigator)){
@@ -1717,7 +2200,7 @@ function setGPSActive(on){
 
 function stopGPS(){
   if(watchId !== null){ navigator.geolocation.clearWatch(watchId); watchId=null; }
-  curPos=null; setGPSActive(false); drawGPS();
+  curPos=null; setGPSActive(false); drawGPS(); releaseWakeLock();
 }
 
 function onGPSPos(p){
@@ -1748,7 +2231,10 @@ function onGPSPos(p){
   document.getElementById('gps-dot').className = 'on';
   if(!gpsOn) setGPSActive(true);
   if(trackOn && curMapId) trkPts.push({lat,lon,time:new Date().toISOString()});
-  drawGPS();
+  // 1m 미만 이동 시 drawGPS 스킵 (불필요한 SVG 재생성 방지)
+  const _pL=drawGPS._pLat, _pO=drawGPS._pLon;
+  const _mv=!_pL||Math.abs(lat-_pL)>0.000009||Math.abs(lon-_pO)>0.000009;
+  if(_mv){drawGPS._pLat=lat; drawGPS._pLon=lon; drawGPS();}
   // auto-detect block
   if(calibPts.length>=2){
     const c=ll2c(lat,lon);
@@ -2180,34 +2666,43 @@ async function extractGeoPDFCoords(pdfDocument, canvasW, canvasH, pdfFileName) {
               const lonNW=Math.min(...lons), lonSE=Math.max(...lons);
 
               if (isValidLatLon(latNW,lonNW) && isValidLatLon(latSE,lonSE)) {
-                // BBox 파싱: /VP[<</Type/Viewport/BBox[left top_pdf right bottom_pdf]
-                // PDF 좌표계: y=0이 페이지 하단 → 화면 좌표로 변환 필요
-                const bboxM = rawText.match(/\/BBox\s*\[([\d\s.\-]+)\]/);
+                // BBox 파싱: Viewport /BBox만 추출 (Form XObject /BBox 제외)
+                // ArcGIS GeoPDF: /VP[<</Type/Viewport/BBox[xMin yMin xMax yMax]...>>]
+                // 단순 /BBox 정규식은 Form XObject의 /BBox[0 0 W H]를 먼저 잡아
+                // 잘못된 전체 페이지 크기를 보정값으로 사용하는 버그 발생
+                // → /VP 또는 /Viewport 내부의 /BBox만 추출해야 함
+                const bboxM = rawText.match(/\/(?:VP|Viewport)[\s\S]{0,200}?\/BBox\s*\[([\d\s.\-]+)\]/) ||
+                              rawText.match(/\/BBox\s*\[([\d\s.\-]+)\](?!.*\/BBox\s*\[0\s)/);
                 if (bboxM && canvasW > 0 && canvasH > 0) {
                   const b = bboxM[1].trim().split(/\s+/).map(Number);
                   if (b.length >= 4) {
-                    // PDF pt → 캔버스 픽셀 변환 비율
-                    // PDF.js는 scale:1로 렌더링 시 pt와 px가 동일
+                    // PDF 좌표계: 원점=좌하단, y위증가
+                    // 화면 좌표계: 원점=좌상단, y아래증가
+                    // ArcGIS BBox 형식: [x_left, y_bottom, x_right, y_top]
                     const pdfW = canvasW, pdfH = canvasH;
-                    // BBox[left, top_from_bottom, right, bottom_from_bottom]
-                    // 화면 y = pageHeight - pdf_y
-                    const bLeft   = b[0];
-                    const bTop    = pdfH - b[1];  // PDF y → 화면 y
-                    const bRight  = b[2];
-                    const bBottom = pdfH - b[3];  // PDF y → 화면 y
-                    if (bRight > bLeft && bBottom > bTop &&
-                        bLeft >= 0 && bTop >= 0 &&
-                        bRight <= pdfW && bBottom <= pdfH) {
+                    const bLeft        = b[0];           // 지도 왼쪽 x
+                    const bRight       = b[2];           // 지도 오른쪽 x
+                    // PDF y → 화면 y 변환: screenY = pdfH - pdfY
+                    const screenYNorth = pdfH - b[3];   // 화면 위쪽(북) = 작은 값
+                    const screenYSouth = pdfH - b[1];   // 화면 아래쪽(남) = 큰 값
+                    // 검증: 북쪽y < 남쪽y, 범위 내
+                    // 안전장치: 전체 페이지와 동일한 BBox는 무시 (Form XObject 오파싱 방지)
+                    const isFullPage = (bLeft < 1 && screenYNorth < 1 &&
+                                       Math.abs(bRight - pdfW) < 2 &&
+                                       Math.abs(screenYSouth - pdfH) < 2);
+                    if (!isFullPage && bRight > bLeft && screenYSouth > screenYNorth &&
+                        bLeft >= 0 && screenYNorth >= 0 &&
+                        bRight <= pdfW && screenYSouth <= pdfH) {
                       // BBox 기반 calibPts — 여백 있는 PDF도 정확하게 처리
                       console.log('[GeoPDF] GPTS+BBox:',
                         'NW=('+latNW.toFixed(5)+','+lonNW.toFixed(5)+')',
                         'SE=('+latSE.toFixed(5)+','+lonSE.toFixed(5)+')',
-                        'BBox=['+bLeft.toFixed(0)+','+bTop.toFixed(0)+','+bRight.toFixed(0)+','+bBottom.toFixed(0)+']');
+                        'BBox=['+bLeft.toFixed(0)+','+screenYNorth.toFixed(0)+','+bRight.toFixed(0)+','+screenYSouth.toFixed(0)+']');
                       geoPDFData = {
                         latNW, lonNW, latSE, lonSE,
                         source: 'stream/GPTS+BBox',
                         // BBox 픽셀 좌표 저장 (applyGeoPDFToCalib에서 사용)
-                        bboxPx: { left:bLeft, top:bTop, right:bRight, bottom:bBottom }
+                        bboxPx: { left:bLeft, right:bRight, screenYNorth:screenYNorth, screenYSouth:screenYSouth }
                       };
                     }
                   }
@@ -2365,12 +2860,15 @@ function applyGeoPDFToCalib(data, canvasW, canvasH) {
   // BBox 픽셀 좌표가 있으면 사용 (PDF에 여백이 있는 경우 정확도 향상)
   let px0=0, py0=0, px1=canvasW, py1=canvasH;
   if (data.bboxPx && canvasW > 0 && canvasH > 0) {
+    // bboxPx.screenYNorth = 지도 북쪽 경계의 화면 y (작은 값 = 위쪽) → NW
+    // bboxPx.screenYSouth = 지도 남쪽 경계의 화면 y (큰 값 = 아래쪽) → SE
     px0 = data.bboxPx.left;
-    py0 = data.bboxPx.top;
+    py0 = data.bboxPx.screenYNorth;  // NW의 y = 북쪽 = 화면 위쪽(작은값)
     px1 = data.bboxPx.right;
-    py1 = data.bboxPx.bottom;
-    console.log('[Calib] BBox pixels: ('+px0.toFixed(0)+','+py0.toFixed(0)+')'
-      +' → ('+px1.toFixed(0)+','+py1.toFixed(0)+')');
+    py1 = data.bboxPx.screenYSouth;  // SE의 y = 남쪽 = 화면 아래쪽(큰값)
+    console.log('[Calib] BBox NW:('+px0.toFixed(0)+','+py0.toFixed(0)+')'
+      +' SE:('+px1.toFixed(0)+','+py1.toFixed(0)+')'
+      +' [yNorth='+py0.toFixed(0)+' < ySouth='+py1.toFixed(0)+']');
   }
   calibPts = [
     {px:px0, py:py0, lat:data.latNW, lon:data.lonNW},
@@ -2378,6 +2876,7 @@ function applyGeoPDFToCalib(data, canvasW, canvasH) {
   ];
   saveCalib();
   drawGPS();
+  _updateResInfo(); // 보정 완료 후 정확도 배지 갱신
   console.log('[Calib] NW('+data.latNW.toFixed(5)+','+data.lonNW.toFixed(5)+')',
     'SE('+data.latSE.toFixed(5)+','+data.lonSE.toFixed(5)+')',
     'canvas:'+canvasW+'x'+canvasH);
@@ -3186,6 +3685,11 @@ function toast(msg,dur=3200){
 function showLoad(msg){ const l=document.getElementById('loading'); if(l){ document.getElementById('loading-txt').textContent=msg||''; l.classList.add('show');} }
 function hideLoad(){ const l=document.getElementById('loading'); if(l) l.classList.remove('show'); }
 function showPanel(id){ document.getElementById(id)?.classList.add('show'); }
+function openLayerPanel(){
+  renderLayerList();
+  showPanel('layer-panel');
+  setTimeout(checkTiffCacheStatus, 100);
+}
 function hidePanel(id){ document.getElementById(id)?.classList.remove('show'); }
 function calcDist(){
   if(trkPts.length<2) return 0;
@@ -3200,6 +3704,20 @@ function calcDist(){
 }
 
 /* ─── CALIBRATION ─── */
+// ── c2ll: Canvas 픽셀 → 위경도 역변환 (ll2cFromCalib의 역함수) ──
+// renderGeoTIFF, GeoTIFF 좌표 추정 등에서 사용
+function c2ll(px, py) {
+  if (calibPts.length < 2) return null;
+  const [a, b] = calibPts;
+  const dPx = b.px - a.px, dPy = b.py - a.py;
+  if (Math.abs(dPx) < 1e-10 || Math.abs(dPy) < 1e-10) return null;
+  return {
+    lon: a.lon + (px - a.px) * (b.lon - a.lon) / dPx,
+    lat: a.lat + (py - a.py) * (b.lat - a.lat) / dPy
+  };
+}
+
+
 function ll2c(lat,lon){ return ll2cFromCalib(lat,lon); }
 
 function saveCalib(){ try{ localStorage.setItem('palmmap_calib',JSON.stringify(calibPts)); }catch(e){} }
@@ -3318,23 +3836,49 @@ function closePop(){ selFeat=null; const el=document.getElementById('layer-popup
 /* ─── LAYER LIST ─── */
 function renderLayerList(){
   const body=document.getElementById('layer-list-body'); if(!body) return;
-  if(!layers.length){ body.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0">레이어 없음</div>'; return; }
+  if(!layers.length){ body.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0">'+T('layer_none')+'</div>'; return; }
   body.innerHTML=layers.slice().reverse().map(l=>{
     const m=TYPE_META[l.type]||TYPE_META.other;
-    return `<div class="layer-item">
-      <span class="badge ${m.badgeCls}">${l.type.toUpperCase()}</span>
-      <span style="flex:1;font-size:12px;color:var(--text)">${escHTML(l.name)}</span>
-      <span style="font-size:10px;color:var(--text3)">${(l.features||[]).length}개</span>
-      <button class="track-vis-btn ${l.visible?'on':''}" onclick="toggleLayerVisible('${l.id}')">${l.visible?'👁':'🚫'}</button>
-      <button class="track-del-btn" onclick="deleteLayer('${l.id}')">🗑</button>
+    const fCount = (l.features||[]).length;
+    const visIcon = l.visible
+      ? '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 8C3 4 13 4 15 8C13 12 3 12 1 8z"/><circle cx="8" cy="8" r="2.5"/></svg>'
+      : '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 8C3 4 13 4 15 8C13 12 3 12 1 8z"/><circle cx="8" cy="8" r="2.5"/><line x1="2" y1="2" x2="14" y2="14" stroke-width="1.5"/></svg>';
+    return `<div class="layer-item" id="li-${l.id}" style="opacity:${l.visible?1:0.5}">
+      <span class="badge ${m.badgeCls}" style="flex-shrink:0">${l.type.toUpperCase()}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHTML(l.name)}</div>
+        <div style="font-size:10px;color:var(--text3)">${fCount}${T('gpkg_feat_count')}</div>
+      </div>
+      <button
+        style="background:${l.visible?'rgba(122,180,80,.2)':'rgba(90,90,90,.2)'};
+               border:.5px solid ${l.visible?'rgba(122,180,80,.5)':'rgba(120,120,120,.3)'};
+               border-radius:5px;padding:5px 7px;cursor:pointer;display:flex;align-items:center;gap:2px;
+               color:${l.visible?'var(--green2)':'var(--text3)'}"
+        onclick="toggleLayerVisible('${l.id}')"
+        title="${T('trk_vis_title')}">
+        ${visIcon}
+      </button>
+      <button
+        style="background:rgba(220,80,80,.15);border:.5px solid rgba(220,80,80,.3);
+               border-radius:5px;padding:5px 7px;cursor:pointer;margin-left:4px;color:var(--red)"
+        onclick="deleteLayer('${l.id}')"
+        title="${T('trk_del_title')}">
+        <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 4h10M6 4V2h4v2M5 4v9h6V4"/><path d="M7 7v4M9 7v4"/>
+        </svg>
+      </button>
     </div>`;
   }).join('');
 }
 function toggleLayerVisible(id){
-  const l=layers.find(x=>x.id===id); if(l){ l.visible=!l.visible; saveLayers(); drawLayerSVG(); renderLayerList(); }
+  // id 타입 통일: 숫자/문자열 모두 허용 (== 비교)
+  const l=layers.find(x=>String(x.id)===String(id));
+  if(l){ l.visible=!l.visible; saveLayers(); drawLayerSVG(); renderLayerList(); }
 }
 function deleteLayer(id){
-  layers=layers.filter(x=>x.id!==id); saveLayers(); drawLayerSVG(); renderLayerList(); toast(T('layer_del'));
+  // id 타입 통일: 숫자/문자열 모두 허용
+  layers=layers.filter(x=>String(x.id)!==String(id));
+  saveLayers(); drawLayerSVG(); renderLayerList(); toast(T('layer_del'));
 }
 
 /* ─── CENTER GPS ─── */
@@ -3379,10 +3923,25 @@ async function deletePDFSlot(slotId){
 function loadPDFJS(){
   return new Promise((res,rej)=>{
     if(window.pdfjsLib){ res(); return; }
+    const PDFJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    const WORKER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     const s=document.createElement('script');
-    s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-    s.onload=()=>{ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; res(); };
-    s.onerror=()=>rej(new Error('PDF.js load failed'));
+    s.src = PDFJS_URL;
+    s.onload = () => {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = WORKER_URL;
+      // SW에 CDN 캐싱 요청 (다음 오프라인 대비)
+      navigator.serviceWorker?.controller?.postMessage({type:'CACHE_CDN'});
+      res();
+    };
+    s.onerror = () => {
+      // PDF.js 로드 실패 → 오프라인 가능성 안내
+      const msg = T ? T('tiff_error') : '⚠️ PDF.js 로드 실패';
+      const isOffline = !navigator.onLine;
+      const detail = isOffline
+        ? '\n오프라인 상태입니다. 먼저 온라인에서 앱을 한 번 실행하세요.\n(Buka aplikasi saat online terlebih dahulu.)'
+        : '\nCDN 연결 실패. 네트워크를 확인하세요.';
+      rej(new Error(msg + detail));
+    };
     document.head.appendChild(s);
   });
 }
@@ -3422,15 +3981,66 @@ async function renderPg(n){
     if(oy<0) oy=0;
     applyTx();
   }
-  drawLayerSVG(); drawGPS();
+  drawLayerSVG(); drawGPS(); _rerenderGeoTIFF();
+  _updateResInfo(); // 해상도·정확도 배지 갱신
 }
 function changePg(d){ const n=curPg+d; if(n<1||n>totalPgs) return; curPg=n; showLoad(T('load_pdf')); renderPg(n).then(hideLoad); updPgLbl(); }
 function updPgLbl(){ document.getElementById('page-lbl').textContent=curPg+'/'+totalPgs; }
 
 function updatePDFInfoBar(name){
-  const bar=document.getElementById('pdf-map-info');
-  const nm=document.getElementById('pdf-map-name');
-  if(bar&&nm){ nm.textContent=name||''; bar.style.display='flex'; document.getElementById('map-area').style.top='84px'; }
+  const bar = document.getElementById('pdf-map-info');
+  const nm  = document.getElementById('pdf-map-name');
+  if (!bar || !nm) return;
+  nm.textContent = name || '';
+  bar.style.display = 'flex';
+  document.getElementById('map-area').style.top = '84px';
+
+  // 해상도 정보 표시 (cW, cH가 설정된 후 호출될 때)
+  _updateResInfo();
+}
+
+// PDF 해상도 및 좌표 정확도 배지 업데이트
+function _updateResInfo() {
+  const resEl   = document.getElementById('pdf-res-info');
+  const badgeEl = document.getElementById('pdf-calib-badge');
+  if (!resEl || !cW || !cH) return;
+
+  // ── 해상도 표시 ──────────────────────────────────────────────
+  resEl.textContent = cW + '×' + cH + 'pt';
+  resEl.style.display = '';
+
+  // ── 좌표 정확도 배지 ─────────────────────────────────────────
+  if (!badgeEl) return;
+  if (calibPts.length < 2) {
+    // 보정 없음
+    badgeEl.textContent = '⚠ ' + (T('calib_fail') || '좌표 미보정');
+    badgeEl.style.background = 'rgba(232,80,80,.2)';
+    badgeEl.style.color      = 'var(--red)';
+    badgeEl.style.display    = '';
+    return;
+  }
+
+  // 지도 면적당 픽셀 밀도로 정확도 계산
+  const [a, b] = calibPts;
+  const dLat = Math.abs(b.lat - a.lat);
+  const dLon = Math.abs(b.lon - a.lon);
+  const dPx  = Math.abs(b.px  - a.px);
+
+  // 1px 당 미터 (위도 방향)
+  const mPerDeg = 111320;
+  const mPerPx  = (dLat * mPerDeg) / Math.max(dPx, 1);
+  let   accText, accColor, accBg;
+
+  if      (mPerPx < 2)  { accText='📍 GPS <2m/px';  accColor='var(--green2)'; accBg='rgba(90,180,80,.2)'; }
+  else if (mPerPx < 5)  { accText='📍 GPS <5m/px';  accColor='var(--green2)'; accBg='rgba(90,180,80,.2)'; }
+  else if (mPerPx < 10) { accText='📍 GPS ~10m/px'; accColor='var(--amber)';  accBg='rgba(232,168,74,.2)'; }
+  else if (mPerPx < 20) { accText='📍 GPS ~'+Math.round(mPerPx)+'m/px'; accColor='var(--amber)'; accBg='rgba(232,168,74,.2)'; }
+  else                  { accText='⚠ GPS >'+Math.round(mPerPx)+'m/px'; accColor='var(--red)';   accBg='rgba(232,80,80,.2)'; }
+
+  badgeEl.textContent      = accText;
+  badgeEl.style.background = accBg;
+  badgeEl.style.color      = accColor;
+  badgeEl.style.display    = '';
 }
 
 async function clearPDF(){
@@ -3778,7 +4388,9 @@ function saveMemo(){
       alt: curPos?.alt ?? null, altAcc: curPos?.altAcc ?? null,
       pinX:pinDragX,pinY:pinDragY,text:txt,
       date:now.toLocaleDateString(),time:now.toLocaleTimeString(),
-      layerName:selFeat?.feat?.name||'' });
+      layerName:selFeat?.feat?.name||'',
+      photos: pendingPhotos.length ? [...pendingPhotos] : [] });
+      pendingPhotos=[]; renderPhotoPreview();
   }
   saveMemos(); pinDragActive=false; pinDragMemoId=null;
   document.getElementById('memo-input').value='';
@@ -3846,9 +4458,580 @@ function cancelMemo(){
 }
 
 
-function tapMemoPinToEdit(memoId){ const slot=curSlot(); if(!slot) return; const m=slot.memos.find(m=>m.id===memoId); if(!m) return; pinDragActive=true; pinDragMemoId=memoId; pinDragX=m.pinX||cW/2; pinDragY=m.pinY||cH/2; document.getElementById('memo-input').value=m.text; document.getElementById('memo-drag-hint')?.classList.add('show'); showPanel('memo-panel'); drawGPS(); }
+function tapMemoPinToEdit(memoId){
+  // 위치 수정 전용 (기존)
+  const slot=curSlot(); if(!slot) return;
+  const m=slot.memos.find(m=>m.id===memoId); if(!m) return;
+  pinDragActive=true; pinDragMemoId=memoId;
+  pinDragX=m.pinX||cW/2; pinDragY=m.pinY||cH/2;
+  document.getElementById('memo-input').value=m.text;
+  document.getElementById('memo-drag-hint')?.classList.add('show');
+  showPanel('memo-panel'); drawGPS();
+}
+
+/* ── Wake Lock: 화면 꺼짐 방지 ── */
+let _wakeLock = null;
+
+async function requestWakeLock(){
+  if(!('wakeLock' in navigator)) return; // 미지원 브라우저
+  try {
+    _wakeLock = await navigator.wakeLock.request('screen');
+    _wakeLock.addEventListener('release', ()=>{
+      _wakeLock = null;
+      _updateWakeLockBtn();
+    });
+    _updateWakeLockBtn();
+    console.log('[WakeLock] Screen lock acquired');
+  } catch(e){
+    console.warn('[WakeLock]', e.message);
+  }
+}
+
+async function releaseWakeLock(){
+  if(_wakeLock){ await _wakeLock.release(); _wakeLock=null; }
+  _updateWakeLockBtn();
+}
+
+async function toggleWakeLock(){
+  if(_wakeLock){ await releaseWakeLock(); toast(T('wl_off')); }
+  else { await requestWakeLock(); toast(_wakeLock ? T('wl_on') : T('wl_unsupported')); }
+}
+
+function _updateWakeLockBtn(){
+  const btn = document.getElementById('wl-btn');
+  if(!btn) return;
+  const on = !!_wakeLock;
+  btn.style.background = on ? 'rgba(122,180,80,.25)' : 'rgba(90,90,90,.15)';
+  btn.style.borderColor = on ? 'rgba(122,180,80,.5)' : 'rgba(120,120,120,.3)';
+  btn.style.color = on ? 'var(--green2)' : 'var(--text3)';
+  btn.title = on ? T('wl_on') : T('wl_off_hint');
+}
+
+// GPS 시작 시 자동 Wake Lock 요청
+// (handleGPS에서 hooking)
+
+/* ── 사진 첨부 시스템 ── */
+let pendingPhotos = []; // [{dataURL, name}]
+
+function attachPhoto(input){
+  const files = Array.from(input.files||[]);
+  if(!files.length) return;
+  input.value='';
+  showLoad(T('photo_loading')||'사진 처리 중...');
+  Promise.all(files.map(f => new Promise(res => {
+    const reader = new FileReader();
+    reader.onload = e => res({ dataURL: e.target.result, name: f.name, size: f.size });
+    reader.readAsDataURL(f);
+  }))).then(photos => {
+    pendingPhotos.push(...photos);
+    renderPhotoPreview();
+    hideLoad();
+    toast(T('photo_added')||`📷 ${photos.length}장 추가됨`);
+  });
+}
+
+function renderPhotoPreview(){
+  const area = document.getElementById('photo-preview-area');
+  const thumbs = document.getElementById('photo-thumbs');
+  const countEl = document.getElementById('photo-count');
+  if(!area||!thumbs) return;
+  if(!pendingPhotos.length){ area.style.display='none'; return; }
+  area.style.display='';
+  const countT = document.getElementById('t-photo-count');
+  if(countT) countT.textContent = (T('photo_count')||'사진') + ' ' + pendingPhotos.length + (T('photo_unit')||'장');
+  thumbs.innerHTML = pendingPhotos.map((p,i) => `
+    <div style="position:relative;width:60px;height:60px;flex-shrink:0">
+      <img src="${p.dataURL}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:.5px solid var(--border)">
+      <button onclick="removePhoto(${i})"
+        style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;
+               background:var(--red);border:none;color:#fff;font-size:9px;cursor:pointer;
+               display:flex;align-items:center;justify-content:center;line-height:1">×</button>
+    </div>`).join('');
+}
+
+function removePhoto(idx){
+  pendingPhotos.splice(idx,1);
+  renderPhotoPreview();
+}
+
+function clearPhotos(){
+  pendingPhotos=[];
+  renderPhotoPreview();
+}
+
+// 메모 저장 시 사진 포함 (IDB에 dataURL로 저장)
+// saveMemo() 호출 전 pendingPhotos를 메모 객체에 포함
+
+function editMemoText(memoId){
+  // 텍스트 편집 패널 열기
+  const slot=curSlot(); if(!slot) return;
+  const m=slot.memos.find(m=>m.id===memoId); if(!m) return;
+  // 편집 패널 생성 (동적)
+  let ep=document.getElementById('memo-edit-panel');
+  if(!ep){
+    ep=document.createElement('div');
+    ep.id='memo-edit-panel';
+    ep.className='fpanel';
+    ep.style.cssText='position:fixed;bottom:74px;left:0;right:0;z-index:300;'+
+      'background:var(--panel);border-top:.5px solid var(--border2);'+
+      'padding:14px;display:none;max-height:50vh;overflow-y:auto';
+    document.body.appendChild(ep);
+  }
+  ep.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <h3 style="font-size:13px;font-weight:700;color:var(--amber)">✏️ ${T('memo_edit_title')}</h3>
+      <button onclick="closeEditMemo()" style="background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer">×</button>
+    </div>
+    <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:6px">
+      📅 ${m.date} ${m.time}${m.lat?' | '+m.lat.toFixed(5)+', '+m.lon.toFixed(5):''}
+    </div>
+    <textarea id="memo-edit-input"
+      style="width:100%;min-height:80px;background:var(--bg3);border:.5px solid var(--border2);
+             color:var(--text);font-size:13px;padding:8px;border-radius:8px;
+             resize:vertical;outline:none;font-family:var(--sans);line-height:1.5"
+      placeholder="${T('memo_ph')}">${escHTML(m.text)}</textarea>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button onclick="saveEditMemo('${memoId}')"
+        style="flex:2;background:var(--green);color:#fff;border:none;border-radius:8px;
+               padding:10px;font-size:13px;font-weight:700;cursor:pointer">
+        ${T('save_btn')}
+      </button>
+      <button onclick="closeEditMemo()"
+        style="flex:1;background:var(--bg3);color:var(--text2);border:.5px solid var(--border);
+               border-radius:8px;padding:10px;font-size:12px;cursor:pointer">
+        ${T('cancel_btn')}
+      </button>
+    </div>
+  `;
+  ep.style.display='block';
+  setTimeout(()=>document.getElementById('memo-edit-input')?.focus(),100);
+}
+
+function saveEditMemo(memoId){
+  const slot=curSlot(); if(!slot) return;
+  const m=slot.memos.find(m=>m.id===memoId); if(!m) return;
+  const input=document.getElementById('memo-edit-input');
+  if(!input) return;
+  const newText=input.value.trim();
+  if(!newText){ toast(T('memo_empty_warn')||T('memo_ph')); return; }
+  m.text=newText;
+  saveMemos();
+  renderMemoList();
+  closeEditMemo();
+  toast(T('memo_edit_ok'));
+}
+
+function closeEditMemo(){
+  const ep=document.getElementById('memo-edit-panel');
+  if(ep) ep.style.display='none';
+}
 function openMemoList(){ renderMemoList(); document.getElementById('memo-list-panel')?.classList.add('show'); }
 /* ─── 메모 TXT 내보내기 ─── */
+/* ═══════════════════════════════════════════════════════════════
+   ① 거리 / 면적 측정 도구
+   ② KML 내보내기
+   ③ 북마크 (즐겨찾기)
+   ─────────────────────────────────────────────────────────────
+   측정 흐름:
+   initMeasure() → 측정 모드 ON (measureMode = 'dist' | 'area')
+   지도 탭 → onMeasureTap(px,py) → 좌표 추가 → drawMeasure()
+   거리: Haversine 누적 합산
+   면적: Shoelace 공식 (UTM 미터 변환)
+═══════════════════════════════════════════════════════════════ */
+
+/* ─── 측정 도구 상태 ─── */
+let measureMode   = 'dist';   // 'dist' | 'area'
+let measurePoints = [];        // [{lat,lon,px,py}]
+let measureActive = false;
+
+function initMeasure() {
+  measurePoints = [];
+  measureActive = true;
+  drawMeasure();
+  updateMeasureResult();
+  // 측정 모드 중 지도 탭을 가로채기 위해 overlay 레이어 활성
+  document.getElementById('measure-overlay')?.remove();
+  const ov = document.createElement('div');
+  ov.id = 'measure-overlay';
+  ov.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;z-index:80;cursor:crosshair';
+  ov.addEventListener('click', onMeasureClick);
+  ov.addEventListener('touchend', onMeasureTouch);
+  document.getElementById('map-area')?.appendChild(ov);
+}
+
+function closeMeasure() {
+  measureActive = false;
+  measurePoints = [];
+  document.getElementById('measure-overlay')?.remove();
+  // 측정 SVG 지우기
+  const msvg = document.getElementById('measure-svg');
+  if (msvg) msvg.innerHTML = '';
+  hidePanel('measure-panel');
+}
+
+function clearMeasure() {
+  measurePoints = [];
+  drawMeasure();
+  updateMeasureResult();
+}
+
+function setMeasureMode(mode) {
+  measureMode = mode;
+  measurePoints = [];
+  // 탭 버튼 스타일
+  const dtab = document.getElementById('msr-dist-tab');
+  const atab = document.getElementById('msr-area-tab');
+  if (dtab) dtab.style.background = mode==='dist' ? 'var(--amber)' : 'var(--bg3)';
+  if (dtab) dtab.style.color      = mode==='dist' ? '#111' : 'var(--text2)';
+  if (atab) atab.style.background = mode==='area' ? 'var(--amber)' : 'var(--bg3)';
+  if (atab) atab.style.color      = mode==='area' ? '#111' : 'var(--text2)';
+  // 힌트 텍스트
+  const hint = document.getElementById('t-tool-dist-hint');
+  if (hint) hint.textContent = mode==='dist' ? T('tool_dist_hint') : T('tool_area_hint');
+  drawMeasure(); updateMeasureResult();
+}
+
+function onMeasureClick(e) {
+  e.stopPropagation();
+  const rect = e.currentTarget.getBoundingClientRect();
+  const cx = (e.clientX - rect.left) / scale - ox/scale;
+  const cy = (e.clientY - rect.top)  / scale - oy/scale;
+  _addMeasurePoint(cx, cy);
+}
+
+function onMeasureTouch(e) {
+  e.preventDefault(); e.stopPropagation();
+  if (!e.changedTouches.length) return;
+  const t = e.changedTouches[0];
+  const rect = e.currentTarget.getBoundingClientRect();
+  const cx = (t.clientX - rect.left) / scale - ox/scale;
+  const cy = (t.clientY - rect.top)  / scale - oy/scale;
+  _addMeasurePoint(cx, cy);
+}
+
+function _addMeasurePoint(px, py) {
+  const ll = c2ll(px, py);
+  if (!ll) { toast(T('calib_no_data')); return; }
+
+  // 면적 모드: 시작점 근처 탭 → 폴리곤 닫기
+  if (measureMode==='area' && measurePoints.length >= 3) {
+    const first = measurePoints[0];
+    const dp = Math.hypot(px-first.px, py-first.py);
+    if (dp < 20/scale) { drawMeasure(true); updateMeasureResult(); return; }
+  }
+  measurePoints.push({lat:ll.lat, lon:ll.lon, px, py});
+  drawMeasure(false);
+  updateMeasureResult();
+}
+
+function drawMeasure(closed=false) {
+  // measure-svg 생성 (없으면 map-wrap 안에 생성)
+  let msvg = document.getElementById('measure-svg');
+  if (!msvg) {
+    msvg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    msvg.id = 'measure-svg';
+    msvg.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;z-index:85;overflow:visible';
+    msvg.setAttribute('width',  cW||800);
+    msvg.setAttribute('height', cH||1200);
+    document.getElementById('map-wrap')?.appendChild(msvg);
+  }
+  msvg.setAttribute('width', cW||800);
+  msvg.setAttribute('height', cH||1200);
+  msvg.innerHTML = '';
+  if (!measurePoints.length) return;
+
+  const pts = measurePoints;
+  const sw = 2/(scale||1);
+
+  // 라인
+  if (pts.length >= 2) {
+    const pl = document.createElementNS('http://www.w3.org/2000/svg','polyline');
+    let pstr = pts.map(p=>`${p.px},${p.py}`).join(' ');
+    if (closed && pts.length >= 3) pstr += ` ${pts[0].px},${pts[0].py}`;
+    pl.setAttribute('points', pstr);
+    pl.setAttribute('stroke','#e8a84a');
+    pl.setAttribute('stroke-width', sw);
+    pl.setAttribute('fill', closed ? 'rgba(232,168,74,.15)' : 'none');
+    pl.setAttribute('stroke-dasharray', measureMode==='area' ? 'none' : `${4/scale},${2/scale}`);
+    pl.setAttribute('stroke-linejoin','round');
+    msvg.appendChild(pl);
+  }
+
+  // 포인트 + 거리 라벨
+  pts.forEach((p, i) => {
+    const r = 4/(scale||1);
+    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx', p.px); c.setAttribute('cy', p.py); c.setAttribute('r', r);
+    c.setAttribute('fill', i===0 ? '#5cba3c' : '#e8a84a');
+    c.setAttribute('stroke','#fff'); c.setAttribute('stroke-width', 1/(scale||1));
+    msvg.appendChild(c);
+
+    // 구간 거리 라벨
+    if (i > 0 && measureMode==='dist') {
+      const prev = pts[i-1];
+      const segM = haversineDist(prev.lat, prev.lon, p.lat, p.lon);
+      const segTxt = segM < 1000 ? segM.toFixed(0)+'m' : (segM/1000).toFixed(2)+'km';
+      const mx = (prev.px+p.px)/2, my = (prev.py+p.py)/2 - 8/(scale||1);
+      const bg = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      const fs = 9/(scale||1);
+      bg.setAttribute('x', mx-18/(scale||1)); bg.setAttribute('y', my-fs);
+      bg.setAttribute('width', 36/(scale||1)); bg.setAttribute('height', fs*1.4);
+      bg.setAttribute('fill','rgba(22,32,22,.75)'); bg.setAttribute('rx', 2/(scale||1));
+      msvg.appendChild(bg);
+      const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+      lbl.setAttribute('x', mx); lbl.setAttribute('y', my);
+      lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('dominant-baseline','auto');
+      lbl.setAttribute('font-size', fs); lbl.setAttribute('fill','#e8a84a');
+      lbl.textContent = segTxt;
+      msvg.appendChild(lbl);
+    }
+  });
+}
+
+function updateMeasureResult() {
+  const resDiv  = document.getElementById('msr-result');
+  const resVal  = document.getElementById('msr-result-val');
+  const resInfo = document.getElementById('msr-points-info');
+  const resLbl  = document.getElementById('msr-result-label');
+  if (!resDiv) return;
+
+  if (measurePoints.length < 2) { resDiv.style.display='none'; return; }
+  resDiv.style.display='';
+
+  if (measureMode==='dist') {
+    let total = 0;
+    for (let i=1; i<measurePoints.length; i++) {
+      total += haversineDist(
+        measurePoints[i-1].lat, measurePoints[i-1].lon,
+        measurePoints[i].lat,   measurePoints[i].lon
+      );
+    }
+    const disp = total<1000 ? total.toFixed(1)+' m' : (total/1000).toFixed(3)+' km';
+    if (resLbl) resLbl.textContent = T('tool_dist_result');
+    if (resVal) resVal.textContent = disp;
+    if (resInfo) resInfo.textContent = measurePoints.length + ' 점';
+  } else {
+    // 면적: Shoelace 공식 (UTM 좌표로 변환)
+    if (measurePoints.length < 3) { resDiv.style.display='none'; return; }
+    const ha = _calcAreaHa(measurePoints);
+    const disp = ha < 1 ? (ha*10000).toFixed(0)+' m²' :
+                 ha < 100 ? ha.toFixed(2)+' ha' : ha.toFixed(0)+' ha';
+    if (resLbl) resLbl.textContent = T('tool_area_result');
+    if (resVal) resVal.textContent = disp;
+    if (resInfo) resInfo.textContent = measurePoints.length + ' 점';
+  }
+}
+
+// 면적 계산 (Shoelace, 미터 단위)
+function _calcAreaHa(pts) {
+  // 중심 위도 기반 UTM 근사 변환
+  const latC = pts.reduce((s,p)=>s+p.lat,0)/pts.length;
+  const mPerLat = 111320;
+  const mPerLon = 111320 * Math.cos(latC * Math.PI/180);
+  // Shoelace
+  let area = 0;
+  for (let i=0, n=pts.length; i<n; i++) {
+    const j = (i+1)%n;
+    const xi = (pts[i].lon - pts[0].lon) * mPerLon;
+    const yi = (pts[i].lat - pts[0].lat) * mPerLat;
+    const xj = (pts[j].lon - pts[0].lon) * mPerLon;
+    const yj = (pts[j].lat - pts[0].lat) * mPerLat;
+    area += xi*yj - xj*yi;
+  }
+  return Math.abs(area/2) / 10000; // m² → ha
+}
+
+
+/* ─── KML 내보내기 ─── */
+function exportKML() {
+  const slot = curSlot();
+  if (!slot) { toast(T('no_map')); return; }
+
+  const memos  = slot.memos  || [];
+  const tracks = slot.tracks || [];
+  const lyrs   = layers      || [];
+
+  if (!memos.length && !tracks.length && !lyrs.length) {
+    toast(T('kml_empty')); return;
+  }
+
+  const esc = s => String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  const lines = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<kml xmlns="http://www.opengis.net/kml/2.2">',
+    '<Document>',
+    `  <name>${esc(slot.name||slot.pdfName||'PalmMap')}</name>`,
+    '  <!-- Styles -->',
+    '  <Style id="s-memo"><IconStyle><color>ff1478e8</color><scale>0.9</scale></IconStyle></Style>',
+    '  <Style id="s-track"><LineStyle><color>ff1478e8</color><width>3</width></LineStyle></Style>',
+    '  <Style id="s-layer"><LineStyle><color>ff50b47a</color><width>2</width></LineStyle>',
+    '    <PolyStyle><color>4050b47a</color></PolyStyle></Style>',
+  ];
+
+  // 메모 → Placemark
+  if (memos.length) {
+    lines.push('  <Folder><name>Memos</name>');
+    memos.forEach((m,i) => {
+      if (!m.lat) return;
+      lines.push(`  <Placemark><name>${esc('📍 '+(i+1)+': '+m.text.substring(0,30))}</name>`);
+      lines.push(`    <description>${esc(m.date+' '+m.time+(m.alt!=null?' ↕'+Math.round(m.alt)+'m':''))}</description>`);
+      lines.push(`    <styleUrl>#s-memo</styleUrl>`);
+      lines.push(`    <Point><coordinates>${m.lon.toFixed(7)},${m.lat.toFixed(7)},${m.alt||0}</coordinates></Point>`);
+      lines.push(`  </Placemark>`);
+    });
+    lines.push('  </Folder>');
+  }
+
+  // 트랙 → LineString
+  if (tracks.length) {
+    lines.push('  <Folder><name>Tracks</name>');
+    tracks.forEach(t => {
+      if (!t.pts?.length) return;
+      lines.push(`  <Placemark><name>${esc(t.name)}</name>`);
+      lines.push(`    <styleUrl>#s-track</styleUrl>`);
+      lines.push(`    <LineString><tessellate>1</tessellate><coordinates>`);
+      lines.push('      ' + t.pts.map(p=>`${p.lon.toFixed(7)},${p.lat.toFixed(7)},0`).join(' '));
+      lines.push(`    </coordinates></LineString></Placemark>`);
+    });
+    lines.push('  </Folder>');
+  }
+
+  // 레이어 → Polygon/LineString
+  if (lyrs.length) {
+    lines.push('  <Folder><name>Layers</name>');
+    lyrs.forEach(layer => {
+      (layer.features||[]).forEach(feat => {
+        const poly = feat.polygon || [];
+        if (poly.length < 2) return;
+        // 픽셀→경위도 변환
+        const coords = poly.map(p => {
+          const ll = c2ll(p.px, p.py);
+          return ll ? `${ll.lon.toFixed(7)},${ll.lat.toFixed(7)},0` : null;
+        }).filter(Boolean);
+        if (coords.length < 2) return;
+        lines.push(`  <Placemark><name>${esc(feat.name||layer.name)}</name>`);
+        lines.push(`    <styleUrl>#s-layer</styleUrl>`);
+        if (layer.type==='road') {
+          lines.push(`    <LineString><tessellate>1</tessellate>`);
+          lines.push(`      <coordinates>${coords.join(' ')}</coordinates>`);
+          lines.push(`    </LineString>`);
+        } else {
+          lines.push(`    <Polygon><outerBoundaryIs><LinearRing>`);
+          lines.push(`      <coordinates>${coords.join(' ')} ${coords[0]}</coordinates>`);
+          lines.push(`    </LinearRing></outerBoundaryIs></Polygon>`);
+        }
+        lines.push(`  </Placemark>`);
+      });
+    });
+    lines.push('  </Folder>');
+  }
+
+  lines.push('</Document></kml>');
+
+  const content = lines.join('\n');
+  const safeName = (slot.name||'palmmap').replace(/[^\w가-힣a-zA-Z0-9_-]/g,'_').substring(0,30);
+  const fname = `${safeName}_${new Date().toISOString().slice(0,10)}.kml`;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\uFEFF'+content],{type:'application/vnd.google-earth.kml+xml'}));
+  a.download = fname;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 1500);
+  toast(T('kml_ok'));
+}
+
+
+/* ─── 북마크 시스템 ─── */
+let bookmarks = JSON.parse(localStorage.getItem('palmmap_bookmarks')||'[]');
+
+function saveBookmarks() {
+  try { localStorage.setItem('palmmap_bookmarks', JSON.stringify(bookmarks)); } catch(e){}
+}
+
+function addBookmark() {
+  if (!cW) { toast(T('no_map')); return; }
+  const nameInput = document.getElementById('bm-name-input');
+  const name = (nameInput?.value.trim()) ||
+    (curSlot()?.name || 'View') + ' ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  if (nameInput) nameInput.value = '';
+
+  const bm = {
+    id: 'bm_'+Date.now(),
+    name,
+    slotId: curSlot()?.id || null,
+    ox, oy, scale,
+    lat: curPos?.lat ?? null,
+    lon: curPos?.lon ?? null,
+    date: new Date().toLocaleDateString(),
+    time: new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
+  };
+  bookmarks.unshift(bm);  // 최신이 위
+  if (bookmarks.length > 50) bookmarks.length = 50; // 최대 50개
+  saveBookmarks();
+  renderBookmarkList();
+  toast(T('bm_added'));
+}
+
+function gotoBookmark(id) {
+  const bm = bookmarks.find(b=>b.id===id);
+  if (!bm) return;
+  // 같은 슬롯이면 바로 이동, 다른 슬롯이면 슬롯 전환 후 이동
+  if (bm.slotId && bm.slotId !== curSlot()?.id) {
+    switchToSlot(bm.slotId);
+    setTimeout(()=>_applyBookmarkView(bm), 300);
+  } else {
+    _applyBookmarkView(bm);
+  }
+  hidePanel('bookmark-panel');
+}
+
+function _applyBookmarkView(bm) {
+  if (bm.scale) { ox=bm.ox; oy=bm.oy; scale=bm.scale; applyTx(); }
+}
+
+function deleteBookmark(id) {
+  bookmarks = bookmarks.filter(b=>b.id!==id);
+  saveBookmarks();
+  renderBookmarkList();
+  toast(T('bm_deleted'));
+}
+
+function renderBookmarkList() {
+  const body = document.getElementById('bm-list-body');
+  if (!body) return;
+
+  // placeholder 업데이트
+  const inp = document.getElementById('bm-name-input');
+  if (inp) inp.placeholder = T('bm_name_ph');
+
+  if (!bookmarks.length) {
+    body.innerHTML = `<div style="font-size:12px;color:var(--text3);padding:10px 0;text-align:center">${T('bm_empty')}</div>`;
+    return;
+  }
+  body.innerHTML = bookmarks.map(bm => `
+    <div style="display:flex;align-items:center;gap:6px;padding:7px 0;
+         border-bottom:.5px solid var(--border)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+          ⭐ ${escHTML(bm.name)}
+        </div>
+        <div style="font-size:10px;color:var(--text3)">
+          ${bm.date} ${bm.time} · ${bm.slotId ? '📌' : '🗺'}
+        </div>
+      </div>
+      <button onclick="gotoBookmark('${bm.id}')"
+        style="background:rgba(122,180,80,.2);border:.5px solid rgba(122,180,80,.4);
+               color:var(--green2);border-radius:5px;padding:4px 10px;
+               font-size:11px;cursor:pointer;white-space:nowrap">${T('bm_goto')}</button>
+      <button onclick="deleteBookmark('${bm.id}')"
+        style="background:rgba(220,80,80,.12);border:.5px solid rgba(220,80,80,.25);
+               color:var(--red);border-radius:5px;padding:4px 6px;font-size:11px;cursor:pointer">🗑</button>
+    </div>`).join('');
+}
+
+
 function exportMemosTXT(){
   const slot = curSlot();
   if(!slot){ toast(T('no_map')); return; }
@@ -3991,12 +5174,31 @@ function renderMemoList(){
       ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#ff7814;color:#fff;font-size:9px;font-weight:700;flex-shrink:0">${idxMap[m.id]||'?'}</span>`
       : '📍';
     const altLabel = m.alt!=null ? ' ↕'+Math.round(m.alt)+'m' : '';
-    return `<div class="memo-item" id="mi-${m.id}"><div class="memo-body" style="display:flex;gap:6px;align-items:flex-start">${pinIcon}<div>${m.lat?'<div class="memo-coords">'+m.lat.toFixed(5)+', '+m.lon.toFixed(5)+altLabel+'</div>':''}<div class="memo-text">${escHTML(m.text)}</div></div></div><div style="display:flex;flex-direction:column;gap:4px"><button class="memo-del" onclick="tapMemoPinToEdit('${m.id}')" title="위치수정">✏️</button><button class="memo-del" onclick="delMemo('${m.id}')" title="삭제">🗑</button></div></div>`;
+    const photoThumb = (m.photos&&m.photos.length)
+      ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">${m.photos.slice(0,4).map(p=>`<img src="${p.dataURL}" style="width:44px;height:44px;object-fit:cover;border-radius:4px;border:.5px solid var(--border)">`).join('')}${m.photos.length>4?`<div style="font-size:9px;color:var(--text3);align-self:center">+${m.photos.length-4}</div>`:''}</div>` : '';
+    return `<div class="memo-item" id="mi-${m.id}"><div class="memo-body" style="display:flex;gap:6px;align-items:flex-start">${pinIcon}<div>${m.lat?'<div class="memo-coords">'+m.lat.toFixed(5)+', '+m.lon.toFixed(5)+altLabel+'</div>':''}<div class="memo-text">${escHTML(m.text)}</div>${photoThumb}</div></div><div style="display:flex;flex-direction:column;gap:4px"><button class="memo-del" onclick="editMemoText('${m.id}')"
+        style="color:var(--amber)" title="${T('memo_edit_title')||'편집'}">✏️</button>
+      <button class="memo-del" onclick="tapMemoPinToEdit('${m.id}')"
+        style="color:var(--blue)" title="${T('memo_move_pin')||'위치'}">📌</button>
+      <button class="memo-del" onclick="delMemo('${m.id}')"
+        style="color:var(--red)" title="${T('trk_del_title')}">🗑</button></div></div>`;
   }).join('')}</div>`).join('');
 }
 
 /* ─── DEMO / IMPORT ─── */
-function guessType(p,f){ const s=(JSON.stringify(p)+f).toLowerCase(); if(s.includes('estate')) return 'estate'; if(s.includes('division')||s.includes('divisi')) return 'division'; if(s.includes('road')||s.includes('jalan')) return 'road'; return 'block'; }
+function guessType(p,f){
+  const s = (JSON.stringify(p) + f).toLowerCase();
+  // Estate: 가장 높은 레벨
+  if(s.includes('estate') || s.includes('areal_tanam')) return 'estate';
+  // Division / Divisi
+  if(s.includes('division') || s.includes('divisi') || s.includes('batas_blok') || s.includes('batas blok')) return 'division';
+  // Road / 도로
+  if(s.includes('road') || s.includes('jalan')) return 'road';
+  // Water / River / 하천
+  if(s.includes('sungai') || s.includes('river') || s.includes('water') || s.includes('kampung')) return 'other';
+  // Block (기본)
+  return 'block';
+}
 function geomToCanvas(geom){
   if(!geom) return [];
   let ring=[];
@@ -4006,6 +5208,908 @@ function geomToCanvas(geom){
   if(calibPts.length>=2) return ring.map(([lon,lat])=>ll2c(lat,lon)||{px:0,py:0}).filter(p=>p.px||p.py);
   return ring.map(([x,y])=>({px:x,py:y}));
 }
+/* ═══════════════════════════════════════════════════════════════
+   GeoTIFF 베이스맵 로더 (2단계 구현)
+   
+   처리 흐름:
+   triggerTiff() → tiff-input.click()
+   loadGeoTIFF(input) → FileReader → arrayBuffer
+   → GeoTIFF.js 로드 → fromArrayBuffer(buf)
+   → image.readRasters() → RGBA 픽셀
+   → image metadata → BBox (lon/lat 범위)
+   → geotiff-canvas에 drawImage
+   → renderGeoTIFF() → map-wrap에서 위치/크기 정렬
+   
+   좌표 정합:
+   - ModelTiepointTag + ModelPixelScaleTag → bbox
+   - EPSG UTM → WGS84 역변환 (utmToWGS84 재활용)
+   - calibPts 기반 ll2c()로 캔버스 픽셀 위치 계산
+═══════════════════════════════════════════════════════════════ */
+
+const GEOTIFF_CDN = 'https://cdn.jsdelivr.net/npm/geotiff@2.0.7/dist/geotiff.bundle.min.js';
+let _geotiffLib = null;  // geotiff.js 캐시
+
+// 현재 로드된 GeoTIFF 상태
+let geoTIFFState = null;
+/* geoTIFFState 구조:
+  {
+    canvas: HTMLCanvasElement,  // 렌더링된 이미지
+    bbox: {minLon, minLat, maxLon, maxLat},  // WGS84 경계
+    width: px, height: px,      // 원본 픽셀 크기
+    filename: string,
+    opacity: 0.85,
+    epsg: number,
+    resolution: string          // 예: '5m/px'
+  }
+*/
+
+// geotiff.js CDN 로드 (최초 1회)
+function loadGeoTIFFLib() {
+  if (_geotiffLib) return Promise.resolve(_geotiffLib);
+  return new Promise((res, rej) => {
+    if (window.GeoTIFF) { _geotiffLib = window.GeoTIFF; res(_geotiffLib); return; }
+    const s = document.createElement('script');
+    s.src = GEOTIFF_CDN;
+    s.onload = () => { _geotiffLib = window.GeoTIFF; res(_geotiffLib); };
+    s.onerror = () => {
+      const isOnline = navigator.onLine;
+      rej(new Error(isOnline
+        ? 'geotiff.js CDN 로드 실패 (CDN 차단 또는 네트워크 오류)'
+        : 'geotiff.js CDN 로드 실패 (오프라인 — 온라인에서 먼저 앱을 실행하세요 / Buka aplikasi saat online)'));
+    };
+    document.head.appendChild(s);
+  });
+}
+
+// GeoTIFF 파일 선택 트리거
+// geotiff.js SW 캐시 상태 확인
+async function checkTiffCacheStatus() {
+  const btn = document.getElementById('tiff-cache-status');
+  if (!btn || !('caches' in window)) return;
+  try {
+    const cache = await caches.open('palmmap-v11');
+    const keys  = await cache.keys();
+    const cached = keys.some(r => r.url.includes('geotiff'));
+    btn.textContent = cached ? '📷 GeoTIFF ✓ 캐시됨' : '📷 GeoTIFF ⚠ 캐시 없음';
+    btn.style.color = cached ? 'var(--green2)' : 'var(--amber)';
+    btn.title = cached
+      ? 'geotiff.js 오프라인 사용 가능'
+      : '온라인에서 먼저 실행하면 캐싱됩니다';
+  } catch(e) {}
+}
+
+function triggerTiff() {
+  document.getElementById('tiff-input')?.click();
+}
+
+// GeoTIFF 파일 로드 핸들러
+async function loadGeoTIFF(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  input.value = '';
+
+  // 200MB 경고
+  if (file.size > 200 * 1024 * 1024) {
+    if (!confirm(T('tiff_too_large') + `\n${(file.size/1024/1024).toFixed(0)}MB`)) return;
+  }
+
+  showLoad(T('tiff_loading'));
+  try {
+    // 1. geotiff.js 로드
+    const GeoTIFF = await loadGeoTIFFLib();
+    if (!GeoTIFF) { toast(T('tiff_error') + ': 라이브러리 없음'); hideLoad(); return; }
+
+    // 2. 파일 읽기
+    const buf = await file.arrayBuffer();
+    const tiff = await GeoTIFF.fromArrayBuffer(buf);
+    const image = await tiff.getImage();
+
+    const width  = image.getWidth();
+    const height = image.getHeight();
+    const geoKeys = image.getGeoKeys() || {};
+    const samplesPerPixel = image.getSamplesPerPixel();
+
+    // 3. EPSG 코드 추출 (여러 geoKey 조합)
+    const epsg = geoKeys.ProjectedCSTypeGeoKey  ||
+                 geoKeys.GeographicTypeGeoKey   ||
+                 geoKeys.GeogGeodeticDatumGeoKey || 0;
+
+    // 4. BBox 추출
+    const bbox = image.getBoundingBox(); // [minX, minY, maxX, maxY]
+    let minLon, minLat, maxLon, maxLat;
+
+    const isUTM = epsg >= 32600 && epsg <= 32799;
+    const isWGS = epsg === 4326 || epsg === 4269 || epsg === 0 ||
+                  (Math.abs(bbox[0]) <= 180 && Math.abs(bbox[1]) <= 90 &&
+                   Math.abs(bbox[2]) <= 180 && Math.abs(bbox[3]) <= 90);
+
+    if (isUTM) {
+      const zone  = epsg >= 32700 ? epsg - 32700 : epsg - 32600;
+      const north = epsg < 32700;
+      try {
+        const [lon0, lat0] = utmToWGS84(bbox[0], bbox[1], zone, north);
+        const [lon1, lat1] = utmToWGS84(bbox[2], bbox[3], zone, north);
+        minLon = Math.min(lon0, lon1); maxLon = Math.max(lon0, lon1);
+        minLat = Math.min(lat0, lat1); maxLat = Math.max(lat0, lat1);
+      } catch(e) {
+        toast(T('tiff_no_geo') + ': UTM 변환 실패');
+        [minLon, minLat, maxLon, maxLat] = [bbox[0], bbox[1], bbox[2], bbox[3]];
+      }
+    } else if (isWGS) {
+      // WGS84 직접 사용
+      minLon = bbox[0]; minLat = bbox[1];
+      maxLon = bbox[2]; maxLat = bbox[3];
+    } else {
+      // 알 수 없는 좌표계 → calibPts 기반 추정
+      toast(T('tiff_no_geo'));
+      if (calibPts.length >= 2) {
+        const refLL = calibPts.map(p => c2ll(p.px, p.py)).filter(Boolean);
+        if (refLL.length >= 2) {
+          minLon = Math.min(...refLL.map(p=>p.lon));
+          maxLon = Math.max(...refLL.map(p=>p.lon));
+          minLat = Math.min(...refLL.map(p=>p.lat));
+          maxLat = Math.max(...refLL.map(p=>p.lat));
+        }
+      }
+    }
+
+    // 좌표 유효성 최종 검사
+    if (minLon == null || isNaN(minLon)) {
+      toast(T('tiff_no_geo')); hideLoad(); return;
+    }
+
+    // 5. 픽셀 해상도 계산
+    const pixelScale = image.fileDirectory?.ModelPixelScale;
+    let resText = '';
+    if (pixelScale && pixelScale[0] > 0) {
+      const resM = pixelScale[0] * 111320;  // 도→미터 근사
+      if (!isUTM) {
+        resText = resM < 1 ? `${(resM*100).toFixed(0)}cm/px`
+                : resM < 100 ? `${resM.toFixed(1)}m/px`
+                : `${(resM/1000).toFixed(2)}km/px`;
+      } else {
+        resText = pixelScale[0] < 1 ? `${(pixelScale[0]*100).toFixed(0)}cm/px`
+                : `${pixelScale[0].toFixed(1)}m/px`;
+      }
+    }
+
+    showLoad(T('tiff_rendering'));
+
+    // 6. 래스터 읽기 — 메모리 효율적 처리
+    let rasters;
+    try {
+      rasters = await image.readRasters({ interleave: true });
+    } catch(e) {
+      // interleave 실패 시 fallback
+      try {
+        rasters = await image.readRasters({ interleave: false });
+      } catch(e2) {
+        toast(T('tiff_error') + ': 래스터 읽기 실패'); hideLoad(); return;
+      }
+    }
+
+    // 7. Canvas에 렌더링 (Canvas 크기 제한: 모바일 ~4096px)
+    const MAX_CANVAS = 4096;
+    let rW = width, rH = height;
+    if (rW > MAX_CANVAS || rH > MAX_CANVAS) {
+      const ratio = Math.min(MAX_CANVAS/rW, MAX_CANVAS/rH);
+      rW = Math.round(rW * ratio);
+      rH = Math.round(rH * ratio);
+    }
+
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width  = rW;
+    offCanvas.height = rH;
+    const ctx = offCanvas.getContext('2d');
+
+    // 픽셀 처리 — 밴드 수 및 비트 깊이 자동 대응
+    const imgData = ctx.createImageData(rW, rH);
+    const pixels  = imgData.data;
+    const totalPx = rW * rH;
+    // 16bit → 8bit 스케일: rasters의 타입 확인
+    const is16bit = rasters instanceof Uint16Array ||
+                    (Array.isArray(rasters) && rasters[0] instanceof Uint16Array);
+    const scale8  = is16bit ? (v => Math.round(v / 256)) : (v => v);
+
+    if (rW !== width || rH !== height) {
+      // 리샘플링 필요 → 임시 캔버스로 전체 그린 후 축소
+      const tmpCanvas = document.createElement('canvas');
+      tmpCanvas.width  = width;
+      tmpCanvas.height = height;
+      const tmpCtx = tmpCanvas.getContext('2d');
+      const tmpImg = tmpCtx.createImageData(width, height);
+      const tmpPx  = tmpImg.data;
+      _fillPixels(tmpPx, rasters, samplesPerPixel, width*height, scale8, is16bit);
+      tmpCtx.putImageData(tmpImg, 0, 0);
+      ctx.drawImage(tmpCanvas, 0, 0, rW, rH);
+    } else {
+      _fillPixels(pixels, rasters, samplesPerPixel, totalPx, scale8, is16bit);
+      ctx.putImageData(imgData, 0, 0);
+    }
+
+    // 8. 상태 저장
+    geoTIFFState = {
+      canvas: offCanvas,
+      bbox: { minLon, minLat, maxLon, maxLat },
+      width: rW, height: rH,
+      filename: file.name,
+      opacity: 0.85,
+      epsg,
+      resolution: resText,
+      fileSizeMB: (file.size / 1024 / 1024).toFixed(1)
+    };
+
+    renderGeoTIFF();
+    setTIFFMode(tiffMode);  // 현재 모드 적용 (기본: blend)
+    updateTIFFStatus();
+    showPanel('layer-panel');
+
+    const sizeInfo = `${rW}×${rH}px${resText ? ' · '+resText : ''}`;
+    toast(`${T('tiff_ok')} (${sizeInfo})`);
+
+  } catch(e) {
+    console.error('GeoTIFF error:', e);
+    _showTiffError(e, file?.name, file?.size);
+  }
+  hideLoad();
+}
+
+// GeoTIFF 에러 상세 표시
+function _showTiffError(e, filename, filesize) {
+  const msg = e?.message || e?.toString() || 'Unknown error';
+  const sizeMB = filesize ? (filesize/1024/1024).toFixed(1) : '?';
+
+  // 에러 유형 분류
+  let cause = '', hint = '';
+
+  if (msg.includes('CDN') || msg.includes('load failed') || msg.includes('Failed to fetch')) {
+    cause = T('tiff_err_cdn');
+    hint  = T('tiff_err_cdn_hint');
+  } else if (msg.includes('arrayBuffer') || msg.includes('memory') || msg.includes('Allocation')) {
+    cause = T('tiff_err_mem');
+    hint  = `${sizeMB}MB → ${T('tiff_err_mem_hint')}`;
+  } else if (msg.includes('EPSG') || msg.includes('projection') || msg.includes('bbox')) {
+    cause = T('tiff_err_crs');
+    hint  = T('tiff_err_crs_hint');
+  } else if (msg.includes('raster') || msg.includes('interleave') || msg.includes('band')) {
+    cause = T('tiff_err_band');
+    hint  = T('tiff_err_band_hint');
+  } else if (msg.includes('TIFF') || msg.includes('magic') || msg.includes('format')) {
+    cause = T('tiff_err_format');
+    hint  = T('tiff_err_format_hint');
+  } else {
+    cause = msg.substring(0, 80);
+    hint  = T('tiff_err_generic_hint');
+  }
+
+  // 콘솔에 전체 정보 출력
+  console.error('[GeoTIFF] File:', filename, `(${sizeMB}MB)`, '| Error:', msg);
+
+  // 상세 에러 패널 표시
+  const errDiv = document.getElementById('tiff-err-detail') || (() => {
+    const d = document.createElement('div');
+    d.id = 'tiff-err-detail';
+    d.style.cssText = 'position:fixed;bottom:80px;left:10px;right:10px;z-index:400;' +
+      'background:rgba(200,50,50,.95);border-radius:10px;padding:12px 14px;' +
+      'font-size:12px;color:#fff;line-height:1.6;max-height:40vh;overflow-y:auto';
+    document.body.appendChild(d);
+    return d;
+  })();
+
+  errDiv.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <strong style="font-size:13px">⚠️ GeoTIFF ${T('tiff_error')}</strong>
+      <button onclick="this.parentElement.parentElement.remove()"
+        style="background:none;border:none;color:#fff;font-size:16px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <div style="background:rgba(0,0,0,.25);border-radius:6px;padding:8px;font-size:11px;font-family:monospace;margin-bottom:8px">
+      📁 ${filename||'?'} (${sizeMB}MB)<br>
+      ❌ ${cause}
+    </div>
+    ${hint ? `<div style="font-size:11px;color:#ffdd99">💡 ${hint}</div>` : ''}
+  `;
+
+  // 5초 후 자동 제거
+  setTimeout(() => errDiv?.remove(), 8000);
+}
+
+// 픽셀 채우기 헬퍼 (밴드 수 / 비트 깊이 자동 처리)
+function _fillPixels(pixels, rasters, bands, totalPx, scale8, is16bit) {
+  if (bands === 1) {
+    for (let i = 0; i < totalPx; i++) {
+      const v = scale8(rasters[i]);
+      pixels[i*4]=v; pixels[i*4+1]=v; pixels[i*4+2]=v; pixels[i*4+3]=255;
+    }
+  } else if (bands === 3) {
+    for (let i = 0; i < totalPx; i++) {
+      pixels[i*4]   = scale8(rasters[i*3]);
+      pixels[i*4+1] = scale8(rasters[i*3+1]);
+      pixels[i*4+2] = scale8(rasters[i*3+2]);
+      pixels[i*4+3] = 255;
+    }
+  } else if (bands >= 4) {
+    for (let i = 0; i < totalPx; i++) {
+      pixels[i*4]   = scale8(rasters[i*4]);
+      pixels[i*4+1] = scale8(rasters[i*4+1]);
+      pixels[i*4+2] = scale8(rasters[i*4+2]);
+      pixels[i*4+3] = scale8(rasters[i*4+3]);
+    }
+  } else {
+    // 알 수 없는 밴드 수 → 첫 번째 밴드를 그레이스케일로
+    for (let i = 0; i < totalPx; i++) {
+      const v = scale8(rasters[i * bands] || 0);
+      pixels[i*4]=v; pixels[i*4+1]=v; pixels[i*4+2]=v; pixels[i*4+3]=255;
+    }
+  }
+}
+
+// GeoTIFF를 지도 캔버스에 렌더링
+// calibPts를 이용해 GeoTIFF bbox → 캔버스 픽셀 위치 계산
+function renderGeoTIFF() {
+  const gtCanvas = document.getElementById('geotiff-canvas');
+  if (!gtCanvas || !geoTIFFState || !cW) return;
+
+  const st = geoTIFFState;
+  const { minLon, minLat, maxLon, maxLat } = st.bbox;
+
+  // 4 모서리를 캔버스 픽셀로 변환
+  const topLeft     = ll2c(maxLat, minLon);
+  const bottomRight = ll2c(minLat, maxLon);
+
+  if (!topLeft || !bottomRight) {
+    // 좌표 보정 없음 → 전체 화면 크기로 배치
+    gtCanvas.style.display = '';
+    gtCanvas.style.width  = cW + 'px';
+    gtCanvas.style.height = cH + 'px';
+    gtCanvas.style.left   = '0px';
+    gtCanvas.style.top    = '0px';
+    gtCanvas.style.opacity = st.opacity;
+    const ctx2 = gtCanvas.getContext('2d');
+    gtCanvas.width  = cW;
+    gtCanvas.height = cH;
+    ctx2.globalAlpha = 1;
+    ctx2.drawImage(st.canvas, 0, 0, cW, cH);
+    return;
+  }
+
+  const x0 = topLeft.px,     y0 = topLeft.py;
+  const x1 = bottomRight.px, y1 = bottomRight.py;
+  const w  = x1 - x0;
+  const h  = y1 - y0;
+
+  // geotiff-canvas 크기 및 위치 설정
+  gtCanvas.width  = Math.round(Math.abs(w));
+  gtCanvas.height = Math.round(Math.abs(h));
+  gtCanvas.style.display = '';
+  gtCanvas.style.left    = Math.min(x0, x1) + 'px';
+  gtCanvas.style.top     = Math.min(y0, y1) + 'px';
+  gtCanvas.style.width   = Math.abs(w) + 'px';
+  gtCanvas.style.height  = Math.abs(h) + 'px';
+  gtCanvas.style.opacity = st.opacity;
+  gtCanvas.style.zIndex  = '0'; // pdf-canvas 아래
+
+  const ctx2 = gtCanvas.getContext('2d');
+  ctx2.clearRect(0, 0, gtCanvas.width, gtCanvas.height);
+  ctx2.drawImage(st.canvas, 0, 0, gtCanvas.width, gtCanvas.height);
+}
+
+// GeoTIFF 제거
+function removeGeoTIFF() {
+  geoTIFFState = null;
+  const gtCanvas  = document.getElementById('geotiff-canvas');
+  const pdfCanvas = document.getElementById('pdf-canvas');
+  if (gtCanvas)  { gtCanvas.style.display = 'none'; gtCanvas.width = 0; gtCanvas.height = 0; }
+  if (pdfCanvas) { pdfCanvas.classList.remove('tiff-blend','tiff-hidden'); pdfCanvas.style.opacity = ''; }
+  tiffMode = 'blend';
+  updateTIFFStatus();
+  toast(T('tiff_removed'));
+}
+
+// GeoTIFF 투명도 조절
+function setTIFFOpacity(val) {
+  if (!geoTIFFState) return;
+  geoTIFFState.opacity = parseFloat(val);
+  const gtCanvas = document.getElementById('geotiff-canvas');
+  if (gtCanvas) gtCanvas.style.opacity = geoTIFFState.opacity;
+  const pct = document.getElementById('tiff-opacity-val');
+  if (pct) pct.textContent = Math.round(parseFloat(val)*100) + '%';
+}
+
+// GeoTIFF 표시 모드 설정
+// blend: GeoPDF + GeoTIFF 혼합 (pdf-canvas mix-blend-mode:multiply)
+// solo : GeoTIFF만 (pdf-canvas 숨김)
+// pdf  : GeoPDF만 (GeoTIFF 숨김, 기존 방식)
+let tiffMode = 'blend';
+
+function setTIFFMode(mode) {
+  tiffMode = mode;
+  const pdfCanvas  = document.getElementById('pdf-canvas');
+  const gtCanvas   = document.getElementById('geotiff-canvas');
+  const btnBlend   = document.getElementById('tiff-mode-blend');
+  const btnSolo    = document.getElementById('tiff-mode-solo');
+  const btnPdf     = document.getElementById('tiff-mode-pdf');
+
+  // 버튼 스타일 갱신
+  const activeStyle   = 'background:var(--amber);color:#111;border:none;font-weight:700';
+  const inactiveStyle = 'background:var(--bg3);color:var(--text2);border:.5px solid var(--border)';
+  if (btnBlend) btnBlend.style.cssText += mode==='blend' ? ';'+activeStyle : ';'+inactiveStyle;
+  if (btnSolo)  btnSolo.style.cssText  += mode==='solo'  ? ';'+activeStyle : ';'+inactiveStyle;
+  if (btnPdf)   btnPdf.style.cssText   += mode==='pdf'   ? ';'+activeStyle : ';'+inactiveStyle;
+
+  if (!pdfCanvas || !gtCanvas) return;
+
+  if (mode === 'blend') {
+    // GeoPDF 위에 mix-blend-mode:multiply → 배경 투명, 선/색상만 남음
+    pdfCanvas.classList.add('tiff-blend');
+    pdfCanvas.classList.remove('tiff-hidden');
+    pdfCanvas.style.opacity = '';
+    gtCanvas.style.display  = geoTIFFState ? '' : 'none';
+    gtCanvas.style.zIndex   = '0';
+  } else if (mode === 'solo') {
+    // GeoTIFF만: pdf-canvas 숨김
+    pdfCanvas.classList.remove('tiff-blend');
+    pdfCanvas.classList.add('tiff-hidden');
+    gtCanvas.style.display  = geoTIFFState ? '' : 'none';
+    gtCanvas.style.zIndex   = '0';
+  } else {
+    // PDF만: GeoTIFF 숨김, pdf-canvas 원래대로
+    pdfCanvas.classList.remove('tiff-blend', 'tiff-hidden');
+    pdfCanvas.style.opacity = '';
+    gtCanvas.style.display  = 'none';
+  }
+}
+
+// GeoTIFF 상태 표시 업데이트
+function updateTIFFStatus() {
+  const statusDiv = document.getElementById('tiff-status');
+  const textEl    = document.getElementById('tiff-status-text');
+  if (!statusDiv || !textEl) return;
+  if (!geoTIFFState) {
+    statusDiv.style.display = 'none';
+    return;
+  }
+  const st = geoTIFFState;
+  statusDiv.style.display = '';
+  textEl.textContent = `🗺 ${st.filename.replace(/\.[^.]+$/,'')} · ${st.width}×${st.height}px`
+    + (st.resolution ? ` · ${st.resolution}` : '')
+    + ` · ${st.fileSizeMB}MB`;
+}
+
+// renderPg / drawGPS 호출 후 GeoTIFF 재렌더링 훅
+function _rerenderGeoTIFF() {
+  if (geoTIFFState && cW) renderGeoTIFF();
+}
+
+// pdf-canvas CSS zIndex 확보 (GeoTIFF 위에 표시)
+(function() {
+  const style = document.createElement('style');
+  style.textContent = `
+    #geotiff-canvas {
+      position: absolute; top: 0; left: 0;
+      image-rendering: crisp-edges;
+      image-rendering: -webkit-optimize-contrast;
+      z-index: 0;
+      pointer-events: none;
+    }
+    #pdf-canvas {
+      position: relative; z-index: 1;
+      transition: opacity .3s;
+    }
+    #pdf-canvas.tiff-blend {
+      mix-blend-mode: multiply;
+      opacity: 0.85;
+    }
+    #pdf-canvas.tiff-hidden { opacity: 0; pointer-events: none; }
+    #layer-svg  { z-index: 2; }
+    #gps-svg    { z-index: 3; }
+    #map-wrap   { background: #1a2a1a; }
+  `;
+  document.head.appendChild(style);
+})();
+
+
+/* ═══════════════════════════════════════════════════════════════
+   GPKG / GeoJSON / CSV 레이어 로더
+   sql.js (WASM SQLite) CDN으로 GPKG 파싱
+   ─────────────────────────────────────────────────────────────
+   처리 흐름:
+   triggerGeo() → geo-input.click()
+   loadGeo(input) → 파일 확장자 분기
+     .gpkg → loadGPKG(buf, fname)
+     .geojson/.json → importGeoJSON(parsed, fname)
+     .csv → importCSV(text, fname)
+   loadGPKG():
+     sql.js 로드 → SQLite DB 오픈 → 테이블 목록
+     → WKB 파싱 → EPSG 좌표변환 → importGeoJSON 형식으로 변환
+═══════════════════════════════════════════════════════════════ */
+
+// sql.js CDN URL
+const SQLJS_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js';
+const SQLJS_WASM = 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.wasm';
+let _sqljsReady = null; // Promise 캐시
+
+// sql.js 로드 (최초 1회, SW가 캐싱)
+function loadSQLjs() {
+  if (_sqljsReady) return _sqljsReady;
+  _sqljsReady = new Promise((res, rej) => {
+    if (window.initSqlJs) { res(window.initSqlJs); return; }
+    const s = document.createElement('script');
+    s.src = SQLJS_CDN;
+    s.onload = () => res(window.initSqlJs);
+    s.onerror = () => rej(new Error('sql.js CDN 로드 실패'));
+    document.head.appendChild(s);
+  });
+  return _sqljsReady;
+}
+
+// 레이어 파일 선택 트리거
+function triggerGeo() {
+  document.getElementById('geo-input')?.click();
+}
+
+// 파일 입력 핸들러 — 확장자별 분기
+async function loadGeo(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  input.value = ''; // 동일 파일 재선택 허용
+
+  const fname = file.name.toLowerCase();
+  const ext = fname.split('.').pop();
+
+  showLoad(T('gpkg_loading'));
+  try {
+    if (ext === 'gpkg') {
+      const buf = await file.arrayBuffer();
+      await loadGPKG(buf, file.name);
+    } else if (ext === 'geojson' || ext === 'json') {
+      const text = await file.text();
+      const gj = JSON.parse(text);
+      importGeoJSON(gj, file.name);
+      toast(T('gpkg_ok'));
+    } else if (ext === 'csv') {
+      const text = await file.text();
+      importCSV(text, file.name);
+      toast(T('gpkg_ok'));
+    } else {
+      toast('❌ ' + ext + ' 포맷 미지원');
+    }
+  } catch(e) {
+    console.error('loadGeo error:', e);
+    toast(T('gpkg_error') + ': ' + e.message.substring(0,50));
+  }
+  hideLoad();
+}
+
+// ─────────────────────────────────────────────────────────────
+// GPKG 파서 핵심 함수
+// ─────────────────────────────────────────────────────────────
+async function loadGPKG(buf, fname) {
+  // 1. sql.js 로드
+  const initSqlJs = await loadSQLjs().catch(() => null);
+  if (!initSqlJs) { toast(T('gpkg_error') + ': sql.js 로드 실패'); return; }
+
+  const SQL = await initSqlJs({ locateFile: () => SQLJS_WASM });
+  const data = new Uint8Array(buf);
+  let db;
+  try {
+    db = new SQL.Database(data);
+  } catch(e) {
+    toast(T('gpkg_error') + ': SQLite 오픈 실패');
+    return;
+  }
+
+  // 2. 레이어 목록 (gpkg_contents)
+  let tables = [];
+  try {
+    const res = db.exec(
+      "SELECT table_name, data_type, identifier, srs_id FROM gpkg_contents WHERE data_type='features'"
+    );
+    if (!res.length || !res[0].values.length) {
+      toast(T('gpkg_empty')); db.close(); return;
+    }
+    tables = res[0].values.map(r => ({
+      table: r[0], type: r[1], name: r[2] || r[0], srsId: r[3]
+    }));
+  } catch(e) {
+    toast(T('gpkg_error') + ': gpkg_contents 읽기 실패'); db.close(); return;
+  }
+
+  // 3. 좌표계 (EPSG) 확인
+  // srs_id로 EPSG 코드 매핑
+  let epsgCode = 4326; // 기본값 WGS84
+  try {
+    if (tables[0].srsId) {
+      const srsRes = db.exec(
+        `SELECT organization, organization_coordsys_id FROM gpkg_spatial_ref_sys WHERE srs_id=${tables[0].srsId}`
+      );
+      if (srsRes.length && srsRes[0].values.length) {
+        const [org, orgId] = srsRes[0].values[0];
+        if (org.toUpperCase() === 'EPSG') epsgCode = parseInt(orgId);
+      }
+    }
+  } catch(e) { /* SRS 읽기 실패 시 기본값 사용 */ }
+
+  // UTM Zone 감지 (EPSG 326xx = 북반구, 327xx = 남반구)
+  let utmZone = null, utmNorth = true;
+  if (epsgCode >= 32600 && epsgCode <= 32699) {
+    utmZone = epsgCode - 32600; utmNorth = true;
+  } else if (epsgCode >= 32700 && epsgCode <= 32799) {
+    utmZone = epsgCode - 32700; utmNorth = false;
+  } else if (epsgCode !== 4326) {
+    // 알 수 없는 좌표계 → GPS로 Zone 추정
+    if (calibPts.length >= 2 || curPos) {
+      const refLon = curPos?.lon || 110.8;
+      const refLat = curPos?.lat || -0.1;
+      utmZone = Math.floor((refLon + 180) / 6) + 1;
+      utmNorth = refLat >= 0;
+    } else {
+      utmZone = 49; utmNorth = false; // 칼리만탄 기본값
+      toast(T('gpkg_crs_warn'));
+    }
+  }
+
+  // 4. 각 테이블 읽기
+  let totalFeats = 0;
+  let loadedLayers = 0;
+
+  for (const tbl of tables) {
+    try {
+      // 컬럼 목록
+      const colRes = db.exec(`PRAGMA table_info("${tbl.table}")`);
+      if (!colRes.length) continue;
+      const cols = colRes[0].values.map(r => r[1]); // name column
+
+      // geom 컬럼 찾기
+      const geomCol = cols.find(c =>
+        ['geom','geometry','GEOM','GEOMETRY','the_geom','shape'].includes(c)
+      ) || cols[0];
+
+      // 속성 컬럼 (geom 제외)
+      const attrCols = cols.filter(c => c !== geomCol);
+
+      // 피처 읽기 (최대 5000개로 제한)
+      const q = `SELECT "${geomCol}", ${attrCols.map(c=>`"${c}"`).join(',') || '1'} FROM "${tbl.table}" LIMIT 5000`;
+      const featRes = db.exec(q);
+      if (!featRes.length || !featRes[0].values.length) continue;
+
+      const rows = featRes[0].values;
+      const geojsonFeats = [];
+
+      for (const row of rows) {
+        const wkbRaw = row[0];
+        if (!wkbRaw) continue;
+
+        // WKB 파싱 → GeoJSON geometry
+        const geom = parseWKB(wkbRaw, utmZone, utmNorth);
+        if (!geom) continue;
+
+        // 속성 객체 생성
+        const props = {};
+        attrCols.forEach((col, ci) => { props[col] = row[ci + 1]; });
+
+        geojsonFeats.push({ type: 'Feature', geometry: geom, properties: props });
+      }
+
+      if (geojsonFeats.length === 0) continue;
+
+      // GeoJSON FeatureCollection 형식으로 importGeoJSON 호출
+      importGeoJSON(
+        { type: 'FeatureCollection', features: geojsonFeats },
+        tbl.name || tbl.table
+      );
+      totalFeats += geojsonFeats.length;
+      loadedLayers++;
+
+    } catch(e) {
+      console.warn(`GPKG 테이블 ${tbl.table} 오류:`, e);
+    }
+  }
+
+  db.close();
+
+  if (loadedLayers === 0) {
+    toast(T('gpkg_empty'));
+  } else {
+    toast(`✅ ${fname.replace(/^.*[\\/]/,'')} — ${loadedLayers}${T('gpkg_layer_count')}, ${totalFeats}${T('gpkg_feat_count')}`);
+    // 레이어 패널 열기
+    showPanel('layer-panel');
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// WKB (Well-Known Binary) 파서
+// GeoPackage WKB는 표준 ISO WKB에 2바이트 헤더가 추가됨
+// ─────────────────────────────────────────────────────────────
+function parseWKB(wkbRaw, utmZone, utmNorth) {
+  try {
+    // wkbRaw는 Uint8Array 또는 number[] (sql.js 반환)
+    let bytes;
+    if (wkbRaw instanceof Uint8Array) {
+      bytes = wkbRaw;
+    } else if (Array.isArray(wkbRaw)) {
+      bytes = new Uint8Array(wkbRaw);
+    } else if (wkbRaw && wkbRaw.buffer) {
+      bytes = new Uint8Array(wkbRaw.buffer);
+    } else {
+      return null;
+    }
+
+    // GeoPackage geometry header 건너뛰기
+    // 헤더: 'GP' (2바이트) + version(1) + flags(1) + srs_id(4) + [envelope]
+    let offset = 0;
+    if (bytes[0] === 0x47 && bytes[1] === 0x50) {
+      // GPKG 헤더
+      const flags = bytes[3];
+      const envelopeCode = (flags >> 1) & 0x07;
+      const envelopeSizes = [0, 32, 48, 48, 64];
+      const envelopeSize = envelopeCode < envelopeSizes.length ? envelopeSizes[envelopeCode] : 0;
+      offset = 8 + envelopeSize; // 헤더 8바이트 + envelope
+    }
+
+    // ISO WKB 파싱
+    return parseISOWKB(bytes, offset, utmZone, utmNorth).geom;
+  } catch(e) {
+    return null;
+  }
+}
+
+function parseISOWKB(bytes, offset, utmZone, utmNorth) {
+  const view = new DataView(bytes.buffer, bytes.byteOffset);
+  const byteOrder = bytes[offset]; // 1=little-endian, 0=big-endian
+  const le = byteOrder === 1;
+  offset++;
+
+  const wkbType = view.getUint32(offset, le) % 1000; // 타입 (Z,M 플래그 제거)
+  offset += 4;
+
+  const readDouble = () => {
+    const v = view.getFloat64(offset, le); offset += 8; return v;
+  };
+  const readUint32 = () => {
+    const v = view.getUint32(offset, le); offset += 4; return v;
+  };
+
+  // 좌표 변환 함수 (UTM → WGS84 또는 이미 WGS84)
+  const toLatLon = (x, y) => {
+    if (utmZone) {
+      // UTM → WGS84 역변환
+      return utmToWGS84(x, y, utmZone, utmNorth);
+    }
+    // WGS84 직접 사용 (lon, lat)
+    return [x, y]; // GeoJSON 형식 [lon, lat]
+  };
+
+  const readPoint = () => {
+    const x = readDouble(), y = readDouble();
+    if (wkbType === 1001 || wkbType === 3001) { readDouble(); } // Z
+    return toLatLon(x, y); // [lon, lat]
+  };
+
+  const readRing = (n) => {
+    const pts = [];
+    for (let i = 0; i < n; i++) {
+      const x = readDouble(), y = readDouble();
+      if (wkbType > 1000) readDouble(); // Z 값 스킵
+      pts.push(toLatLon(x, y));
+    }
+    return pts;
+  };
+
+  let geom = null;
+  const t = wkbType;
+
+  if (t === 1) { // Point
+    const [lon, lat] = readPoint();
+    geom = { type: 'Point', coordinates: [lon, lat] };
+
+  } else if (t === 2) { // LineString
+    const n = readUint32();
+    geom = { type: 'LineString', coordinates: readRing(n) };
+
+  } else if (t === 3) { // Polygon
+    const numRings = readUint32();
+    const rings = [];
+    for (let r = 0; r < numRings; r++) {
+      const n = readUint32();
+      rings.push(readRing(n));
+    }
+    geom = { type: 'Polygon', coordinates: rings };
+
+  } else if (t === 4) { // MultiPoint
+    const n = readUint32();
+    const pts = [];
+    for (let i = 0; i < n; i++) {
+      const r = parseISOWKB(bytes, offset, utmZone, utmNorth);
+      offset = r.offset;
+      pts.push(r.geom.coordinates);
+    }
+    geom = { type: 'MultiPoint', coordinates: pts };
+
+  } else if (t === 5) { // MultiLineString
+    const n = readUint32();
+    const lines = [];
+    for (let i = 0; i < n; i++) {
+      const r = parseISOWKB(bytes, offset, utmZone, utmNorth);
+      offset = r.offset;
+      lines.push(r.geom.coordinates);
+    }
+    geom = { type: 'MultiLineString', coordinates: lines };
+
+  } else if (t === 6) { // MultiPolygon
+    const n = readUint32();
+    const polys = [];
+    for (let i = 0; i < n; i++) {
+      const r = parseISOWKB(bytes, offset, utmZone, utmNorth);
+      offset = r.offset;
+      polys.push(r.geom.coordinates);
+    }
+    geom = { type: 'MultiPolygon', coordinates: polys };
+  }
+
+  return { geom, offset };
+}
+
+// ─────────────────────────────────────────────────────────────
+// UTM → WGS84 역변환 (Bowring 방법)
+// ─────────────────────────────────────────────────────────────
+function utmToWGS84(easting, northing, zone, isNorth) {
+  // WGS84 타원체 상수
+  const a = 6378137.0;
+  const f = 1 / 298.257223563;
+  const b = a * (1 - f);
+  const e2 = 2*f - f*f;
+  const e_p2 = e2 / (1 - e2);
+  const k0 = 0.9996;
+
+  // 중앙 경선
+  const lon0 = (zone - 1) * 6 - 180 + 3;
+
+  // 남반구 보정
+  const N0 = isNorth ? 0 : 10000000;
+  const E0 = 500000;
+
+  const x = easting - E0;
+  const y = northing - N0;
+
+  const M = y / k0;
+  const mu = M / (a * (1 - e2/4 - 3*e2*e2/64 - 5*e2*e2*e2/256));
+
+  const e1 = (1 - Math.sqrt(1-e2)) / (1 + Math.sqrt(1-e2));
+  const phi1 = mu
+    + (3*e1/2 - 27*e1*e1*e1/32) * Math.sin(2*mu)
+    + (21*e1*e1/16 - 55*e1*e1*e1*e1/32) * Math.sin(4*mu)
+    + (151*e1*e1*e1/96) * Math.sin(6*mu);
+
+  const N1 = a / Math.sqrt(1 - e2*Math.sin(phi1)**2);
+  const T1 = Math.tan(phi1)**2;
+  const C1 = e_p2 * Math.cos(phi1)**2;
+  const R1 = a*(1-e2) / Math.pow(1-e2*Math.sin(phi1)**2, 1.5);
+  const D = x / (N1*k0);
+
+  const lat_rad = phi1
+    - (N1*Math.tan(phi1)/R1) * (
+        D*D/2
+      - (5 + 3*T1 + 10*C1 - 4*C1*C1 - 9*e_p2)*D*D*D*D/24
+      + (61 + 90*T1 + 298*C1 + 45*T1*T1 - 252*e_p2 - 3*C1*C1)*D*D*D*D*D*D/720
+    );
+
+  const lon_rad = (
+      D
+    - (1 + 2*T1 + C1)*D*D*D/6
+    + (5 - 2*C1 + 28*T1 - 3*C1*C1 + 8*e_p2 + 24*T1*T1)*D*D*D*D*D/120
+  ) / Math.cos(phi1) + lon0 * Math.PI/180;
+
+  const lat = lat_rad * 180 / Math.PI;
+  const lon = lon_rad * 180 / Math.PI;
+
+  // [lon, lat] — GeoJSON 형식
+  return [lon, lat];
+}
+
+// ─────────────────────────────────────────────────────────────
+// guessType 확장: GPKG 테이블 이름 기반 타입 추정
+// ─────────────────────────────────────────────────────────────
+
 function importGeoJSON(gj,fname){
   if(!gj.features?.length) return;
   const type=guessType(gj.features[0].properties||{},fname);
@@ -4023,10 +6127,10 @@ function importCSV(text,fname){
 function loadDemo(){
   if(!cW){ toast(T('no_map')); return; }
   layers=[]; const W=cW, H=cH;
-  layers.push({id:1,name:'Estate A',type:'estate',visible:true,features:[{name:'Estate A',code:'EST-A',area:'2,450',year:'2005',notes:'팜 농장',polygon:[{px:W*.04,py:H*.04},{px:W*.96,py:H*.04},{px:W*.96,py:H*.96},{px:W*.04,py:H*.96}]}]});
+  layers.push({id:Date.now()+1,name:'Estate A',type:'estate',visible:true,features:[{name:'Estate A',code:'EST-A',area:'2,450',year:'2005',notes:'팜 농장',polygon:[{px:W*.04,py:H*.04},{px:W*.96,py:H*.04},{px:W*.96,py:H*.96},{px:W*.04,py:H*.96}]}]});
   const bw=(W*.46)/3, bh=(H*.46)/3, bNames=['B-01','B-02','B-03','B-04','B-05','B-06','B-07','B-08','B-09'], bYrs=[2010,2012,2008,2015,2011,2007,2018,2013,2009], bSt=['active','active','active','immature','active','replant','immature','active','replant'], bTr=[148,152,146,138,150,141,135,149,143], blks=[];
   for(let r=0;r<3;r++) for(let c=0;c<3;c++){ const i=r*3+c,x1=W*.04+c*bw+3,y1=H*.04+r*bh+3; blks.push({name:bNames[i],code:'BLK-0'+(i+1),area:(bw*bh/900).toFixed(1),year:bYrs[i],trees:bTr[i],status:bSt[i],division:'D-1',estate:'EST-A',polygon:[{px:x1,py:y1},{px:x1+bw-6,py:y1},{px:x1+bw-6,py:y1+bh-6},{px:x1,py:y1+bh-6}]}); }
-  layers.push({id:3,name:'Blocks',type:'block',visible:true,features:blks});
+  layers.push({id:Date.now()+3,name:'Blocks',type:'block',visible:true,features:blks});
   renderLayerList(); drawLayerSVG(); saveLayers();
   toast(T('demo_ok')); document.getElementById('layer-panel')?.classList.remove('show');
 }
