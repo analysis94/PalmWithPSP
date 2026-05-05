@@ -371,7 +371,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 <!-- TOP BAR -->
 <div id="topbar">
   <div class="logo">🌴 PALM<em> MAP</em></div>
-  <div id="app-ver" style="font-size:8px;color:var(--text3);font-family:var(--mono);margin-left:2px;align-self:flex-end;padding-bottom:8px">v0.057</div>
+  <div id="app-ver" style="font-size:8px;color:var(--text3);font-family:var(--mono);margin-left:2px;align-self:flex-end;padding-bottom:8px">v0.060</div>
   <div id="ts"></div>
   <button class="tbtn" id="btn-maps" onclick="toggleMapSwitcher()">
     🗺 <span id="t-maps">지도</span>
@@ -418,7 +418,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 
 <!-- 핀 이동 모드 안내 바 -->
 <div id="pin-move-bar">
-  <div style="font-size:12px;color:var(--green);font-weight:700" id="t-pin-move-hint">✋ 드래그로 핀 이동</div>
+  <div style="font-size:12px;color:var(--green);font-weight:700" id="t-pin-move-hint" id="t-drag-pin-hint">✋ 드래그로 핀 이동</div>
   <div style="display:flex;gap:8px">
     <button onclick="confirmPinMove()"
       id="t-pin-move-ok" style="background:var(--green);color:#fff;border:none;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">
@@ -542,7 +542,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
   <!-- 결과 표시 -->
   <div id="msr-result" style="display:none;background:rgba(122,180,80,.12);
        border:.5px solid rgba(122,180,80,.4);border-radius:8px;padding:10px 12px;margin-bottom:10px">
-    <div style="font-size:12px;font-weight:700;color:var(--green2)" id="msr-result-label">거리</div>
+    <div style="font-size:12px;font-weight:700;color:var(--green2)" id="msr-result-label">—</div>
     <div style="font-size:22px;font-weight:700;color:var(--text);font-family:var(--mono)" id="msr-result-val">—</div>
     <div style="font-size:10px;color:var(--text3);margin-top:2px" id="msr-points-info">0점</div>
   </div>
@@ -715,7 +715,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     </button>
     <button onclick="enterPinMoveMode()"
       style="flex:2;padding:5px 8px;border-radius:6px;font-size:10px;cursor:pointer;border:.5px solid var(--green);background:var(--bg3);color:var(--green);font-weight:700">
-      ✋ 핀 이동
+      <span id="t-pin-move-btn">✋ 핀 이동</span>
     </button>
   </div>
 
@@ -756,7 +756,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
   <div id="track-recording-info" style="display:none;background:rgba(255,120,20,.12);border:.5px solid rgba(255,120,20,.4);border-radius:8px;padding:9px 12px;margin-bottom:10px">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
       <div style="width:8px;height:8px;border-radius:50%;background:#ff7814;animation:pulse 1s infinite"></div>
-      <span id="t-trk-recording" style="font-size:12px;color:#ff7814;font-weight:700">녹화 중</span>
+      <span id="t-trk-recording" style="font-size:12px;color:#ff7814;font-weight:700" id="t-trk-recording">녹화 중</span>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
       <div style="font-size:10px;color:var(--text3)" id="t-tpts-lbl">포인트: <span id="trk-pts" style="color:var(--text);font-family:var(--mono)">0</span></div>
@@ -764,7 +764,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
       <div style="font-size:10px;color:var(--text3)" id="t-tstart-lbl">시작: <span id="trk-start" style="color:var(--text);font-family:var(--mono)">—</span></div>
     </div>
     <!-- 트랙 색상 선택 -->
-    <div id="t-trk-color-lbl" style="font-size:10px;color:var(--text3);margin-top:8px;margin-bottom:4px">트랙 색상:</div>
+    <div id="t-trk-color-lbl" style="font-size:10px;color:var(--text3);margin-top:8px;margin-bottom:4px" id="t-trk-color-lbl">트랙 색상:</div>
     <div class="color-palette" id="track-color-picker">
       <div class="color-swatch sel" style="background:#ff7814" data-color="#ff7814" onclick="selectTrackColor(this)"></div>
       <div class="color-swatch" style="background:#ffdd00" data-color="#ffdd00" onclick="selectTrackColor(this)"></div>
@@ -779,7 +779,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     </div>
   </div>
   <!-- 저장된 트랙 목록 -->
-  <div style="font-size:11px;color:var(--text3);margin-bottom:8px;font-family:var(--mono)" id="t-trk-saved-header">저장된 트랙</div>
+  <div style="font-size:11px;color:var(--text3);margin-bottom:8px;font-family:var(--mono)" id="t-trk-saved-header" id="t-trk-saved-hdr">저장된 트랙</div>
   <div id="track-list-body"><!-- JS --></div>
   <button class="btn-grey" onclick="hidePanel('track-panel')" style="width:100%;margin-top:6px">닫기</button>
 </div>
@@ -914,7 +914,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
   <span id="pdf-calib-badge" style="display:none;font-size:9px;padding:1px 5px;border-radius:3px;white-space:nowrap"></span>
   <button onclick="showPDFMenu()" style="background:none;border:.5px solid var(--border);color:var(--text3);font-size:10px;padding:2px 8px;border-radius:4px;cursor:pointer;white-space:nowrap" id="t-pdf-change-btn">지도 변경</button></div>
 <!-- PDF 지도 관리 메뉴 -->
-<div class="panel panel-top" id="pdf-menu-panel"><button class="panel-close" onclick="hidePanel('pdf-menu-panel')">×</button><h3 id="t-pdf-menu-title" style="color:var(--green2)">🗺 지도 관리</h3><div id="pdf-menu-info" style="background:var(--bg3);border:.5px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px"><div style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-bottom:4px">현재 저장된 지도</div><div id="pdf-menu-fname" style="font-size:13px;color:var(--text);word-break:break-all"></div><div id="pdf-menu-fdate" style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px"></div></div><button class="btn-green" onclick="replacePDF()" style="width:100%;margin-bottom:8px;border:none" id="t-pdf-change">새 지도 불러오기</button><button class="btn-red" onclick="clearPDF()" style="width:100%;margin-bottom:8px" id="t-pdf-delete">🗑 지도 삭제</button><button class="btn-grey" onclick="hidePanel('pdf-menu-panel')" style="width:100%" id="t-pdf-menu-close">닫기</button></div>
+<div class="panel panel-top" id="pdf-menu-panel"><button class="panel-close" onclick="hidePanel('pdf-menu-panel')">×</button><h3 id="t-pdf-menu-title" style="color:var(--green2)">🗺 지도 관리</h3><div id="pdf-menu-info" style="background:var(--bg3);border:.5px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px"><div style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-bottom:4px" id="t-cur-map-lbl">현재 저장된 지도</div><div id="pdf-menu-fname" style="font-size:13px;color:var(--text);word-break:break-all"></div><div id="pdf-menu-fdate" style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px"></div></div><button class="btn-green" onclick="replacePDF()" style="width:100%;margin-bottom:8px;border:none" id="t-pdf-change">새 지도 불러오기</button><button class="btn-red" onclick="clearPDF()" style="width:100%;margin-bottom:8px" id="t-pdf-delete">🗑 지도 삭제</button><button class="btn-grey" onclick="hidePanel('pdf-menu-panel')" style="width:100%" id="t-pdf-menu-close">닫기</button></div>
 <!-- ══ UTM Zone 설정 모달 ══ -->
 <div id="utm-zone-modal" style="display:none;position:absolute;inset:0;z-index:750;background:rgba(0,0,0,.8);align-items:center;justify-content:center">
   <div style="background:var(--panel);border:.5px solid var(--border2);border-radius:14px;padding:20px 18px;margin:16px;max-width:360px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,.6)">
@@ -924,12 +924,12 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 
     <!-- Zone 번호 -->
     <div style="margin-bottom:12px">
-      <div style="font-size:11px;color:var(--text2);margin-bottom:6px;font-weight:600">UTM Zone 번호</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:6px;font-weight:600" id="t-utm-zone-lbl">UTM Zone 번호</div>
       <div style="display:flex;gap:8px;align-items:center">
         <input id="utm-zone-input" type="number" min="1" max="60" value="49"
           style="width:80px;background:var(--bg2);border:.5px solid var(--amber);color:var(--text);font-size:16px;font-weight:700;padding:8px 10px;border-radius:8px;outline:none;font-family:var(--mono);text-align:center">
         <div style="font-size:11px;color:var(--text3)">
-          1~60 범위<br>
+          <span id="t-utm-range2">1~60 범위</span><br>
           <span style="color:var(--text2)" id="t-utm-indo-range">인도네시아: 46~54</span>
         </div>
       </div>
@@ -937,20 +937,20 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 
     <!-- 남/북반구 -->
     <div style="margin-bottom:14px">
-      <div style="font-size:11px;color:var(--text2);margin-bottom:6px;font-weight:600">반구</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:6px;font-weight:600" id="t-utm-hemi-lbl">반구</div>
       <div style="display:flex;gap:8px">
         <label style="flex:1;display:flex;align-items:center;gap:8px;cursor:pointer;background:var(--bg3);border:.5px solid var(--border);border-radius:8px;padding:10px 12px">
           <input type="radio" name="utm-hemi" value="S" checked style="accent-color:var(--amber)">
           <div>
-            <div style="font-size:12px;font-weight:700;color:var(--text)">남반구 (S)</div>
-            <div style="font-size:10px;color:var(--text3)">인도네시아·칼리만탄</div>
+            <div style="font-size:12px;font-weight:700;color:var(--text)" id="t-utm-south">남반구 (S)</div>
+            <div style="font-size:10px;color:var(--text3)" id="t-utm-south-hint">인도네시아·칼리만탄</div>
           </div>
         </label>
         <label style="flex:1;display:flex;align-items:center;gap:8px;cursor:pointer;background:var(--bg3);border:.5px solid var(--border);border-radius:8px;padding:10px 12px">
           <input type="radio" name="utm-hemi" value="N" style="accent-color:var(--amber)">
           <div>
-            <div style="font-size:12px;font-weight:700;color:var(--text)">북반구 (N)</div>
-            <div style="font-size:10px;color:var(--text3)">적도 이북 지역</div>
+            <div style="font-size:12px;font-weight:700;color:var(--text)" id="t-utm-north">북반구 (N)</div>
+            <div style="font-size:10px;color:var(--text3)" id="t-utm-north-hint">적도 이북 지역</div>
           </div>
         </label>
       </div>
@@ -958,7 +958,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 
     <!-- 참고 정보 -->
     <div style="background:var(--bg3);border:.5px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:10px;color:var(--text3);line-height:1.8;font-family:var(--mono)">
-      <div style="color:var(--text2);font-weight:700;margin-bottom:4px">📍 인도네시아 주요 Zone</div>
+      <div style="color:var(--text2);font-weight:700;margin-bottom:4px" id="t-utm-indo-zones">📍 인도네시아 주요 Zone</div>
       Zone 46: 수마트라 서부 (90~96°E)<br>
       Zone 47: 수마트라·칼리만탄 서부 (96~102°E)<br>
       Zone 48: 수마트라·칼리만탄 중서부 (102~108°E)<br>
@@ -1002,7 +1002,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
         <input type="radio" name="del-scope" value="pdf-only" style="margin-top:2px;accent-color:var(--amber)">
         <div>
           <div style="font-size:12px;font-weight:700;color:var(--amber)" id="t-del-pdf-btn">지도 PDF만 삭제 (트랙·메모 보존)</div>
-          <div style="font-size:10px;color:var(--text3);margin-top:2px" id="t-del-pdf-desc">PDF를 제거하되 트랙과 메모 데이터는 유지합니다.<br>나중에 같은 지도를 다시 불러오면 복원됩니다.</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px" id="t-del-pdf-desc">PDF를 제거하되 트랙과 메모 데이터는 유지합니다.<br id="t-calib-restore-hint">나중에 같은 지도를 다시 불러오면 복원됩니다.</div>
         </div>
       </label>
     </div>
@@ -1010,7 +1010,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     <!-- 버튼 -->
     <div style="display:flex;gap:8px">
       <button onclick="confirmDeleteSlot()" style="flex:1;background:var(--red);color:#fff;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:700;cursor:pointer">삭제</button>
-      <button onclick="cancelDeleteSlot()" style="flex:1;background:var(--bg3);color:var(--text2);border:.5px solid var(--border);border-radius:8px;padding:11px;font-size:13px;cursor:pointer">취소</button>
+      <button onclick="cancelDeleteSlot()" style="flex:1;background:var(--bg3);color:var(--text2);border:.5px solid var(--border);border-radius:8px;padding:11px;font-size:13px;cursor:pointer" id="t-del-cancel">취소</button>
     </div>
   </div>
 </div>
@@ -1212,6 +1212,54 @@ ko: {
   tiff_size:'크기',
   tiff_crs:'좌표계',
   tiff_opacity_lbl:'투명도',
+  // 트래킹 WakeLock
+  trk_wl_on:'🔆 트래킹 중 화면 꺼짐 방지 활성',
+  trk_wl_off:'트래킹 종료 후 화면 꺼짐 방지 해제',
+  trk_wl_fail:'⚠️ 화면 꺼짐 방지 미지원 — 화면이 꺼져도 트래킹은 계속됩니다',
+  del_confirm:'삭제',
+  del_cancel_btn:'취소',
+  del_dialog_title:'🗑 지도 삭제',
+  // UTM/지도관리/핀/사진 번역
+  utm_zone_lbl:'UTM Zone 번호',
+  utm_range_hint:'1~60 범위',
+  utm_hemi_lbl:'반구',
+  utm_south:'남반구 (S)',
+  utm_south_hint:'인도네시아·칼리만탄',
+  utm_north:'북반구 (N)',
+  utm_north_hint:'적도 이북 지역',
+  utm_indo_zones:'📍 인도네시아 주요 Zone',
+  cur_map_lbl:'현재 저장된 지도',
+  pin_move_btn:'✋ 핀 이동',
+  photo_count_lbl:'사진',
+  tiff_mode_blend2:'🗺+📷 PDF+위성',
+  msr_pts_lbl:'점',
+  calib_status_lbl:'기준점',
+  tiff_tfw_hint:'위성사진·항공사진 배경 지도 (.tif) · TFW 좌표파일 동시 선택 가능',
+  calib_auto_desc2:'PDF를 불러오면 GeoPDF 좌표를',
+  calib_detected_hint:'감지되면 위의 배너가 나타납니다 →',
+  calib_restore_hint:'나중에 같은 지도를 다시 불러오면 복원됩니다.',
+  drag_pin_hint:'✋ 드래그로 핀 이동',
+  trk_recording_lbl:'녹화 중',
+  // 패널 헤딩 번역
+  track_panel_h:'🛣️ 트랙 관리',
+  layer_panel_h:'레이어 관리',
+  memo_panel_h:'📍 위치 메모 추가',
+  geo_import_lbl:'GeoJSON / CSV / GPKG 불러오기',
+  tiff_import_lbl:'GeoTIFF 베이스맵 불러오기',
+  trk_recording:'녹화 중',
+  trk_pts_lbl:'포인트:',
+  trk_color_lbl2:'트랙 색상:',
+  trk_stop_btn2:'⏹ 정지 & 저장',
+  trk_discard2:'버리기',
+  trk_saved_hdr2:'저장된 트랙',
+  // 하드코딩 제거 번역 키
+  memo_drag_hint:'📍 핀을 손가락으로 드래그해서 위치 조정 → 탭으로 메모 작성',
+  msr_dist_label:'거리',
+  msr_area_label:'면적',
+  msr_pts_info:'0점',
+  calib_status_init:'기준점 0/2',
+  photo_count_init:'사진 0장',
+  tiff_cache_check:'📷 캐시 상태 확인...',
   tiff_mode_blend:'🗺+📷 GeoPDF+위성',
   tiff_mode_solo:'📷 위성만',
   tiff_mode_pdf:'🗺 PDF만',
@@ -1436,7 +1484,7 @@ en: {
   photo_loading:'Processing photo...',
   photo_added:'Photo added',
   photo_count:'Photo',
-  photo_unit:'',
+  photo_unit:'pcs',
   memo_edit_title:'Edit Memo',
   memo_edit_ok:'✅ Memo updated',
   memo_empty_warn:'Please enter memo text',
@@ -1460,6 +1508,58 @@ en: {
   tiff_size:'Size',
   tiff_crs:'CRS',
   tiff_opacity_lbl:'Opacity',
+  // 트래킹 WakeLock
+  trk_wl_on:'🔆 Screen lock active during tracking',
+  trk_wl_off:'Screen lock released after tracking',
+  trk_wl_fail:'⚠️ Screen lock not supported — tracking continues even if screen turns off',
+  del_confirm:'Delete',
+  del_cancel_btn:'Cancel',
+  del_dialog_title:'🗑 Delete Map',
+  // UTM/지도관리/핀/사진 번역
+  utm_zone_lbl:'UTM Zone Number',
+  utm_range_hint:'Range: 1–60',
+  utm_hemi_lbl:'Hemisphere',
+  utm_south:'Southern (S)',
+  utm_south_hint:'Indonesia · Kalimantan',
+  utm_north:'Northern (N)',
+  utm_north_hint:'Region above equator',
+  utm_indo_zones:'📍 Main Indonesia Zones',
+  cur_map_lbl:'Currently saved map',
+  pin_move_btn:'✋ Move Pin',
+  photo_count_lbl:'Photo',
+  tiff_mode_blend2:'🗺+📷 PDF+Satellite',
+  msr_pts_lbl:'pts',
+  calib_status_lbl:'Point',
+  tiff_tfw_hint:'Satellite/aerial basemap (.tif) · Select TFW world file together',
+  calib_auto_desc2:'When PDF is loaded, GeoPDF coordinates are',
+  calib_detected_hint:'When detected, banner appears above →',
+  calib_restore_hint:'Reloading the same map will restore calibration.',
+  drag_pin_hint:'✋ Drag to move pin',
+  trk_recording_lbl:'Recording',
+  // 패널 헤딩 번역
+  track_panel_h:'🛣️ Track Management',
+  layer_panel_h:'Layer Management',
+  memo_panel_h:'📍 Add Location Memo',
+  geo_import_lbl:'Load GeoJSON / CSV / GPKG',
+  tiff_import_lbl:'Load GeoTIFF Basemap',
+  trk_recording:'Recording',
+  trk_pts_lbl:'Points:',
+  trk_color_lbl2:'Track color:',
+  trk_stop_btn2:'⏹ Stop & Save',
+  trk_discard2:'Discard',
+  trk_saved_hdr2:'Saved Tracks',
+  // hardcoded removal keys
+  memo_drag_hint:'📍 Drag pin to adjust position → tap to write memo',
+  msr_dist_label:'Distance',
+  msr_area_label:'Area',
+  msr_pts_info:'0 pts',
+  calib_status_init:'Point 0/2',
+  photo_count_init:'0 photos',
+  photo_btn:'📷 Attach photo',
+  tiff_cache_check:'📷 Checking cache...',
+  tiff_mode_blend:'🗺+📷 PDF+Satellite',
+  tiff_mode_solo:'📷 Satellite only',
+  tiff_mode_pdf:'🗺 PDF only',
   tiff_mode_blend:'🗺+📷 PDF+Satellite',
   tiff_mode_solo:'📷 Satellite only',
   tiff_mode_pdf:'🗺 PDF only',
@@ -1567,7 +1667,7 @@ en: {
   trk_start_lbl:'Start',
   trk_saved:'Track saved',
   trk_few_pts:'Not enough track points',
-  trk_count:'',
+  trk_count:'track(s)',
   trk_vis_title:'Show/Hide',
   trk_gpx_title:'Export GPX',
   trk_txt_title:'Export TXT',
@@ -1683,7 +1783,7 @@ id: {
   photo_loading:'Memproses foto...',
   photo_added:'Foto ditambahkan',
   photo_count:'Foto',
-  photo_unit:'',
+  photo_unit:'lembar',
   memo_edit_title:'Edit Memo',
   memo_edit_ok:'✅ Memo diperbarui',
   memo_empty_warn:'Masukkan teks memo',
@@ -1707,6 +1807,58 @@ id: {
   tiff_size:'Ukuran',
   tiff_crs:'CRS',
   tiff_opacity_lbl:'Transparansi',
+  // 트래킹 WakeLock
+  trk_wl_on:'🔆 Kunci layar aktif saat pelacakan',
+  trk_wl_off:'Kunci layar dilepas setelah pelacakan',
+  trk_wl_fail:'⚠️ Kunci layar tidak didukung — pelacakan tetap berlanjut jika layar mati',
+  del_confirm:'Hapus',
+  del_cancel_btn:'Batal',
+  del_dialog_title:'🗑 Hapus Peta',
+  // UTM/지도관리/핀/사진 번역
+  utm_zone_lbl:'Nomor UTM Zone',
+  utm_range_hint:'Rentang: 1–60',
+  utm_hemi_lbl:'Belahan Bumi',
+  utm_south:'Belahan Selatan (S)',
+  utm_south_hint:'Indonesia · Kalimantan',
+  utm_north:'Belahan Utara (N)',
+  utm_north_hint:'Wilayah di atas khatulistiwa',
+  utm_indo_zones:'📍 Zone Utama Indonesia',
+  cur_map_lbl:'Peta yang tersimpan',
+  pin_move_btn:'✋ Pindah Pin',
+  photo_count_lbl:'Foto',
+  tiff_mode_blend2:'🗺+📷 PDF+Satelit',
+  msr_pts_lbl:'titik',
+  calib_status_lbl:'Titik',
+  tiff_tfw_hint:'Basemap satelit/foto udara (.tif) · Pilih TFW bersama-sama',
+  calib_auto_desc2:'Saat PDF dimuat, koordinat GeoPDF',
+  calib_detected_hint:'Jika terdeteksi, banner muncul di atas →',
+  calib_restore_hint:'Memuat ulang peta yang sama akan memulihkan kalibrasi.',
+  drag_pin_hint:'✋ Seret untuk pindah pin',
+  trk_recording_lbl:'Merekam',
+  // 패널 헤딩 번역
+  track_panel_h:'🛣️ Manajemen Trek',
+  layer_panel_h:'Manajemen Layer',
+  memo_panel_h:'📍 Tambah Memo Lokasi',
+  geo_import_lbl:'Muat GeoJSON / CSV / GPKG',
+  tiff_import_lbl:'Muat Basemap GeoTIFF',
+  trk_recording:'Merekam',
+  trk_pts_lbl:'Titik:',
+  trk_color_lbl2:'Warna trek:',
+  trk_stop_btn2:'⏹ Berhenti & Simpan',
+  trk_discard2:'Buang',
+  trk_saved_hdr2:'Trek Tersimpan',
+  // kunci penghapusan hardcode
+  memo_drag_hint:'📍 Seret pin untuk sesuaikan posisi → ketuk untuk tulis memo',
+  msr_dist_label:'Jarak',
+  msr_area_label:'Luas',
+  msr_pts_info:'0 titik',
+  calib_status_init:'Titik 0/2',
+  photo_count_init:'0 foto',
+  photo_btn:'📷 Lampirkan foto',
+  tiff_cache_check:'📷 Memeriksa cache...',
+  tiff_mode_blend:'🗺+📷 PDF+Satelit',
+  tiff_mode_solo:'📷 Satelit saja',
+  tiff_mode_pdf:'🗺 PDF saja',
   tiff_mode_blend:'🗺+📷 PDF+Satelit',
   tiff_mode_solo:'📷 Satelit saja',
   tiff_mode_pdf:'🗺 PDF saja',
@@ -1814,7 +1966,7 @@ id: {
   trk_start_lbl:'Mulai',
   trk_saved:'Trek tersimpan',
   trk_few_pts:'Titik trek tidak cukup',
-  trk_count:'',
+  trk_count:'trek',
   trk_vis_title:'Tampilkan/Sembunyikan',
   trk_gpx_title:'Ekspor GPX',
   trk_txt_title:'Ekspor TXT',
@@ -1929,6 +2081,24 @@ const LANG_IDS = {
   't-del-pdf-btn':'del_pdf_btn',
   't-del-pdf-desc':'del_pdf_desc',
   't-utm-range':'utm_range',
+  't-track-panel-h':'track_panel_h',
+  't-layer-panel-h':'layer_panel_h',
+  't-memo-panel-h':'memo_panel_h',
+  't-geo-import-lbl':'geo_import_lbl',
+  't-tiff-import-lbl':'tiff_import_lbl',
+  't-trk-recording':'trk_recording',
+  't-trk-pts-lbl':'trk_pts_lbl',
+  't-trk-color-lbl':'trk_color_lbl2',
+  't-trk-stop-btn':'trk_stop_btn2',
+  't-trk-discard':'trk_discard2',
+  't-trk-saved-hdr':'trk_saved_hdr2',
+  'memo-drag-hint':'memo_drag_hint',
+  'msr-result-label':'msr_dist_label',
+  'tiff-cache-status':'tiff_cache_check',
+  't-tiff-mode-blend':'tiff_mode_blend',
+  'tiff-mode-solo':'tiff_mode_solo',
+  'tiff-mode-pdf':'tiff_mode_pdf',
+  't-photo-btn':'photo_btn',
   't-utm-indo-range':'utm_indo_range',
   't-trk-none-data':'trk_none_data',
   't-tool-measure':'tool_measure',
@@ -1940,6 +2110,27 @@ const LANG_IDS = {
   't-kml-export':'kml_export',
   't-bm-title':'bm_title',
   't-bm-add':'bm_add',
+  't-del-confirm':'del_confirm',
+  't-del-cancel':'del_cancel_btn',
+  't-del-dialog-title':'del_dialog_title',
+  't-utm-zone-lbl':'utm_zone_lbl',
+  't-utm-range2':'utm_range_hint',
+  't-utm-hemi-lbl':'utm_hemi_lbl',
+  't-utm-south':'utm_south',
+  't-utm-south-hint':'utm_south_hint',
+  't-utm-north':'utm_north',
+  't-utm-north-hint':'utm_north_hint',
+  't-utm-indo-zones':'utm_indo_zones',
+  't-cur-map-lbl':'cur_map_lbl',
+  't-pin-move-btn':'pin_move_btn',
+  'msr-points-info':'msr_pts_info',
+  'tiff-mode-blend':'tiff_mode_blend2',
+  't-photo-count':'photo_count_init',
+  'calib-status':'calib_status_init',
+  't-tiff-import-s':'tiff_tfw_hint',
+  't-calib-restore-hint':'calib_restore_hint',
+  't-calib-detected-hint':'calib_detected_hint',
+  't-drag-pin-hint':'drag_pin_hint',
 };
 
 function applyLang() {
@@ -1963,6 +2154,8 @@ function applyLang() {
 
   // GPS 원거리 배너 동적 텍스트 갱신
   updateFarBanner();
+
+  // 하드코딩 요소: LANG_IDS로 처리됨
 
   // 핀 스타일 버튼 텍스트
   const btnPin = document.getElementById('pin-style-pin');
@@ -2019,6 +2212,7 @@ let layers=[], selFeat=null;
 let mapSlots = [];       // 최대 10개
 let curMapId = null;     // 현재 활성 지도 ID
 let trackOn=false, trkPts=[], trkStart=null, trkColor='#ff7814';
+let _trackWL=false; // 트래킹이 WakeLock을 자동 획득했는지 여부
 
 // 현재 지도의 memos/tracks는 curSlot()에서 직접 읽음
 function curSlot(){ return mapSlots.find(s=>s.id===curMapId)||null; }
@@ -4115,6 +4309,22 @@ function toggleTrack(){
     if(!gpsOn){ toast(T('need_gps')); return; }
     trackOn=true; trkStart=new Date(); trkPts=[];
     trkCurrentColor='#ff7814';
+    // 트래킹 시작 시 화면 꺼짐 방지 자동 활성화
+    if (!_wakeLock) {
+      requestWakeLock().then(()=>{
+        if (_wakeLock) {
+          _trackWL = true;
+          // 토스트: 화면 꺼짐 방지 활성 안내
+          setTimeout(()=>toast(T('trk_wl_on')), 500);
+          console.log('[Track] WakeLock acquired for tracking');
+        } else {
+          // WakeLock 미지원이어도 GPS watchPosition은 계속 실행됨
+          setTimeout(()=>toast(T('trk_wl_fail')), 500);
+        }
+      }).catch(e=>{
+        console.warn('[Track] WakeLock fail:', e);
+      });
+    }
     document.getElementById('btn-track')?.classList.add('on');
     document.getElementById('track-recording-info').style.display='block';
     // 트랙 시작 시간 표시
@@ -4163,12 +4373,18 @@ function stopAndSaveTrack(){
   renderTrackList();
   showPanel('track-panel');
   toast('✅ ' + _trkName + ' ' + T('track_off'));
+  // 트래킹이 자동으로 켠 WakeLock이면 해제
+  if (_trackWL) {
+    releaseWakeLock();
+    _trackWL = false;
+  }
 }
 function discardTrack(){
   trackOn=false; trkPts=[];
   document.getElementById('btn-track')?.classList.remove('on');
   document.getElementById('track-recording-info').style.display='none';
   hidePanel('track-panel'); toast(T('track_clr'));
+  if (_trackWL) { releaseWakeLock(); _trackWL=false; }
 }
 function deleteTrack(trkId){ const slot=curSlot(); if(!slot) return; slot.tracks=slot.tracks.filter(t=>t.id!==trkId); saveSlotsMeta(); drawGPS(); renderTrackList(); toast(T('trk_del_toast')); }
 function toggleTrackVisible(trkId){ const slot=curSlot(); if(!slot) return; const t=slot.tracks.find(t=>t.id===trkId); if(t){ t.visible=!t.visible; saveSlotsMeta(); drawGPS(); renderTrackList(); } }
@@ -4500,6 +4716,10 @@ async function requestWakeLock(){
     _wakeLock.addEventListener('release', ()=>{
       _wakeLock = null;
       _updateWakeLockBtn();
+      // 트래킹 중 WakeLock이 해제되면(화면 꺼짐 등) 복귀 시 재취득 예약
+      if (trackOn) {
+        console.log('[WakeLock] Released during tracking — will reacquire on visibility');
+      }
     });
     _updateWakeLockBtn();
     console.log('[WakeLock] Screen lock acquired');
@@ -6305,6 +6525,25 @@ function toggleFullscreen(){
 }
 document.addEventListener('fullscreenchange',updateFsBtn);
 document.addEventListener('webkitfullscreenchange',updateFsBtn);
+
+// ── 화면 꺼짐/켜짐 감지 → 트래킹 중 WakeLock 재취득 ──────────
+document.addEventListener('visibilitychange', async ()=>{
+  if (document.visibilityState === 'visible') {
+    // 화면이 다시 켜졌을 때
+    if (trackOn && !_wakeLock) {
+      // 트래킹 중인데 WakeLock이 없으면(꺼지면서 해제됨) 재취득
+      try {
+        await requestWakeLock();
+        if (_wakeLock) {
+          _trackWL = true;
+          console.log('[Track] WakeLock re-acquired after screen on');
+        }
+      } catch(e) {
+        console.warn('[Track] WakeLock re-acquire failed:', e);
+      }
+    }
+  }
+});
 function updateFsBtn(){ const b=document.getElementById('fs-btn'); if(b) b.textContent=!!(document.fullscreenElement||document.webkitFullscreenElement)?'✕':'⛶'; }
 window.addEventListener('orientationchange',()=>{ setTimeout(()=>{ if(pdfDoc){clamp();applyTx();syncSVGSize&&syncSVGSize();} },300); });
 window.addEventListener('resize',()=>{ if(pdfDoc){clamp();applyTx();} });
