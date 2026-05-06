@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════
-// Palm Farm Field Map — Service Worker v0.062
-// 앱 버전과 일치: v0.062
+// Palm Farm Field Map — Service Worker v0.096
+// 앱 버전과 일치: v0.096
 // 변경사항:
 //   - CACHE_NAME을 앱 버전 v0.062에 맞게 갱신
 //   - GeoPDF/GeoTIFF/GPKG 통합 레이어 관리 지원
@@ -9,7 +9,7 @@
 //   - 3개국어 번역 완성 (KO/EN/ID)
 // ═══════════════════════════════════════════════════════════════
 
-const CACHE_NAME  = 'palmmap-v0062';
+const CACHE_NAME  = 'palmmap-v0096';
 const OFFLINE_URL = './offline.html';
 
 // ── CORE_ASSETS: 반드시 존재하는 파일만 ────────────────────────
