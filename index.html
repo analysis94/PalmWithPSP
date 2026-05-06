@@ -459,7 +459,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     <div style="font-size:22px">🌴</div>
     <div>
       <div style="font-size:14px;font-weight:700;color:var(--green2);letter-spacing:-.2px">PALM MAP</div>
-      <div id="app-ver" style="font-size:10px;color:var(--text3);font-family:var(--mono)">v0.149</div>
+      <div id="app-ver" style="font-size:10px;color:var(--text3);font-family:var(--mono)">v0.152</div>
     </div>
     <button onclick="toggleHamburger()" style="margin-left:auto;background:none;border:none;color:var(--text3);font-size:22px;cursor:pointer;line-height:1;padding:4px">×</button>
   </div>
@@ -679,7 +679,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
   </div>
 
   <!-- ④ 스케일 바 (CarryMap 스타일 - 하단 중앙) -->
-  <div id="scale-bar" style="position:absolute;bottom:72px;left:50%;transform:translateX(-50%);
+  <div id="scale-bar" style="position:fixed;bottom:72px;left:50%;transform:translateX(-50%);
     z-index:85;display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:none">
 
     <!-- 위: 거리 (km 또는 m) — 검정+흰외곽, 18px -->
@@ -767,7 +767,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 
 
   <!-- 나침반 독립 배치 - 하단 버튼과 하단 정렬 -->
-  <div id="compass-btn" onclick="toggleCompassMode()" title="나침반 모드 전환" style="position:absolute;bottom:12px;left:50%;
+  <div id="compass-btn" onclick="toggleCompassMode()" title="나침반 모드 전환" style="position:fixed;bottom:10px;left:50%;
     transform:translateX(-50%);z-index:86;cursor:pointer">
     <div style="width:52px;height:52px;background:rgba(255,255,255,0.92);border-radius:50%;
                 box-shadow:0 2px 8px rgba(0,0,0,.2);
@@ -815,7 +815,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 </div>
 
 <!-- BOTTOM BAR -->
-<div id="gps-pill" onclick="toggleGpsPopup()" style="cursor:pointer;position:fixed;bottom:12px;left:10px;z-index:101;display:none">
+<div id="gps-pill" onclick="toggleGpsPopup()" style="cursor:pointer;position:fixed;bottom:10px;left:10px;z-index:101;display:none">
     <div id="gps-dot"></div>
     <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
       <!-- 위도/경도 -->
@@ -856,17 +856,15 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 
 
 
-<div id="bottombar">
-  <!-- 나침반 미니 (좌측) -->
-  
+<div id="bottombar" style="display:none"></div>
 
-  
-
-  <div style="flex:1"></div>
+<!-- 우측 하단 플로팅: 핀·GPS·트랙 (세로) -->
+<div id="right-bottom-fab" style="position:fixed;right:10px;bottom:10px;
+  display:flex;flex-direction:column;gap:8px;z-index:95">
   <!-- 핀+플러스 -->
   <button class="bbtn" id="btn-add-popup" onclick="toggleAddPopup()"
-    style="width:52px;height:52px;border-radius:50%;padding:0;justify-content:center;flex-shrink:0">
-    <svg viewBox="0 0 24 26" width="44" height="44"
+    style="width:52px;height:52px;border-radius:50%;background:#fff;border:none;box-shadow:0 2px 8px rgba(0,0,0,.18);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0">
+    <svg viewBox="0 0 24 26" width="36" height="36"
          fill="none" stroke="#111" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2">
       <path d="M12 1C8.13 1 5 4.13 5 8c0 5.5 7 13 7 13s7-7.5 7-13c0-3.87-3.13-7-7-7z"/>
       <line x1="12" y1="5" x2="12" y2="11"/>
@@ -876,8 +874,8 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 
   <!-- GPS 화살표 -->
   <button class="bbtn" id="btn-gps" onclick="handleGPS()"
-    style="width:52px;height:52px;border-radius:50%;padding:0;justify-content:center;flex-shrink:0">
-    <svg viewBox="0 0 24 24" width="44" height="44"
+    style="width:52px;height:52px;border-radius:50%;background:#fff;border:none;box-shadow:0 2px 8px rgba(0,0,0,.18);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0">
+    <svg viewBox="0 0 24 24" width="36" height="36"
          fill="none" stroke="#111" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2">
       <path d="M12 2 L21 20 L12 16 L3 20 Z"/>
     </svg>
@@ -885,8 +883,8 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 
   <!-- 트래킹 사람+발자국 -->
   <button class="bbtn" id="btn-track" onclick="toggleTrack()"
-    style="width:52px;height:52px;border-radius:50%;padding:0;justify-content:center;flex-shrink:0">
-    <svg viewBox="0 0 24 28" width="44" height="44" fill="#111">
+    style="width:52px;height:52px;border-radius:50%;background:#fff;border:none;box-shadow:0 2px 8px rgba(0,0,0,.18);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0">
+    <svg viewBox="0 0 24 28" width="36" height="36" fill="#111">
       <circle cx="12" cy="3.5" r="3"/>
       <path d="M9 8.5h6l-1.5 7-1.5 5.5-1.5-5.5-1.5-7z"/>
       <line x1="4.5" y1="12.5" x2="19.5" y2="12.5"
@@ -2899,6 +2897,57 @@ const MW = document.getElementById('map-wrap');
 
 
 // zoom-wrap 패널 높이를 버튼 합계에 자동 맞춤
+// GPS 정보창 반응형 크기 조정
+function _fitGpsPill(){
+  const pill = document.getElementById('gps-pill');
+  if(!pill) return;
+
+  const sw = window.innerWidth;
+
+  // 화면 너비에 따른 폰트·패딩 스케일
+  // 기준: 390px(iPhone 14) = 100%, 320px(소형) = 80%
+  const scale = Math.max(0.72, Math.min(1.0, sw / 390));
+
+  // Lat/Lon 값 (16px 기준)
+  const fLarge = Math.round(16 * scale) + 'px';
+  // Zone/E/N/Elv 값 (15px 기준)
+  const fMed   = Math.round(15 * scale) + 'px';
+  // 라벨 (11px 기준)
+  const fSmall = Math.round(11 * scale) + 'px';
+  // 패딩 (10px 14px 기준)
+  const pV = Math.round(10 * scale) + 'px';
+  const pH = Math.round(14 * scale) + 'px';
+  // gap (4px 기준)
+  const gap = Math.round(4 * scale) + 'px';
+
+  pill.style.padding = pV + ' ' + pH;
+
+  // 내부 컬럼 gap
+  const col = pill.querySelector('div[style*="flex-direction:column"]');
+  if(col) col.style.gap = gap;
+
+  // Lat/Lon 값
+  ['gps-lat','gps-lon'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.style.fontSize = fLarge;
+  });
+  // Zone/E/N/Elv 값
+  ['gps-utm-zone','gps-utm-x','gps-utm-y','gps-elv'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.style.fontSize = fMed;
+  });
+  // 라벨들
+  pill.querySelectorAll('span[style*="rgba(255,255,255,.7)"]').forEach(el => {
+    el.style.fontSize = fSmall;
+  });
+
+  // 나침반(left:50%) 과 겹치지 않도록 max-width 설정
+  // 나침반 왼쪽 가장자리 = sw/2 - 26px(나침반 반경)
+  const compassLeft = sw / 2 - 30;
+  const maxW = Math.max(140, compassLeft - 20); // 20px 여백
+  pill.style.maxWidth = maxW + 'px';
+}
+
 function _fitZoomWrap(){
   const zw = document.getElementById('zoom-wrap');
   if(!zw) return;
@@ -2918,8 +2967,8 @@ function _fitZoomWrap(){
   const RT_COUNT = 3;
   const rtBottom = RT_TOP + RT_COUNT * RT_BTN + (RT_COUNT - 1) * RT_GAP;
 
-  // bottombar 버튼 상단: maH - 76 + (76-52)/2 = maH - 64
-  const bbBtnTop = maH - 76 + (76 - 52) / 2;
+  // 우측 하단 플로팅 그룹 상단: bottom:10 + 3*52 + 2*8 = 182px
+  const bbBtnTop = maH - (10 + 3*52 + 2*8);
 
   // 위/아래 여백 균등: gap = (가용공간 - 패널높이) / 2
   const totalSpace = bbBtnTop - rtBottom;
@@ -3172,6 +3221,7 @@ function setGPSActive(on){
   // GPS 정보창 표시/숨김
   const pill = document.getElementById('gps-pill');
   if(pill) pill.style.display = on ? 'flex' : 'none';
+  if(on) setTimeout(_fitGpsPill, 50);
 }
 
 function stopGPS(){
@@ -3212,19 +3262,7 @@ function onGPSPos(p){
   const _gacc = document.getElementById('gps-acc-txt');
   if(_gacc) _gacc.textContent = '±'+Math.round(acc)+'m';
   // 고도 표시 (기기가 지원할 때만)
-  const altEl = document.getElementById('gps-alt-txt');
-  if(altEl){
-    if(alt != null){
-      // 고도 있을 때만 표시 (↕ 접두어 포함)
-      const altAccTxt = altAcc!=null ? '±'+Math.round(altAcc)+'m' : '';
-      altEl.textContent = '↕' + Math.round(alt) + 'm' +
-                          (altAccTxt ? ' '+altAccTxt : '');
-      altEl.style.display = '';
-    } else {
-      // 고도 미지원 기기: div 숨김
-      altEl.style.display = 'none';
-    }
-  }
+
   document.getElementById('gps-lbl').textContent = T('gps_active');
   document.getElementById('gps-dot').className = 'on';
   if(!gpsOn) setGPSActive(true);
@@ -9120,7 +9158,32 @@ async function initMultiMap(){
 
 /* ─── MAP AREA TOUCH (핀 드래그) ─── */
 document.addEventListener('DOMContentLoaded',()=>{
+  // ── 자동 전체화면 ────────────────────────────────────────
+  // PWA standalone/fullscreen 모드는 이미 전체화면이므로 스킵
+  // 브라우저 탭으로 열린 경우만 첫 터치 후 전체화면 요청
+  (function _autoFullscreen(){
+    const isStandalone =
+      window.navigator.standalone === true ||
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.matchMedia('(display-mode: fullscreen)').matches;
+    if(isStandalone) return; // PWA 모드: 이미 전체화면
+
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen ||
+                el.mozRequestFullScreen || el.msRequestFullscreen;
+    if(!req) return; // 지원 안 하는 브라우저
+
+    // 첫 번째 사용자 인터랙션 후 요청 (브라우저 보안 정책)
+    const _doFullscreen = () => {
+      req.call(el).catch(() => {});
+      document.removeEventListener('touchend', _doFullscreen);
+      document.removeEventListener('click',    _doFullscreen);
+    };
+    document.addEventListener('touchend', _doFullscreen, { once: true });
+    document.addEventListener('click',    _doFullscreen, { once: true });
+  })();
   setTimeout(_fitZoomWrap, 200);
+  setTimeout(_fitGpsPill, 200);
 
   // ── DeviceOrientation 등록 (나침반 모드 0) ──────────────
   function _onDeviceOrientation(e){
@@ -9157,9 +9220,10 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
   // 화면 크기/방향 변화 시 자동 재계산
   if(window.ResizeObserver){
-    new ResizeObserver(_fitZoomWrap).observe(document.getElementById('map-area') || document.body);
+    new ResizeObserver(() => { _fitZoomWrap(); _fitGpsPill(); }).observe(document.getElementById('map-area') || document.body);
   }
   window.addEventListener('resize', _fitZoomWrap);
+  window.addEventListener('resize', _fitGpsPill);
   const mapArea=document.getElementById('map-area'); if(!mapArea) return;
   let ptId=null;
   mapArea.addEventListener('touchstart',ev=>{if(!pinDragActive||ev.touches.length!==1) return; ptId=ev.touches[0].identifier;},{passive:true});

@@ -1,13 +1,13 @@
 // ═══════════════════════════════════════════════════════════════
-// Palm Farm Field Map — Service Worker v0.149
-// 앱 버전: v0.149
+// Palm Farm Field Map — Service Worker v0.150
+// 앱 버전: v0.150
 // 변경사항:
 //   - 캐시명 v0149로 갱신
 //   - 3개국어 오프라인 페이지 (KO/EN/ID) 완성
 //   - GPS 정확도 색상 원, 나침반 3단계, UTM 좌표 지원
 // ═══════════════════════════════════════════════════════════════
 
-const CACHE_NAME  = 'palmmap-v0149';
+const CACHE_NAME  = 'palmmap-v0152';
 const OFFLINE_URL = './offline.html';
 
 const CORE_ASSETS = [
