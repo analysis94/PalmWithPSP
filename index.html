@@ -1058,7 +1058,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     })
     .catch(() => {
       // file:// 로컬 실행 시 Blob SW 폴백
-      const c = `const C='palmmap-v8';
+      const c = `const C='palmmap-v0062';
 self.addEventListener('install',e=>{self.skipWaiting();});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
 self.addEventListener('fetch',e=>{if(!e.request.url.startsWith('http')||e.request.method!=='GET')return;e.respondWith(caches.open(C).then(cache=>cache.match(e.request).then(hit=>{const net=fetch(e.request).then(res=>{if(res&&res.ok&&res.type!=='opaque')cache.put(e.request,res.clone());return res;}).catch(()=>hit||new Response('Offline',{status:503}));return hit||net;})));});`;
@@ -5607,7 +5607,7 @@ async function checkTiffCacheStatus() {
   const btn = document.getElementById('tiff-cache-status');
   if (!btn || !('caches' in window)) return;
   try {
-    const cache = await caches.open('palmmap-v11');
+    const cache = await caches.open('palmmap-v0062');
     const keys  = await cache.keys();
     const cached = keys.some(r => r.url.includes('geotiff'));
     btn.textContent = cached ? '📷 GeoTIFF ✓ 캐시됨' : '📷 GeoTIFF ⚠ 캐시 없음';

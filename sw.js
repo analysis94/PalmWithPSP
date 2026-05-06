@@ -1,19 +1,18 @@
 // ═══════════════════════════════════════════════════════════════
-// Palm Farm Field Map — Service Worker v11
-// v0.044 기준 오프라인 완전 지원
+// Palm Farm Field Map — Service Worker v0.062
+// 앱 버전과 일치: v0.062
 // 변경사항:
-//   - CACHE_NAME을 앱 버전에 맞게 갱신 (palmmap-v11)
-//   - CORE_ASSETS에서 존재하지 않는 파일 제거
-//   - PDF.js CDN 캐싱 실패 시 로컬 폴백 로직 추가
-//   - SW install 실패 방지 (필수 파일만 CORE_ASSETS에 포함)
+//   - CACHE_NAME을 앱 버전 v0.062에 맞게 갱신
+//   - GeoPDF/GeoTIFF/GPKG 통합 레이어 관리 지원
+//   - GPS 트래킹 중 WakeLock 자동 유지 지원
+//   - TFW World File 좌표 지원
+//   - 3개국어 번역 완성 (KO/EN/ID)
 // ═══════════════════════════════════════════════════════════════
 
-const CACHE_NAME  = 'palmmap-v11';
+const CACHE_NAME  = 'palmmap-v0062';
 const OFFLINE_URL = './offline.html';
 
 // ── CORE_ASSETS: 반드시 존재하는 파일만 ────────────────────────
-// manifest.json, icon 파일이 없으면 SW install이 실패하므로
-// index.html 단독으로만 캐싱 (단일 파일 배포 방식)
 const CORE_ASSETS = [
   './',
   './index.html',
