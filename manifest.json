@@ -1,7 +1,7 @@
 {
   "name": "Palm Farm Field Map",
   "short_name": "PalmMap",
-  "description": "Palm oil farm GIS field mapping app — GPS tracking, PDF map viewer, layer management and offline support for field workers.",
+  "description": "Palm oil farm GIS field mapping app — GPS tracking, GeoPDF/GeoTIFF/GPKG viewer, UTM coordinates, compass, layer management. KO/EN/ID. Offline PWA. v0.149",
   "id": "/",
   "start_url": "./index.html",
   "scope": "./",
@@ -83,9 +83,9 @@
   ],
   "shortcuts": [
     {
-      "name": "지도 열기",
-      "short_name": "지도",
-      "description": "GIS 팜 농장 지도 열기",
+      "name": "지도 열기 / Open Map / Buka Peta",
+      "short_name": "PalmMap",
+      "description": "GIS 팜 농장 지도",
       "url": "./index.html",
       "icons": [
         {
@@ -95,9 +95,9 @@
       ]
     },
     {
-      "name": "메모 목록",
-      "short_name": "메모",
-      "description": "현장 메모 목록 보기",
+      "name": "메모 / Memo / Catatan",
+      "short_name": "Memo",
+      "description": "현장 메모",
       "url": "./index.html#memos",
       "icons": [
         {
@@ -188,5 +188,6 @@
   "note_taking": {
     "new_note_url": "./index.html?action=new-memo"
   },
-  "handle_links": "preferred"
+  "handle_links": "preferred",
+  "version": "0.149"
 }
