@@ -532,7 +532,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     <div style="font-size:22px">🌴</div>
     <div>
       <div style="font-size:14px;font-weight:700;color:var(--green2);letter-spacing:-.2px">PALM MAP</div>
-      <div id="app-ver" style="font-size:10px;color:var(--text3);font-family:var(--mono)">v0.191</div>
+      <div id="app-ver" style="font-size:10px;color:var(--text3);font-family:var(--mono)">v0.193</div>
     </div>
     <button onclick="toggleHamburger()" style="margin-left:auto;background:none;border:none;color:var(--text3);font-size:22px;cursor:pointer;line-height:1;padding:4px">×</button>
   </div>
@@ -755,10 +755,10 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
   </div>
 
   <!-- ③ 우측 중앙 플로팅: 화면꺼짐방지 / 내위치 / 확대 / 축소 -->
-  <div id="zoom-wrap" style="position:absolute;right:10px;top:0;display:flex;flex-direction:column;gap:0;z-index:95;background:#fff;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.18);overflow:hidden;width:58px">
+  <div id="zoom-wrap" style="position:absolute;right:10px;top:0;display:flex;flex-direction:column;gap:0;z-index:95;background:#fff;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.18);overflow:hidden;width:52px">
     <!-- 화면꺼짐 방지: ② 화면잠금해제 아이콘 -->
     <button id="wl-btn" onclick="toggleWakeLock()" title="화면 꺼짐 방지"
-      style="width:58px;height:55px;background:transparent;border:none;
+      style="width:52px;height:55px;background:transparent;border:none;
              border-bottom:.5px solid #e8e8e8;
              cursor:pointer;display:flex;align-items:center;justify-content:center;
              padding:0;color:#1a1a1a">
@@ -770,7 +770,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     </button>
     <!-- 내 위치: ① 크로스헤어 아이콘 -->
     <button onclick="centerGPS()" title="내 위치"
-      style="width:58px;height:55px;background:transparent;border:none;
+      style="width:52px;height:55px;background:transparent;border:none;
              border-bottom:.5px solid #e8e8e8;
              cursor:pointer;display:flex;align-items:center;justify-content:center;
              padding:0;color:#1a1a1a">
@@ -784,15 +784,15 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     </button>
     <!-- 확대 -->
     <button onclick="zoomBy(1.25)" title="확대"
-      style="width:58px;height:55px;background:transparent;border:none;
+      style="width:52px;height:55px;background:transparent;border:none;
              border-bottom:.5px solid #e8e8e8;
-             cursor:pointer;font-size:29px;font-weight:300;
+             cursor:pointer;font-size:24px;font-weight:300;
              color:#1a1a1a;line-height:1;
              display:flex;align-items:center;justify-content:center">+</button>
     <!-- 축소 -->
     <button onclick="zoomBy(1/1.25)" title="축소"
-      style="width:58px;height:55px;background:transparent;border:none;
-             cursor:pointer;font-size:31px;font-weight:300;
+      style="width:52px;height:55px;background:transparent;border:none;
+             cursor:pointer;font-size:26px;font-weight:300;
              color:#1a1a1a;line-height:1;
              display:flex;align-items:center;justify-content:center">−</button>
   </div>
@@ -7886,25 +7886,9 @@ function initMeasure() {
   if(popup) popup.style.display = 'none';
 
   _updateMeasureBtn(); // 버튼 ON 스타일
-  // 전체화면 전환 후 canvas 생성 (크기 정확도 보장)
-  // 이미 전체화면이거나 전체화면 미지원이면 즉시 생성
-  const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
-  if(isFS) {
-    _createMeasureCanvas();
-  } else {
-    // 전체화면 전환 시도 후 canvas 생성
-    const el = document.documentElement;
-    const req = el.requestFullscreen || el.webkitRequestFullscreen;
-    if(req) {
-      req.call(el)
-        .then(() => { setTimeout(_createMeasureCanvas, 100); })
-        .catch(() => { _createMeasureCanvas(); }); // 실패해도 생성
-    } else {
-      _createMeasureCanvas();
-    }
-    return; // canvas는 콜백에서 생성
-  }
-  // ── Canvas 오버레이 생성 ───────────────────────────────
+
+  // 거리측정은 전체화면과 무관하게 즉시 canvas 생성
+  // (전체화면은 앱 시작 시 첫 터치에서 자동 처리)
   _createMeasureCanvas();
 }
 
@@ -10555,14 +10539,16 @@ document.addEventListener('DOMContentLoaded',()=>{
                 el.mozRequestFullScreen || el.msRequestFullscreen;
     if(!req) return; // 지원 안 하는 브라우저
 
-    // 첫 번째 사용자 인터랙션 후 요청 (브라우저 보안 정책)
+    // 첫 번째 사용자 인터랙션 → 전체화면 (브라우저 보안 정책)
+    // touchstart: 가장 빠른 반응 (touchend 대기 없음)
+    let _fsRequested = false;
     const _doFullscreen = () => {
+      if(_fsRequested) return;
+      _fsRequested = true;
       req.call(el).catch(() => {});
-      document.removeEventListener('touchend', _doFullscreen);
-      document.removeEventListener('click',    _doFullscreen);
     };
-    document.addEventListener('touchend', _doFullscreen, { once: true });
-    document.addEventListener('click',    _doFullscreen, { once: true });
+    document.addEventListener('touchstart', _doFullscreen, { once: true, passive: true });
+    document.addEventListener('click',      _doFullscreen, { once: true });
   })();
   setTimeout(_fitZoomWrap, 200);
   // 전체화면 전환 시 measure canvas 재생성 (크기 갱신)
