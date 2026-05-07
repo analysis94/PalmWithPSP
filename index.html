@@ -532,7 +532,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     <div style="font-size:22px">🌴</div>
     <div>
       <div style="font-size:14px;font-weight:700;color:var(--green2);letter-spacing:-.2px">PALM MAP</div>
-      <div id="app-ver" style="font-size:10px;color:var(--text3);font-family:var(--mono)">v0.190</div>
+      <div id="app-ver" style="font-size:10px;color:var(--text3);font-family:var(--mono)">v0.191</div>
     </div>
     <button onclick="toggleHamburger()" style="margin-left:auto;background:none;border:none;color:var(--text3);font-size:22px;cursor:pointer;line-height:1;padding:4px">×</button>
   </div>
@@ -8684,6 +8684,78 @@ function renderBookmarkList() {
     </div>`).join('');
 }
 
+
+
+// ── 메모 CSV 내보내기 ─────────────────────────────────────────
+function exportMemosCSV(){
+  const slot = curSlot();
+  if(!slot){ toast(T('no_map')); return; }
+  const memos = slot.memos || [];
+  if(!memos.length){ toast(T('memo_none')); return; }
+
+  // CSV 셀 이스케이프: 큰따옴표 포함·쉼표·줄바꿈 처리
+  const esc = v => {
+    const s = String(v == null ? '' : v).replace(/"/g, '""');
+    return (s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r'))
+      ? '"' + s + '"' : s;
+  };
+
+  // 헤더
+  const headers = [
+    'No','Date','Time','Text','Lat','Lon','Alt(m)',
+    'DMS_Lat','DMS_Lon','LayerName','PhotoCount','MemoID'
+  ];
+
+  const toDMS = deg => {
+    const d   = Math.floor(deg);
+    const mf  = (deg-d)*60;
+    const min = Math.floor(mf);
+    const sec = ((mf-min)*60).toFixed(2);
+    return d+'d '+String(min).padStart(2,'0')+'m '+String(sec).padStart(5,'0')+'s';
+  };
+
+  const rows = memos.map((m, i) => {
+    const latAbs = m.lat != null ? Math.abs(m.lat).toFixed(7) : '';
+    const lonAbs = m.lon != null ? Math.abs(m.lon).toFixed(7) : '';
+    const latDir = m.lat != null ? (m.lat>=0?'N':'S') : '';
+    const lonDir = m.lon != null ? (m.lon>=0?'E':'W') : '';
+    const dmsLat = m.lat != null ? toDMS(Math.abs(m.lat))+latDir : '';
+    const dmsLon = m.lon != null ? toDMS(Math.abs(m.lon))+lonDir : '';
+    return [
+      i+1,
+      esc(m.date||''),
+      esc(m.time||''),
+      esc(m.text||''),
+      latAbs ? latAbs+latDir : '',
+      lonAbs ? lonAbs+lonDir : '',
+      m.alt != null ? Math.round(m.alt) : '',
+      esc(dmsLat),
+      esc(dmsLon),
+      esc(m.layerName||''),
+      (m.photos||[]).length,
+      esc(m.id||''),
+    ].join(',');
+  });
+
+  const now = new Date();
+  const pad2 = n => String(n).padStart(2,'0');
+  const dateTag = now.toISOString().slice(0,10);
+  const mapName = (slot.name||'map').replace(/[^\w\-]/g,'_').slice(0,30);
+
+  // BOM(\uFEFF) 추가: Excel/메모장에서 UTF-8 한글 자동 인식
+  const content = '\uFEFF' + headers.join(',') + '\r\n' + rows.join('\r\n');
+  const blob = new Blob([content], {type:'text/csv;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = 'memo_' + mapName + '_' + dateTag + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 1500);
+
+  toast('📥 CSV ' + memos.length + '개 내보내기 완료');
+}
 
 function exportMemosTXT(){
   const slot = curSlot();
