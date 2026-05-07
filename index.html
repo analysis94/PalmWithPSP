@@ -532,7 +532,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     <div style="font-size:22px">🌴</div>
     <div>
       <div style="font-size:14px;font-weight:700;color:var(--green2);letter-spacing:-.2px">PALM MAP</div>
-      <div id="app-ver" style="font-size:10px;color:var(--text3);font-family:var(--mono)">v0.194</div>
+      <div id="app-ver" style="font-size:10px;color:var(--text3);font-family:var(--mono)">v0.195</div>
     </div>
     <button onclick="toggleHamburger()" style="margin-left:auto;background:none;border:none;color:var(--text3);font-size:22px;cursor:pointer;line-height:1;padding:4px">×</button>
   </div>
@@ -5113,11 +5113,17 @@ function _updateHmenuBadges(){
 function toggleHamburger() {
   const m = document.getElementById('hamburger-menu');
   if (!m) return;
+  const opening = !m.classList.contains('open');
   m.classList.toggle('open');
-  if (m.classList.contains('open')) {
+  if (opening) {
+    // 1) 전체화면 요청 (사용자 탭 직후 → 브라우저 정책 충족)
+    _requestFullscreenOnce();
+    // 2) 다른 팝업 닫기
     closeAllPopups();
-    _updateHmenuBadges(); // 메뉴 열릴 때 배지 업데이트
+    // 3) 배지 업데이트
+    _updateHmenuBadges();
   }
+  // 닫을 때: 전체화면 유지, 메뉴만 사라짐 (toggle로 'open' 제거됨)
 }
 
 // 추가 팝업 툴바 토글
@@ -10527,38 +10533,22 @@ document.addEventListener('DOMContentLoaded',()=>{
   // ── 자동 전체화면 ────────────────────────────────────────
   // PWA standalone/fullscreen 모드는 이미 전체화면이므로 스킵
   // 브라우저 탭으로 열린 경우만 첫 터치 후 전체화면 요청
-  (function _autoFullscreen(){
-    // PWA standalone/fullscreen 모드는 이미 전체화면 → 스킵
+  // 전체화면 요청 함수 (버튼 클릭 핸들러 내에서 직접 호출)
+  function _requestFullscreenOnce(){
     const isStandalone =
       window.navigator.standalone === true ||
       window.matchMedia('(display-mode: standalone)').matches ||
       window.matchMedia('(display-mode: fullscreen)').matches;
     if(isStandalone) return;
-
+    const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+    if(isFs) return; // 이미 전체화면
     const el  = document.documentElement;
     const req = el.requestFullscreen
              || el.webkitRequestFullscreen
              || el.mozRequestFullScreen
              || el.msRequestFullscreen;
-    if(!req) return;
-
-    // 브라우저 보안 정책: fullscreen은 사용자 인터랙션 직후 호출해야 함
-    // touchend / pointerup / click 세 가지 모두 등록 (첫 번째만 실행)
-    let _done = false;
-    function _tryFullscreen(e) {
-      if(_done) return;
-      _done = true;
-      // 등록한 모든 리스너 제거
-      ['touchend','pointerup','click'].forEach(t =>
-        document.removeEventListener(t, _tryFullscreen)
-      );
-      req.call(el).catch(() => {});
-    }
-    // passive 없이 등록 (passive:true 이면 preventDefault 불가 → fullscreen 거부)
-    document.addEventListener('touchend',  _tryFullscreen, { once: true });
-    document.addEventListener('pointerup', _tryFullscreen, { once: true });
-    document.addEventListener('click',     _tryFullscreen, { once: true });
-  })();
+    if(req) req.call(el).catch(() => {});
+  }
   setTimeout(_fitZoomWrap, 200);
   // 전체화면 전환 시 measure canvas 재생성 (크기 갱신)
   document.addEventListener('fullscreenchange', function(){
