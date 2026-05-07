@@ -16,7 +16,34 @@
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
 <link rel="apple-touch-icon" sizes="192x192" href="./icon-192.png">
-<style>#topbar{display:none!important}
+<style>
+/* ══ side-panel 공통 ══ */
+.side-panel{
+  position:fixed;top:0;right:0;bottom:0;
+  width:min(360px,95vw);
+  background:var(--bg2);
+  border-left:.5px solid var(--border);
+  z-index:400;
+  display:flex;flex-direction:column;
+  transform:translateX(110%);
+  transition:transform .25s cubic-bezier(.4,0,.2,1);
+  box-shadow:-4px 0 20px rgba(0,0,0,.15);
+}
+.side-panel.show{transform:translateX(0)}
+.panel-hdr{
+  display:flex;align-items:center;gap:8px;
+  padding:14px 16px 10px;
+  border-bottom:.5px solid var(--border);
+  flex-shrink:0;
+  font-size:14px;font-weight:600;color:var(--text);
+}
+.panel-hdr span:first-child{flex:1}
+.panel-close{
+  background:none;border:none;color:var(--text3);
+  font-size:22px;cursor:pointer;
+  line-height:1;padding:2px 4px;flex-shrink:0;
+}
+#topbar{display:none!important}
 
 :root{
   /* 배경: 짙은 녹색 유지 (팜 농장 테마) */
@@ -105,7 +132,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 #gps-acc-txt{font-size:9px;color:var(--text3);font-family:var(--mono);flex-shrink:0}
 .bbtn{background:#fff;border:1.5px solid #e0e0e0;color:#1a1a1a;font-size:10px;padding:0;border-radius:50%;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;box-shadow:0 2px 10px rgba(0,0,0,.2);min-width:42px;flex-shrink:0;font-family:var(--sans);transition:.15s}
 .bbtn svg{width:15px;height:15px}
-.bbtn:active,.bbtn.on{border-color:var(--green);color:var(--green2);background:var(--gdim)}
+.bbtn:active,.bbtn.on{border-color:#e02020;background:#fff0f0;box-shadow:0 2px 8px rgba(220,32,32,.25)}
 
 /* ── ZOOM ── */
 #zoom-wrap{position:absolute;right:12px;bottom:78px;display:flex;flex-direction:column;gap:0;z-index:90;background:#fff;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.15);overflow:hidden;border:1.5px solid #e8e8e8}
@@ -330,7 +357,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 #fs-btn:active { border-color:var(--border2);color:var(--green2); }
 
 /* ══ 지도 슬롯 선택기 ══ */
-#map-switcher{position:absolute;top:50px;left:0;right:0;background:var(--bg2);border-bottom:.5px solid var(--border);z-index:110;display:none;padding:6px 8px;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;box-shadow:0 4px 16px rgba(0,0,0,.5)}
+#map-switcher{position:fixed;top:10px;left:50%;transform:translateX(-50%);width:90%;max-width:500px;background:var(--bg2);border-radius:12px;border:.5px solid var(--border);z-index:9998;display:none;padding:6px 8px;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;box-shadow:0 4px 16px rgba(0,0,0,.4)}
 #map-switcher.show{display:flex;gap:6px;align-items:center}
 .map-slot{display:inline-flex;flex-direction:column;align-items:center;min-width:72px;max-width:90px;background:var(--bg3);border:.5px solid var(--border);border-radius:8px;padding:6px 6px 4px;cursor:pointer;position:relative;flex-shrink:0;transition:.15s}
 .map-slot:active,.map-slot.active{border-color:var(--green);background:var(--gdim)}
@@ -373,7 +400,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 .fab-green{background:#43a047;color:#fff}
 .fab-blue{background:#1976d2;color:#fff}
 /* 팝업 툴바 (CarryMap 중앙 버블 메뉴) */
-.popup-toolbar{position:absolute;bottom:80px;left:50%;transform:translateX(-50%);background:#fff;border:none;border-radius:32px;padding:6px 10px;display:inline-flex;align-items:center;gap:10px;z-index:220;box-shadow:0 4px 20px rgba(0,0,0,.22);white-space:nowrap:200;box-shadow:0 2px 12px rgba(0,0,0,.15)}
+.popup-toolbar{position:fixed;background:transparent;border:none;border-radius:0;padding:4px;display:inline-flex;align-items:center;gap:8px;z-index:300;box-shadow:none;flex-direction:row;}
 .popup-toolbar button{width:54px;height:54px;border-radius:50%;background:#fff;border:1.5px solid #e0e0e0;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#1a1a1a;box-shadow:0 2px 8px rgba(0,0,0,.15)}
 .popup-toolbar button:active{background:var(--bg3)}
 .popup-toolbar button svg{width:22px;height:22px}
@@ -401,7 +428,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 /* CarryMap 스타일 팝업 툴바 라벨 */
 .popup-toolbar button:active{transform:scale(.93);box-shadow:none}
 .popup-toolbar .tb-lbl{font-size:10px;color:#555;margin-top:3px;line-height:1;text-align:center;pointer-events:none}
-.popup-toolbar-wrap{display:flex;flex-direction:column;align-items:center;gap:0}
+.popup-toolbar-wrap{display:flex;flex-direction:column;align-items:center;gap:4px}
 /* 트랙 정보 오버레이 */
 #track-overlay{
   position:absolute;
@@ -436,7 +463,53 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 
   #bottombar { background: transparent !important; }
 }
+
+/* ── 레이어 스타일 편집 패널 ── */
+#layer-style-panel{
+  position:fixed;top:0;right:0;bottom:0;width:min(320px,92vw);
+  background:var(--bg2);border-left:.5px solid var(--border);
+  z-index:500;display:flex;flex-direction:column;
+  transform:translateX(100%);transition:transform .25s ease;
+  overflow:hidden;
+}
+#layer-style-panel.show{transform:translateX(0)}
+.lsp-hdr{display:flex;align-items:center;gap:8px;padding:14px 16px 10px;
+  border-bottom:.5px solid var(--border);flex-shrink:0}
+.lsp-hdr span{flex:1;font-size:14px;font-weight:600;color:var(--text)}
+.lsp-hdr button{background:none;border:none;color:var(--text3);
+  font-size:22px;cursor:pointer;padding:4px}
+.lsp-body{flex:1;overflow-y:auto;padding:14px 16px}
+.lsp-row{margin-bottom:14px}
+.lsp-label{font-size:11px;font-weight:500;color:var(--text2);
+  margin-bottom:5px;display:flex;align-items:center;gap:6px}
+.lsp-preview{width:20px;height:20px;border-radius:4px;
+  border:.5px solid var(--border);display:inline-block;flex-shrink:0}
+.lsp-control{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.lsp-slider{width:100%;accent-color:var(--green);cursor:pointer}
+.lsp-color{width:40px;height:30px;padding:2px;border-radius:6px;
+  border:.5px solid var(--border);cursor:pointer;background:transparent}
+.lsp-dash-btn{padding:5px 10px;border-radius:6px;border:.5px solid var(--border);
+  background:var(--bg3);cursor:pointer;font-size:11px;color:var(--text2)}
+.lsp-dash-btn.sel{background:var(--green2);color:#fff;border-color:var(--green2)}
+.lsp-toggle{position:relative;width:38px;height:20px;flex-shrink:0}
+.lsp-toggle input{opacity:0;width:0;height:0}
+.lsp-toggle-track{position:absolute;inset:0;border-radius:20px;
+  background:var(--border2);transition:.2s;cursor:pointer}
+.lsp-toggle input:checked+.lsp-toggle-track{background:var(--green2)}
+.lsp-toggle-track:before{content:'';position:absolute;width:14px;height:14px;
+  left:3px;top:3px;border-radius:50%;background:#fff;transition:.2s}
+.lsp-toggle input:checked+.lsp-toggle-track:before{transform:translateX(18px)}
+.layer-style-btn{background:rgba(59,130,246,.12);border:.5px solid rgba(59,130,246,.3);
+  border-radius:50%;padding:5px 7px;cursor:pointer;color:#185FA5;flex-shrink:0;
+  display:flex;align-items:center}
+.lsp-reset{width:100%;padding:8px;margin-top:8px;border-radius:8px;
+  background:var(--bg3);border:.5px solid var(--border);
+  cursor:pointer;font-size:12px;color:var(--text2)}
 </style>
+  <!-- shpjs: SHP/DBF → GeoJSON -->
+  <script src="https://cdn.jsdelivr.net/npm/shpjs@4.0.4/dist/shp.min.js"></script>
+  <!-- JSZip: KMZ(zip) 파싱 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
 
@@ -459,7 +532,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     <div style="font-size:22px">🌴</div>
     <div>
       <div style="font-size:14px;font-weight:700;color:var(--green2);letter-spacing:-.2px">PALM MAP</div>
-      <div id="app-ver" style="font-size:10px;color:var(--text3);font-family:var(--mono)">v0.155</div>
+      <div id="app-ver" style="font-size:10px;color:var(--text3);font-family:var(--mono)">v0.190</div>
     </div>
     <button onclick="toggleHamburger()" style="margin-left:auto;background:none;border:none;color:var(--text3);font-size:22px;cursor:pointer;line-height:1;padding:4px">×</button>
   </div>
@@ -473,6 +546,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
   <button class="hmenu-item" onclick="openLayerPanel();toggleHamburger()">
     <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 6l8-4 8 4-8 4-8-4zM2 10l8 4 8-4M2 14l8 4 8-4"/></svg>
     <span id="t-hmenu-layers">레이어 관리</span>
+    <span id="hmenu-layers-badge" style="margin-left:auto;background:var(--green2);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;display:none">0</span>
   </button>
   <button class="hmenu-item" onclick="openCalibPanel();toggleHamburger()">
     <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="7"/><path d="M10 3v3M10 14v3M3 10h3M14 10h3"/><circle cx="10" cy="10" r="2" fill="currentColor"/></svg>
@@ -481,6 +555,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
   <button class="hmenu-item" onclick="openBookmarks();toggleHamburger()">
     <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 3h10v15l-5-3-5 3V3z"/></svg>
     <span id="t-hmenu-bm">북마크</span>
+    <span id="hmenu-bm-badge" style="margin-left:auto;background:var(--green2);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;display:none">0</span>
   </button>
 
   <div class="hmenu-sep"></div>
@@ -489,10 +564,12 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
   <button class="hmenu-item" onclick="showPanel('track-panel');toggleHamburger()">
     <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 16L6 10L10 13L14 6L18 8"/></svg>
     <span id="t-hmenu-tracks">트랙 목록</span>
+    <span id="hmenu-tracks-badge" style="margin-left:auto;background:var(--green2);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;display:none">0</span>
   </button>
   <button class="hmenu-item" onclick="openMemoList();toggleHamburger()">
     <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="M7 8h6M7 11h4M7 14h3"/></svg>
     <span id="t-hmenu-memolist">메모 목록</span>
+    <span id="hmenu-memolist-badge" style="margin-left:auto;background:var(--green2);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;display:none">0</span>
   </button>
 
   <div class="hmenu-sep"></div>
@@ -510,6 +587,47 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 
   <div class="hmenu-sep"></div>
 
+  <!-- Titik / Jalur / Area / Foto -->
+  <button class="hmenu-item" onclick="openTitikList();toggleHamburger()">
+    <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M10 2C7.24 2 5 4.24 5 7c0 3.75 5 9 5 9s5-5.25 5-9c0-2.76-2.24-5-5-5z"/>
+      <circle cx="10" cy="7" r="2" fill="currentColor" stroke="none"/>
+    </svg>
+    <span id="t-hmenu-titik">Titik</span>
+    <span id="titik-count-badge" style="margin-left:auto;background:var(--green2);color:#fff;
+      border-radius:10px;padding:1px 7px;font-size:10px;display:none">0</span>
+  </button>
+  <button class="hmenu-item" onclick="openJalurList();toggleHamburger()">
+    <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M3 17L8 8L13 12L17 3"/>
+      <circle cx="3" cy="17" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="17" cy="3" r="1.5" fill="currentColor" stroke="none"/>
+    </svg>
+    <span id="t-hmenu-jalur">Jalur</span>
+    <span id="jalur-count-badge" style="margin-left:auto;background:var(--green2);color:#fff;
+      border-radius:10px;padding:1px 7px;font-size:10px;display:none">0</span>
+  </button>
+  <button class="hmenu-item" onclick="openAreaList();toggleHamburger()">
+    <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5">
+      <polygon points="3,16 6,4 15,3 18,13 11,18"/>
+    </svg>
+    <span id="t-hmenu-area">Area</span>
+    <span id="area-count-badge" style="margin-left:auto;background:var(--green2);color:#fff;
+      border-radius:10px;padding:1px 7px;font-size:10px;display:none">0</span>
+  </button>
+  <button class="hmenu-item" onclick="openFotoList();toggleHamburger()">
+    <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5">
+      <rect x="2" y="5" width="16" height="12" rx="2"/>
+      <circle cx="10" cy="11" r="3"/>
+      <path d="M7 5l1.2-2h3.6L13 5"/>
+    </svg>
+    <span id="t-hmenu-foto">Foto</span>
+    <span id="foto-count-badge" style="margin-left:auto;background:var(--green2);color:#fff;
+      border-radius:10px;padding:1px 7px;font-size:10px;display:none">0</span>
+  </button>
+
+  <div class="hmenu-sep"></div>
+
   <!-- GPS 정확도 -->
   <button class="hmenu-item" onclick="showGPSAccuracyInfo();toggleHamburger()">
     <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -517,7 +635,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
       <circle cx="10" cy="10" r="3"/>
       <circle cx="10" cy="10" r="0.8" fill="currentColor" stroke="none"/>
     </svg>
-    <span>GPS 정확도 안내</span>
+    <span id="t-hmenu-gps-acc">GPS 정확도 안내</span>
   </button>
 
   <!-- 앱 정보 -->
@@ -527,7 +645,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
       <line x1="10" y1="9" x2="10" y2="14"/>
       <circle cx="10" cy="6.5" r=".8" fill="currentColor" stroke="none"/>
     </svg>
-    <span>앱 정보</span>
+    <span id="t-hmenu-appinfo">앱 정보</span>
   </button>
 </div>
 
@@ -607,15 +725,15 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     <!-- 선 3개: 햄버거 메뉴 (언어설정·버전정보) -->
     <button onclick="toggleHamburger()" title="메뉴"
       style="width:52px;height:52px;border-radius:50%;background:#fff;border:none;box-shadow:0 2px 8px rgba(0,0,0,.18);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;color:#1a1a1a;flex-shrink:0">
-      <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+      <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#3B9EE8" stroke-width="2.5" stroke-linecap="round">
         <line x1="3" y1="6"  x2="21" y2="6"/>
         <line x1="3" y1="12" x2="21" y2="12"/>
         <line x1="3" y1="18" x2="21" y2="18"/>
       </svg>
     </button>
     <!-- 줄자: 거리 측정 -->
-    <button onclick="" title="거리 측정 (준비 중)"
-      style="width:52px;height:52px;border-radius:50%;background:#e8e8e8;border:none;box-shadow:0 2px 8px rgba(0,0,0,.08);cursor:not-allowed;display:flex;align-items:center;justify-content:center;padding:0;color:#bbb;flex-shrink:0;opacity:0.6">
+    <button onclick="toggleMeasure(); event.stopPropagation()" title="거리 측정"
+      style="width:52px;height:52px;border-radius:50%;background:#fff;border:none;box-shadow:0 2px 8px rgba(0,0,0,.18);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;color:#1a1a1a;flex-shrink:0">
       <svg viewBox="0 0 24 14" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
         <rect x="1" y="2" width="22" height="10" rx="2"/>
         <line x1="5" y1="2" x2="5" y2="7"/>
@@ -637,25 +755,26 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
   </div>
 
   <!-- ③ 우측 중앙 플로팅: 화면꺼짐방지 / 내위치 / 확대 / 축소 -->
-  <div id="zoom-wrap" style="position:absolute;right:10px;top:0;display:flex;flex-direction:column;gap:0;z-index:95;background:#fff;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.18);overflow:hidden;width:48px">
-    <!-- 화면꺼짐 방지 -->
+  <div id="zoom-wrap" style="position:absolute;right:10px;top:0;display:flex;flex-direction:column;gap:0;z-index:95;background:#fff;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.18);overflow:hidden;width:58px">
+    <!-- 화면꺼짐 방지: ② 화면잠금해제 아이콘 -->
     <button id="wl-btn" onclick="toggleWakeLock()" title="화면 꺼짐 방지"
-      style="width:48px;height:46px;background:transparent;border:none;
+      style="width:58px;height:55px;background:transparent;border:none;
              border-bottom:.5px solid #e8e8e8;
              cursor:pointer;display:flex;align-items:center;justify-content:center;
              padding:0;color:#1a1a1a">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-        <path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/>
-        <circle cx="12" cy="9" r="2.5"/>
+      <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="3" width="20" height="14" rx="2"/>
+        <path d="M8 21h8M12 17v4"/>
+        <path d="M9 10l2 2 4-4"/>
       </svg>
     </button>
-    <!-- 내 위치 -->
+    <!-- 내 위치: ① 크로스헤어 아이콘 -->
     <button onclick="centerGPS()" title="내 위치"
-      style="width:48px;height:46px;background:transparent;border:none;
+      style="width:58px;height:55px;background:transparent;border:none;
              border-bottom:.5px solid #e8e8e8;
              cursor:pointer;display:flex;align-items:center;justify-content:center;
              padding:0;color:#1a1a1a">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+      <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
         <circle cx="12" cy="12" r="4"/>
         <line x1="12" y1="2" x2="12" y2="7"/>
         <line x1="12" y1="17" x2="12" y2="22"/>
@@ -665,15 +784,15 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     </button>
     <!-- 확대 -->
     <button onclick="zoomBy(1.25)" title="확대"
-      style="width:48px;height:46px;background:transparent;border:none;
+      style="width:58px;height:55px;background:transparent;border:none;
              border-bottom:.5px solid #e8e8e8;
-             cursor:pointer;font-size:24px;font-weight:300;
+             cursor:pointer;font-size:29px;font-weight:300;
              color:#1a1a1a;line-height:1;
              display:flex;align-items:center;justify-content:center">+</button>
     <!-- 축소 -->
     <button onclick="zoomBy(1/1.25)" title="축소"
-      style="width:48px;height:46px;background:transparent;border:none;
-             cursor:pointer;font-size:26px;font-weight:300;
+      style="width:58px;height:55px;background:transparent;border:none;
+             cursor:pointer;font-size:31px;font-weight:300;
              color:#1a1a1a;line-height:1;
              display:flex;align-items:center;justify-content:center">−</button>
   </div>
@@ -860,39 +979,52 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 
 <!-- 우측 하단 플로팅: 핀·GPS·트랙 (세로) -->
 <div id="right-bottom-fab" style="position:fixed;right:10px;bottom:10px;
-  display:flex;flex-direction:column;gap:8px;z-index:95">
+  display:flex;flex-direction:column;gap:10px;z-index:95">
   <!-- 핀+플러스 -->
   <button class="bbtn" id="btn-add-popup" onclick="toggleAddPopup()"
-    style="width:52px;height:52px;border-radius:50%;background:#fff;border:none;box-shadow:0 2px 8px rgba(0,0,0,.18);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0">
-    <svg viewBox="0 0 24 26" width="36" height="36"
-         fill="none" stroke="#111" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2">
-      <path d="M12 1C8.13 1 5 4.13 5 8c0 5.5 7 13 7 13s7-7.5 7-13c0-3.87-3.13-7-7-7z"/>
-      <line x1="12" y1="5" x2="12" y2="11"/>
-      <line x1="9"  y1="8" x2="15" y2="8"/>
-    </svg>
-  </button>
+    style="width:52px;height:52px;border-radius:50%;background:#fff;border:none;box-shadow:0 2px 8px rgba(0,0,0,.18);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;overflow:hidden">
+      <svg viewBox="0 0 24 24" width="44" height="44"
+        style="display:block;flex-shrink:0"
+        fill="none" stroke="#1a1a1a" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+        <circle cx="12" cy="9" r="2.5" fill="#1a1a1a" stroke="none"/>
+        <circle cx="18.5" cy="18.5" r="4.5" fill="#1a1a1a" stroke="none"/>
+        <line x1="18.5" y1="15.5" x2="18.5" y2="21.5" stroke="#ffffff" stroke-width="2.2"/>
+        <line x1="15.5" y1="18.5" x2="21.5" y2="18.5" stroke="#ffffff" stroke-width="2.2"/>
+      </svg>
+    </button>
 
   <!-- GPS 화살표 -->
   <button class="bbtn" id="btn-gps" onclick="handleGPS()"
-    style="width:52px;height:52px;border-radius:50%;background:#fff;border:none;box-shadow:0 2px 8px rgba(0,0,0,.18);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0">
-    <svg viewBox="0 0 24 24" width="36" height="36"
-         fill="none" stroke="#111" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2">
-      <path d="M12 2 L21 20 L12 16 L3 20 Z"/>
-    </svg>
-  </button>
+    style="width:52px;height:52px;border-radius:50%;background:#fff;border:none;box-shadow:0 2px 8px rgba(0,0,0,.18);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;overflow:hidden">
+      <svg viewBox="0 0 24 24" width="44" height="44"
+        style="display:block;flex-shrink:0">
+        <g transform="rotate(30,12,12)">
+          <polygon points="12,2 22,21 12,17 2,21"
+            fill="#1a1a1a" stroke="#ffffff" stroke-width="1" stroke-linejoin="round"/>
+        </g>
+      </svg>
+    </button>
 
   <!-- 트래킹 사람+발자국 -->
   <button class="bbtn" id="btn-track" onclick="toggleTrack()"
-    style="width:52px;height:52px;border-radius:50%;background:#fff;border:none;box-shadow:0 2px 8px rgba(0,0,0,.18);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0">
-    <svg viewBox="0 0 24 28" width="36" height="36" fill="#111">
-      <circle cx="12" cy="3.5" r="3"/>
-      <path d="M9 8.5h6l-1.5 7-1.5 5.5-1.5-5.5-1.5-7z"/>
-      <line x1="4.5" y1="12.5" x2="19.5" y2="12.5"
-            stroke="#111" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-      <ellipse cx="6.5"  cy="25.5" rx="3" ry="1.8" transform="rotate(-20,6.5,25.5)"/>
-      <ellipse cx="17.5" cy="26.5" rx="3" ry="1.8" transform="rotate(20,17.5,26.5)"/>
-    </svg>
-  </button>
+    style="width:52px;height:52px;border-radius:50%;background:#fff;border:none;box-shadow:0 2px 8px rgba(0,0,0,.18);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;overflow:hidden">
+      <svg viewBox="0 0 24 28" width="44" height="44"
+        style="display:block;flex-shrink:0" fill="#1a1a1a">
+        <circle cx="11" cy="1.8" r="2.1"/>
+        <line x1="11" y1="4.5" x2="10.5" y2="13.5" stroke="#1a1a1a" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+        <line x1="11" y1="6" x2="15.5" y2="9" stroke="#1a1a1a" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+        <line x1="11" y1="6" x2="6" y2="8.5" stroke="#1a1a1a" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+        <line x1="10.5" y1="13.5" x2="13.5" y2="17.5" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <line x1="13.5" y1="17.5" x2="15.5" y2="21" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <line x1="10.5" y1="13.5" x2="7" y2="19.5" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <path d="M2 24 Q8 26.5 14 24 Q19 22 23 19.5"
+          fill="none" stroke="#1a1a1a" stroke-width="1.6" stroke-dasharray="2.2 1.8" stroke-linecap="round"/>
+        <circle cx="2" cy="24" r="1.4"/>
+        <circle cx="23" cy="19.5" r="1.9"/>
+      </svg>
+    </button>
 </div>/div>/div>/div>/div>/div>/div>/div>/div>/div>/div>/div>/div>
 
 <!-- 팝업 툴바: 추가 버튼 클릭 시 (CarryMap 스타일) -->
@@ -956,45 +1088,35 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 
 <!-- 팝업 툴바: 더보기 (측정 도구 + 그리기) -->
 <div c<div class="popup-toolbar hidden" id="more-popup">
-  <div class="popup-toolbar-wrap">
-    <button onclick="startMeasure('dist');toggleMorePopup()" title="거리 측정">
-      <svg viewBox="0 0 24 14" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-        <rect x="1" y="2" width="22" height="10" rx="2"/>
-        <line x1="5" y1="2" x2="5" y2="7"/><line x1="9" y1="2" x2="9" y2="6"/>
-        <line x1="13" y1="2" x2="13" y2="7"/><line x1="17" y1="2" x2="17" y2="6"/>
-        <line x1="21" y1="2" x2="21" y2="7"/>
-      </svg>
-      <span>Jarak</span>
-    </button>
-  </div>
+
   <div class="popup-toolbar-wrap">
     <button onclick="startMeasure('area');toggleMorePopup()" title="면적 측정">
-      <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-        <path d="M12 3L21 20H3L12 3z"/>
+      <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="3,18 7,4 17,3 21,14 13,21"/>
       </svg>
-      <span>Luas</span>
+      <span id="t-area-more">면적</span>
     </button>
   </div>
   <div class="popup-toolbar-wrap">
     <button onclick="shareMap();toggleMorePopup()" title="공유">
-      <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-        <circle cx="18" cy="5" r="3"/><circle cx="18" cy="19" r="3"/><circle cx="6" cy="12" r="3"/>
-        <line x1="15.5" y1="6.5" x2="8.5" y2="10.5"/>
-        <line x1="15.5" y1="17.5" x2="8.5" y2="13.5"/>
+      <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3v13"/>
+        <path d="M8 7l4-4 4 4"/>
+        <path d="M4 14v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5"/>
       </svg>
-      <span>Bagikan</span>
+      <span id="t-share">Share</span>
     </button>
   </div>
   <div class="popup-toolbar-wrap">
     <button onclick="openMemoList();toggleMorePopup()" title="메모 목록">
-      <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
-        <line x1="8" y1="18" x2="21" y2="18"/>
-        <circle cx="3" cy="6" r="1.5" fill="currentColor" stroke="none"/>
-        <circle cx="3" cy="12" r="1.5" fill="currentColor" stroke="none"/>
-        <circle cx="3" cy="18" r="1.5" fill="currentColor" stroke="none"/>
+      <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+        <line x1="10" y1="9" x2="8" y2="9"/>
       </svg>
-      <span>Catatan</span>
+      <span id="t-memo-more">메모</span>
     </button>
   </div>
 </div>
@@ -1105,6 +1227,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 
 <!-- ══ 북마크 패널 ══ -->
 <div class="fpanel" id="bookmark-panel">
+  <span id="t-panel-bm" style="flex:1;font-size:13px;font-weight:600">🔖 북마크</span><span id="panel-bm-badge" style="display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;background:var(--green2);color:#fff;border-radius:9px;font-size:10px;font-weight:600;margin-left:4px;flex-shrink:0;display:none">0</span>
   <button class="panel-close" onclick="hidePanel('bookmark-panel')">×</button>
   <h3 style="color:var(--amber);font-size:13px;font-weight:700;margin-bottom:10px">⭐ <span id="t-bm-title">북마크</span></h3>
 
@@ -1291,6 +1414,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 
 <!-- ══ TRACK PANEL ══ -->
 <div class="panel panel-bot" id="track-panel" style="max-height:70vh;overflow-y:auto">
+  <span id="t-panel-tracks" style="flex:1;font-size:13px;font-weight:600">🚶 트랙 목록</span><span id="panel-tracks-badge" style="display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;background:var(--green2);color:#fff;border-radius:9px;font-size:10px;font-weight:600;margin-left:4px;flex-shrink:0;display:none">0</span>
   <button class="panel-close" onclick="hidePanel('track-panel')">×</button>
   <h3 id="t-track-title">🛣️ 트랙 관리</h3>
   <!-- 현재 녹화 중 상태 -->
@@ -1354,7 +1478,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 <div class="fpanel" id="memo-list-panel">
   <!-- 헤더 행 -->
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-    <h2 id="t-mlist" style="margin:0">📋 메모 목록</h2>
+    <h2 id="t-mlist" style="margin:0">📋 메모 목록</h2><span id="panel-memo-badge" style="display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;background:var(--green2);color:#fff;border-radius:9px;font-size:10px;font-weight:600;margin-left:4px;flex-shrink:0;display:none">0</span>
     <button onclick="exportMemosTXT()"
       style="display:flex;align-items:center;gap:5px;background:var(--green);color:#fff;
              border:none;border-radius:50%;padding:7px 12px;font-size:12px;
@@ -1371,10 +1495,10 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 
 <!-- ══ LAYER MANAGER FULL PANEL ══ -->
 <div class="fpanel" id="layer-panel">
-  <h2 id="t-lmgr">레이어 관리</h2>
+  <div style="display:flex;align-items:center;gap:4px"><h2 id="t-lmgr" style="margin:0">레이어 관리</h2><span id="panel-layers-badge" style="display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;background:var(--green2);color:#fff;border-radius:9px;font-size:10px;font-weight:600;margin-left:4px;flex-shrink:0;display:none">0</span></div>
   <div class="import-zone" onclick="triggerGeo()">
     <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 24V10l10-6 10 6v14l-10 6-10-6z"/><path d="M16 4v22M6 10l10 6 10-6"/></svg>
-    <p id="t-import">GeoJSON / CSV / GPKG 불러오기</p>
+    <p id="t-import">GeoJSON / CSV / GPKG / SHP / KML / KMZ / GPX</p>
     <small id="t-import-s">Block, Division, Estate, 도로 레이어</small>
   </div>
   <div class="import-zone" onclick="triggerTiff()" style="margin-top:8px;border-color:rgba(232,168,74,.5)">
@@ -1426,6 +1550,21 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     </svg>
     <span id="t-kml-export">KML 내보내기</span>
   </button>
+        <button onclick="exportGPX()" style="margin-top:6px;width:100%;padding:9px;
+          background:var(--bg3);border:none;border-radius:8px;cursor:pointer;
+          font-size:12px;color:var(--text);text-align:left">
+          📥 GPX 내보내기
+        </button>
+        <button onclick="exportGeoJSONAll()" style="margin-top:4px;width:100%;padding:9px;
+          background:var(--bg3);border:none;border-radius:8px;cursor:pointer;
+          font-size:12px;color:var(--text);text-align:left">
+          📥 GeoJSON 내보내기
+        </button>
+        <button onclick="exportSHPGuide()" style="margin-top:4px;width:100%;padding:9px;
+          background:var(--bg3);border:none;border-radius:8px;cursor:pointer;
+          font-size:12px;color:var(--text);text-align:left">
+          📥 SHP 내보내기 안내
+        </button>
   <button class="demo-btn" onclick="loadDemo()">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6M8 5v6"/></svg>
     <span id="t-demo">샘플 레이어 불러오기 (데모)</span>
@@ -1561,7 +1700,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 <div id="toast"></div>
 
 <input type="file" id="pdf-input" accept=".pdf,application/pdf" style="display:none" onchange="loadPDF(this)">
-<input type="file" id="geo-input" accept=".geojson,.json,.csv,.gpkg" style="display:none" onchange="loadGeo(this)" multiple>
+<input type="file" id="geo-input" accept=".geojson,.json,.csv,.gpkg,.shp,.zip,.kml,.kmz,.gpx" style="display:none" onchange="loadGeo(this)" multiple>
 <input type="file" id="tiff-input" accept="image/tiff,image/geo+tiff,.tif,.tiff,.tfw" style="display:none" onchange="loadGeoTIFF(this)" multiple>
 
 <!-- ══════════════════════════════════════════════════════════
@@ -1764,17 +1903,7 @@ ko: {
   draw_cancel:'취소',
   draw_undo:'되돌리기',
   compass_fix:'나침반 고정',
-  compass_gps:'나침반 GPS 연동',
-  search_no_result:'검색 결과 없음',
-  t_hmenu_maps:'지도 관리',
-  t_hmenu_layers:'레이어 관리',
-  t_hmenu_calib:'좌표 보정',
-  t_hmenu_bm:'북마크',
-  t_hmenu_tracks:'트랙 목록',
-  t_hmenu_memolist:'메모 목록',
-  t_hmenu_lang:'언어 설정',
-  t_add_btn:'추가',
-  t_more_btn:'더보기',
+  compass_gps:'나침반 GPS 연동',  t_hmenu_maps:'지도 관리',
   tiff_cache_ok:'📷 GeoTIFF ✅ 사용 가능',
   tiff_cache_cached:'📷 GeoTIFF ✅ 캐시됨 (오프라인 가능)',
   tiff_cache_online:'📷 GeoTIFF — 온라인 필요 (첫 로드 후 캐싱)',
@@ -1813,7 +1942,7 @@ ko: {
   track_panel_h:'🛣️ 트랙 관리',
   layer_panel_h:'레이어 관리',
   memo_panel_h:'📍 위치 메모 추가',
-  geo_import_lbl:'GeoJSON / CSV / GPKG 불러오기',
+  geo_import_lbl:'GeoJSON·CSV·GPKG·SHP·KML·KMZ·GPX 불러오기',
   tiff_import_lbl:'GeoTIFF 베이스맵 불러오기',
   trk_recording:'녹화 중',
   trk_pts_lbl:'포인트:',
@@ -1846,8 +1975,8 @@ ko: {
   tiff_err_format_hint:'ArcGIS에서 TIFF 형식으로 다시 내보내세요',
   tiff_err_generic_hint:'ArcGIS Export Raster → TIFF, LZW, Force RGB 설정 확인',
   // GPKG 레이어
-  import_title:'GeoJSON / CSV / GPKG 불러오기',
-  import_hint:'Block, Division, Estate, 도로, 하천 레이어',
+  import_title:'GeoJSON·CSV·GPKG·SHP·KML·KMZ·GPX 불러오기',
+  import_hint:'블록·경계·도로 레이어 (.shp .kml .kmz .gpx .geojson .gpkg .csv)',
   gpkg_loading:'GPKG 파싱 중...',
   gpkg_ok:'✅ GPKG 레이어 불러옴',
   gpkg_empty:'GPKG에 피처가 없습니다.',
@@ -1971,6 +2100,12 @@ ko: {
   pin_move_hint:'드래그로 핀 이동',
   pin_move_ok:'확인',
   pin_move_cancel:'취소',
+  share_btn:'공유',
+  hmenu_gps_acc:'GPS 정확도 안내',
+  layer_mgmt:'레이어 관리',
+  msr_dist_hint:'거리 측정: 2점 이상 탭',
+  msr_area_hint:'면적 측정: 3점 이상 탭',
+  hmenu_appinfo:'앱 정보',
   txt_save:'TXT 저장',
   far_banner_title:'📍 GPS 위치 — 이 지도 범위 밖',
   far_banner_uncalib:'📍 GPS 위치 (지도 미보정)',
@@ -1978,6 +2113,34 @@ ko: {
   map_del_confirm:'이 지도를 삭제하시겠습니까?',
   map_del_yes:'삭제',
   map_del_no:'취소',
+
+  no_results:'검색 결과 없음',
+  panel_tracks:'🚶 트랙 목록',
+  panel_memolist:'📝 메모 목록',
+  panel_bm:'🔖 북마크',
+  panel_layers:'🗂 레이어',
+  panel_titik:'📍 Titik 목록',
+  panel_jalur:'📐 Jalur 목록',
+  panel_area:'🔲 Area 목록',
+  panel_foto:'📷 Foto 목록',
+  export_gpx:'GPX 내보내기',
+  export_geojson:'GeoJSON 내보내기',
+  export_list:'목록 공유',
+  hmenu_titik:'Titik 목록',
+  hmenu_jalur:'Jalur 목록',
+  hmenu_area:'Area 목록',
+  hmenu_foto:'Foto 목록',
+  hmenu_maps:'지도 관리',
+  hmenu_layers:'레이어 관리',
+  hmenu_calib:'좌표 보정',
+  hmenu_bm:'북마크',
+  hmenu_tracks:'트랙 목록',
+  hmenu_memolist:'메모 목록',
+  area_empty:'저장된 Area 없음',
+  titik_empty:'저장된 Titik 없음',
+  jalur_empty:'저장된 Jalur 없음',
+  foto_empty:'저장된 Foto 없음',
+  hmenu_lang:'언어',
 },
 en: {
   pdf:'PDF', layers:'Layers', calib:'Calibrate',
@@ -2090,16 +2253,34 @@ en: {
   draw_undo:'Undo',
   compass_fix:'Compass locked',
   compass_gps:'Compass GPS sync',
-  search_no_result:'No results found',
-  t_hmenu_maps:'Map Management',
-  t_hmenu_layers:'Layer Management',
-  t_hmenu_calib:'Calibration',
-  t_hmenu_bm:'Bookmarks',
-  t_hmenu_tracks:'Track Log',
-  t_hmenu_memolist:'Memo List',
-  t_hmenu_lang:'Language',
-  t_add_btn:'Add',
-  t_more_btn:'More',
+  share_btn:'Share',
+  hmenu_gps_acc:'GPS Accuracy Guide',
+  layer_mgmt:'Layer Management',
+  msr_dist_hint:'Tap 2+ points to measure',
+  msr_area_hint:'Tap 3+ points for area',
+  hmenu_maps:'Map Management',
+  hmenu_layers:'Layer Management',
+  hmenu_calib:'Calibration',
+  hmenu_bm:'Bookmarks',
+  hmenu_tracks:'Track List',
+  hmenu_memolist:'Memo List',
+  hmenu_lang:'Language',
+  panel_tracks:'🚶 Track List',
+  panel_memolist:'📝 Memo List',
+  panel_bm:'🔖 Bookmarks',
+  panel_layers:'🗂 Layers',
+  panel_titik:'📍 Titik List',
+  panel_jalur:'📐 Jalur List',
+  panel_area:'🔲 Area List',
+  panel_foto:'📷 Foto List',
+  export_gpx:'Export GPX',
+  export_geojson:'Export GeoJSON',
+  export_list:'Share List',
+  hmenu_titik:'Titik List',
+  hmenu_jalur:'Jalur List',
+  hmenu_area:'Area List',
+  hmenu_foto:'Foto List',
+  hmenu_appinfo:'App Info',
   tiff_cache_ok:'📷 GeoTIFF ✅ Ready',
   tiff_cache_cached:'📷 GeoTIFF ✅ Cached (offline OK)',
   tiff_cache_online:'📷 GeoTIFF — Online needed (cached on first load)',
@@ -2136,7 +2317,7 @@ en: {
   track_panel_h:'🛣️ Track Management',
   layer_panel_h:'Layer Management',
   memo_panel_h:'📍 Add Location Memo',
-  geo_import_lbl:'Load GeoJSON / CSV / GPKG',
+  geo_import_lbl:'Import: GeoJSON·CSV·GPKG·SHP·KML·KMZ·GPX',
   tiff_import_lbl:'Load GeoTIFF Basemap',
   trk_recording:'Recording',
   trk_pts_lbl:'Points:',
@@ -2173,8 +2354,8 @@ en: {
   tiff_err_format_hint:'Re-export as TIFF from ArcGIS',
   tiff_err_generic_hint:'Check ArcGIS Export Raster: TIFF, LZW, Force RGB',
   // GPKG 레이어
-  import_title:'GeoJSON / CSV / GPKG Import',
-  import_hint:'Block, Division, Estate, Road, River layers',
+  import_title:'Import GeoJSON·CSV·GPKG·SHP·KML·KMZ·GPX',
+  import_hint:'Block·boundary·road layers (.shp .kml .kmz .gpx .geojson .gpkg .csv)',
   gpkg_loading:'Parsing GPKG...',
   gpkg_ok:'✅ GPKG layers loaded',
   gpkg_empty:'No features found in GPKG.',
@@ -2303,6 +2484,11 @@ en: {
   far_banner_uncalib_hint:'Use 📐 Calibrate to set UTM Zone',
   map_del_confirm:'Delete this map?',
   map_del_yes:'Delete',
+  area_empty:'No Area saved',
+  titik_empty:'No Titik saved',
+  jalur_empty:'No Jalur saved',
+  foto_empty:'No Foto saved',
+  no_results:'No results found',
   map_del_no:'Cancel',
 },
 id: {
@@ -2416,16 +2602,34 @@ id: {
   draw_undo:'Batalkan',
   compass_fix:'Kompas dikunci',
   compass_gps:'Kompas GPS sinkron',
-  search_no_result:'Tidak ada hasil',
-  t_hmenu_maps:'Kelola Peta',
-  t_hmenu_layers:'Kelola Layer',
-  t_hmenu_calib:'Kalibrasi',
-  t_hmenu_bm:'Bookmark',
-  t_hmenu_tracks:'Log Trek',
-  t_hmenu_memolist:'Daftar Memo',
-  t_hmenu_lang:'Bahasa',
-  t_add_btn:'Tambah',
-  t_more_btn:'Lainnya',
+  share_btn:'Bagikan',
+  hmenu_gps_acc:'Panduan Akurasi GPS',
+  layer_mgmt:'Manajemen Layer',
+  msr_dist_hint:'Ketuk 2+ titik untuk jarak',
+  msr_area_hint:'Ketuk 3+ titik untuk luas',
+  hmenu_maps:'Kelola Peta',
+  hmenu_layers:'Kelola Layer',
+  hmenu_calib:'Kalibrasi',
+  hmenu_bm:'Bookmark',
+  hmenu_tracks:'Log Trek',
+  hmenu_memolist:'Daftar Memo',
+  hmenu_lang:'Bahasa',
+  panel_tracks:'🚶 Log Trek',
+  panel_memolist:'📝 Daftar Memo',
+  panel_bm:'🔖 Bookmark',
+  panel_layers:'🗂 Layer',
+  panel_titik:'📍 Daftar Titik',
+  panel_jalur:'📐 Daftar Jalur',
+  panel_area:'🔲 Daftar Area',
+  panel_foto:'📷 Daftar Foto',
+  export_gpx:'Ekspor GPX',
+  export_geojson:'Ekspor GeoJSON',
+  export_list:'Bagikan Daftar',
+  hmenu_titik:'Daftar Titik',
+  hmenu_jalur:'Daftar Jalur',
+  hmenu_area:'Daftar Area',
+  hmenu_foto:'Daftar Foto',
+  hmenu_appinfo:'Info Aplikasi',
   tiff_cache_ok:'📷 GeoTIFF ✅ Tersedia',
   tiff_cache_cached:'📷 GeoTIFF ✅ Tersimpan (offline OK)',
   tiff_cache_online:'📷 GeoTIFF — Perlu online (cache setelah muat pertama)',
@@ -2462,7 +2666,7 @@ id: {
   track_panel_h:'🛣️ Manajemen Trek',
   layer_panel_h:'Manajemen Layer',
   memo_panel_h:'📍 Tambah Memo Lokasi',
-  geo_import_lbl:'Muat GeoJSON / CSV / GPKG',
+  geo_import_lbl:'Impor: GeoJSON·CSV·GPKG·SHP·KML·KMZ·GPX',
   tiff_import_lbl:'Muat Basemap GeoTIFF',
   trk_recording:'Merekam',
   trk_pts_lbl:'Titik:',
@@ -2499,8 +2703,8 @@ id: {
   tiff_err_format_hint:'Ekspor ulang sebagai TIFF dari ArcGIS',
   tiff_err_generic_hint:'Periksa: ArcGIS Export Raster → TIFF, LZW, Force RGB',
   // GPKG 레이어
-  import_title:'Impor GeoJSON / CSV / GPKG',
-  import_hint:'Blok, Divisi, Estate, Jalan, Sungai layer',
+  import_title:'Impor GeoJSON·CSV·GPKG·SHP·KML·KMZ·GPX',
+  import_hint:'Layer blok·batas·jalan (.shp .kml .kmz .gpx .geojson .gpkg .csv)',
   gpkg_loading:'Memproses GPKG...',
   gpkg_ok:'✅ Layer GPKG dimuat',
   gpkg_empty:'Tidak ada fitur di GPKG.',
@@ -2629,6 +2833,11 @@ id: {
   far_banner_uncalib_hint:'Gunakan 📐 Kalibrasi untuk mengatur Zone UTM',
   map_del_confirm:'Hapus peta ini?',
   map_del_yes:'Hapus',
+  area_empty:'Tidak ada Area',
+  titik_empty:'Tidak ada Titik',
+  jalur_empty:'Tidak ada Jalur',
+  foto_empty:'Tidak ada Foto',
+  no_results:'Tidak ada hasil',
   map_del_no:'Batal',
 }
 };
@@ -2668,6 +2877,25 @@ const LANG_IDS = {
   't-pin-style-label':'pin_style_label',
   't-txt-save':'txt_save',
   't-far-banner-title':'far_banner_title',
+  't-share':'share_btn',
+  't-hmenu-gps-acc':'hmenu_gps_acc',
+  't-hmenu-appinfo':'hmenu_appinfo',
+  't-hmenu-titik':'hmenu_titik',
+  't-hmenu-jalur':'hmenu_jalur',
+  't-hmenu-area':'hmenu_area',
+  't-hmenu-foto':'hmenu_foto',
+  't-panel-titik':'panel_titik',
+  't-panel-tracks':'panel_tracks',
+  't-panel-memolist':'panel_memolist',
+  't-panel-bm':'panel_bm',
+  't-panel-layers':'panel_layers',
+  't-panel-jalur':'panel_jalur',
+  't-panel-area':'panel_area',
+  't-panel-foto':'panel_foto',
+  't-export-titik':'export_gpx',
+  't-export-jalur':'export_gpx',
+  't-export-area':'export_geojson',
+  't-export-foto':'export_list',
   // 햄버거 메뉴
   't-hmenu-maps':'hmenu_maps',
   't-hmenu-layers':'hmenu_layers',
@@ -2675,6 +2903,8 @@ const LANG_IDS = {
   't-hmenu-bm':'hmenu_bm',
   't-hmenu-tracks':'hmenu_tracks',
   't-hmenu-memolist':'hmenu_memolist',
+  't-memo-more':'memo_btn',
+  't-area-more':'tool_area',
   't-hmenu-lang':'hmenu_lang',
   't-trk-recording':'trk_recording',
   't-trk-color-lbl':'trk_color_lbl',
@@ -3121,6 +3351,15 @@ function zoomAt(cx, cy, f) {
 
   applyTx();
 }
+
+// 지도 이동: px,py 좌표를 화면 중앙으로
+function panTo(px, py) {
+  if (!MA) return;
+  ox = MA.clientWidth  / 2 - px * scale;
+  oy = MA.clientHeight / 2 - py * scale;
+  applyTx();
+}
+
 function zoomBy(f){ zoomAt(MA.clientWidth/2, MA.clientHeight/2, f); 
   updateScaleBar();
 }
@@ -3224,9 +3463,20 @@ function _showGpsPill(){
   if(show) setTimeout(_fitGpsPill, 50);
 }
 
+// GPS/트랙 버튼 아이콘 색상 업데이트
+function _updateBtnIcon(id, svgHtml) {
+  const btn = document.getElementById(id);
+  if(btn) btn.innerHTML = svgHtml;
+}
+const _GPS_SVG_ON  = '<svg viewBox="0 0 24 24" width="44" height="44"\n        style="display:block;flex-shrink:0">\n        <g transform="rotate(30,12,12)">\n          <polygon points="12,2 22,21 12,17 2,21"\n            fill="#e02020" stroke="#ffffff" stroke-width="1" stroke-linejoin="round"/>\n        </g>\n      </svg>';
+const _GPS_SVG_OFF = '<svg viewBox="0 0 24 24" width="44" height="44"\n        style="display:block;flex-shrink:0">\n        <g transform="rotate(30,12,12)">\n          <polygon points="12,2 22,21 12,17 2,21"\n            fill="#1a1a1a" stroke="#ffffff" stroke-width="1" stroke-linejoin="round"/>\n        </g>\n      </svg>';
+const _TRK_SVG_ON  = '<svg viewBox="0 0 24 28" width="44" height="44"\n        style="display:block;flex-shrink:0" fill="#e02020">\n        <circle cx="11" cy="1.8" r="2.1"/>\n        <line x1="11" y1="4.5" x2="10.5" y2="13.5" stroke="#e02020" stroke-width="2.2" stroke-linecap="round" fill="none"/>\n        <line x1="11" y1="6" x2="15.5" y2="9" stroke="#e02020" stroke-width="1.8" stroke-linecap="round" fill="none"/>\n        <line x1="11" y1="6" x2="6" y2="8.5" stroke="#e02020" stroke-width="1.8" stroke-linecap="round" fill="none"/>\n        <line x1="10.5" y1="13.5" x2="13.5" y2="17.5" stroke="#e02020" stroke-width="2" stroke-linecap="round" fill="none"/>\n        <line x1="13.5" y1="17.5" x2="15.5" y2="21" stroke="#e02020" stroke-width="2" stroke-linecap="round" fill="none"/>\n        <line x1="10.5" y1="13.5" x2="7" y2="19.5" stroke="#e02020" stroke-width="2" stroke-linecap="round" fill="none"/>\n        <path d="M2 24 Q8 26.5 14 24 Q19 22 23 19.5"\n          fill="none" stroke="#e02020" stroke-width="1.6" stroke-dasharray="2.2 1.8" stroke-linecap="round"/>\n        <circle cx="2" cy="24" r="1.4"/>\n        <circle cx="23" cy="19.5" r="1.9"/>\n      </svg>';
+const _TRK_SVG_OFF = '<svg viewBox="0 0 24 28" width="44" height="44"\n        style="display:block;flex-shrink:0" fill="#1a1a1a">\n        <circle cx="11" cy="1.8" r="2.1"/>\n        <line x1="11" y1="4.5" x2="10.5" y2="13.5" stroke="#1a1a1a" stroke-width="2.2" stroke-linecap="round" fill="none"/>\n        <line x1="11" y1="6" x2="15.5" y2="9" stroke="#1a1a1a" stroke-width="1.8" stroke-linecap="round" fill="none"/>\n        <line x1="11" y1="6" x2="6" y2="8.5" stroke="#1a1a1a" stroke-width="1.8" stroke-linecap="round" fill="none"/>\n        <line x1="10.5" y1="13.5" x2="13.5" y2="17.5" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round" fill="none"/>\n        <line x1="13.5" y1="17.5" x2="15.5" y2="21" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round" fill="none"/>\n        <line x1="10.5" y1="13.5" x2="7" y2="19.5" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round" fill="none"/>\n        <path d="M2 24 Q8 26.5 14 24 Q19 22 23 19.5"\n          fill="none" stroke="#1a1a1a" stroke-width="1.6" stroke-dasharray="2.2 1.8" stroke-linecap="round"/>\n        <circle cx="2" cy="24" r="1.4"/>\n        <circle cx="23" cy="19.5" r="1.9"/>\n      </svg>';
+
 function setGPSActive(on){
   gpsOn = on;
   document.getElementById('btn-gps').classList.toggle('on', on);
+  _updateBtnIcon('btn-gps', on ? _GPS_SVG_ON : _GPS_SVG_OFF);
   document.getElementById('gps-dot').className = on ? 'on' : '';
   document.getElementById('gps-lbl').textContent = on ? T('gps_active') : 'GPS';
   if(!on){ document.getElementById('gps-val').textContent = T('gps_none'); document.getElementById('gps-acc-txt').textContent='—'; }
@@ -4805,13 +5055,68 @@ function ll2c(lat,lon){ return ll2cFromCalib(lat,lon); }
 // ── CarryMap 스타일 UI 함수들 ─────────────────────────────────
 
 // 햄버거 메뉴 토글
+
+function _updateHmenuBadges(){
+  const slot = curSlot();
+  const counts = {
+    'titik': slot?.memos?.length || 0,
+    'jalur': slot?.lines?.length || 0,
+    'area':  slot?.polygons?.length || 0,
+    'foto':  (slot?.memos||[]).filter(m=>m.photos&&m.photos.length).length,
+    'tracks': slot?.tracks?.length || 0,
+    'memo':   slot?.memos?.length || 0,
+    'bm':     (typeof bookmarks!=='undefined' ? bookmarks.length : 0),
+    'layers': (typeof layers!=='undefined' ? layers.length : 0),
+    'maps':   (typeof mapSlots!=='undefined' ? mapSlots.length : 0),
+  };
+  // 지도 관리 배지 (햄버거 메뉴)
+  const mb = document.getElementById('maps-badge');
+  if(mb){
+    const n = counts.maps;
+    mb.textContent = n;
+    mb.style.display = n>0 ? 'inline-block' : 'none';
+  }
+
+  // 햄버거 메뉴 배지
+  const hmBadges = {
+    'titik-count-badge':    counts.titik,
+    'jalur-count-badge':    counts.jalur,
+    'area-count-badge':     counts.area,
+    'foto-count-badge':     counts.foto,
+    'hmenu-layers-badge':   counts.layers,
+    'hmenu-bm-badge':       counts.bm,
+    'hmenu-tracks-badge':   counts.tracks,
+    'hmenu-memolist-badge': counts.memo,
+  };
+  Object.entries(hmBadges).forEach(([id, n]) => {
+    const el = document.getElementById(id);
+    if(el){ el.textContent=n; el.style.display = n>0?'inline-block':'none'; }
+  });
+
+  // 패널 헤더 배지
+  const panelBadges = {
+    'panel-titik-badge':  counts.titik,
+    'panel-jalur-badge':  counts.jalur,
+    'panel-area-badge':   counts.area,
+    'panel-foto-badge':   counts.foto,
+    'panel-tracks-badge': counts.tracks,
+    'panel-memo-badge':   counts.memo,
+    'panel-bm-badge':     counts.bm,
+    'panel-layers-badge': counts.layers,
+  };
+  Object.entries(panelBadges).forEach(([id, n]) => {
+    const el = document.getElementById(id);
+    if(el){ el.textContent=n; el.style.display = n>0?'inline-flex':'none'; }
+  });
+}
+
 function toggleHamburger() {
   const m = document.getElementById('hamburger-menu');
   if (!m) return;
   m.classList.toggle('open');
-  // 열릴 때 팝업 툴바 닫기
   if (m.classList.contains('open')) {
     closeAllPopups();
+    _updateHmenuBadges(); // 메뉴 열릴 때 배지 업데이트
   }
 }
 
@@ -4821,30 +5126,90 @@ function toggleAddPopup() {
   const q = document.getElementById('more-popup');
   if (!p) return;
   const opening = p.classList.contains('hidden');
-  if (q) q.classList.add('hidden');
+  if (q) { q.classList.add('hidden'); _clearPopupTimer('more'); }
   p.classList.toggle('hidden');
   document.getElementById('hamburger-menu')?.classList.remove('open');
-  // 팝업 위치: bottombar 위
-  if (opening && p) {
-    const bb = document.getElementById('bottombar');
-    const bbH = bb ? bb.offsetHeight : 72;
-    p.style.bottom = (bbH + 8) + 'px';
+  if (opening) {
+    _positionPopupLeft(p, document.getElementById('btn-add-popup'));
+    _startPopupTimer('add', p);
+  } else {
+    _clearPopupTimer('add');
   }
 }
 
 // 더보기 팝업 툴바 토글
+// 팝업을 기준 버튼의 왼쪽에 배치
+function _positionPopupLeft(popup, btn) {
+  if (!popup || !btn) return;
+  const br = btn.getBoundingClientRect();
+  const vh = window.innerHeight;
+
+  // 팝업이 이미 표시된 상태에서 크기 측정 (hidden 제거된 후 호출됨)
+  // visibility:hidden으로 잠깐 감추고 크기 측정
+  const prevVis = popup.style.visibility;
+  popup.style.visibility = 'hidden';
+  const pr = popup.getBoundingClientRect();
+  popup.style.visibility = prevVis;
+
+  const pw = pr.width  || 160;
+  const ph = pr.height || 200;
+
+  // 버튼 왼쪽에 배치 (8px 간격)
+  let left = br.left - pw - 8;
+  if (left < 8) left = 8;
+
+  // 버튼 하단 기준, 위로 올림
+  let bottom = vh - br.bottom;
+  // 화면 상단 넘치면 조정
+  if (vh - bottom - ph < 8) bottom = vh - ph - 8;
+
+  popup.style.left   = left + 'px';
+  popup.style.right  = 'auto';
+  popup.style.bottom = bottom + 'px';
+  popup.style.top    = 'auto';
+}
+
+// 팝업 자동 닫힘 타임아웃 (3.5초 — 모바일 UX 표준)
+const _popupTimers = {};
+const POPUP_TIMEOUT = 3500; // ms
+
+function _startPopupTimer(key, popup) {
+  _clearPopupTimer(key);
+  _popupTimers[key] = setTimeout(function() {
+    if (popup && !popup.classList.contains('hidden')) {
+      popup.classList.add('hidden');
+    }
+  }, POPUP_TIMEOUT);
+
+  // 팝업 안 터치/클릭 시 타이머 리셋
+  if (!popup._timerResetBound) {
+    popup._timerResetBound = true;
+    popup.addEventListener('pointerdown', function() {
+      _startPopupTimer(key, popup);
+    });
+  }
+}
+
+function _clearPopupTimer(key) {
+  if (_popupTimers[key]) {
+    clearTimeout(_popupTimers[key]);
+    delete _popupTimers[key];
+  }
+}
+
 function toggleMorePopup() {
   const p = document.getElementById('more-popup');
   const q = document.getElementById('add-popup');
   if (!p) return;
   const opening = p.classList.contains('hidden');
-  if (q) q.classList.add('hidden');
+  if (q) { q.classList.add('hidden'); _clearPopupTimer('add'); }
   p.classList.toggle('hidden');
   document.getElementById('hamburger-menu')?.classList.remove('open');
-  if (opening && p) {
-    const bb = document.getElementById('bottombar');
-    const bbH = bb ? bb.offsetHeight : 72;
-    p.style.bottom = (bbH + 8) + 'px';
+  if (opening) {
+    _positionPopupLeft(p, document.querySelector('[onclick*="toggleMorePopup"]'));
+    _startPopupTimer('more', p);
+  } else {
+    _clearPopupTimer('more');
   }
 }
 
@@ -4859,41 +5224,238 @@ function toggleGpsPopup() {
 function toggleSearchBar() {
   const existing = document.getElementById('search-bar-inline');
   if (existing) { existing.remove(); return; }
+
+  // ── 검색 UI 생성 ──────────────────────────────────────────
   const bar = document.createElement('div');
   bar.id = 'search-bar-inline';
-  bar.style.cssText = 'position:absolute;top:52px;left:0;right:0;padding:8px;background:var(--bg2);border-bottom:.5px solid var(--border);z-index:200;display:flex;gap:8px;align-items:center';
+  bar.style.cssText = [
+    'position:fixed;top:10px;left:50%;transform:translateX(-50%)',
+    'width:92%;max-width:440px',
+    'background:var(--bg2)',
+    'border-radius:14px',
+    'box-shadow:0 6px 24px rgba(0,0,0,.35)',
+    'border:.5px solid var(--border)',
+    'z-index:9998',
+    'display:flex;flex-direction:column',
+    'overflow:hidden'
+  ].join(';');
+
+  // 입력창 행
+  const inputRow = document.createElement('div');
+  inputRow.style.cssText = 'display:flex;gap:8px;align-items:center;padding:10px 12px';
+
+  const searchIcon = document.createElement('span');
+  searchIcon.textContent = '🔍';
+  searchIcon.style.cssText = 'font-size:16px;flex-shrink:0';
+
   const inp = document.createElement('input');
-  inp.type='text'; inp.placeholder='블록명 검색...'; inp.id='search-input';
-  inp.style.cssText='flex:1;border:none;background:transparent;font-size:14px;outline:none;color:var(--text)';
-  inp.addEventListener('input', () => searchBlocks(inp.value));
+  inp.type = 'text';
+  inp.placeholder = '블록·메모·경로·북마크 검색...';
+  inp.id = 'search-input';
+  inp.style.cssText = 'flex:1;border:none;background:transparent;font-size:14px;outline:none;color:var(--text)';
+  inp.addEventListener('input', () => runSearch(inp.value));
+
   const closeBtn = document.createElement('button');
-  closeBtn.textContent='✕';
-  closeBtn.style.cssText='border:none;background:transparent;cursor:pointer;color:var(--text2);font-size:16px';
+  closeBtn.textContent = '✕';
+  closeBtn.style.cssText = 'border:none;background:transparent;cursor:pointer;color:var(--text2);font-size:16px;padding:2px 4px';
   closeBtn.addEventListener('click', () => bar.remove());
-  bar.appendChild(inp); bar.appendChild(closeBtn);
+
+  inputRow.appendChild(searchIcon);
+  inputRow.appendChild(inp);
+  inputRow.appendChild(closeBtn);
+
+  // 결과 컨테이너
+  const resultBox = document.createElement('div');
+  resultBox.id = 'search-results';
+  resultBox.style.cssText = [
+    'max-height:65vh;overflow-y:auto',
+    'border-top:.5px solid var(--border)'
+  ].join(';');
+
+  bar.appendChild(inputRow);
+  bar.appendChild(resultBox);
   document.body.appendChild(bar);
   setTimeout(() => inp.focus(), 100);
 }
 
-// 블록 검색 (레이어 피처 이름 검색)
-function searchBlocks(query) {
-  if (!query.trim()) return;
-  // 레이어에서 이름 검색
+// ── 통합 검색 실행 ─────────────────────────────────────────
+function runSearch(query) {
+  const box = document.getElementById('search-results');
+  if (!box) return;
+  const q = query.trim();
+  if (!q) { box.innerHTML = ''; return; }
+  const qU = q.toUpperCase();
+  const slot = curSlot();
+
+  const results = { block:[], titik:[], jalur:[], area:[], bm:[] };
+
+  // ① 블록명 (레이어 Feature)
   for (const layer of layers) {
-    const feat = (layer.features || []).find(f =>
-      f.name && f.name.toUpperCase().includes(query.toUpperCase())
-    );
+    for (const f of (layer.features || [])) {
+      if (f.name && f.name.toUpperCase().includes(qU)) {
+        results.block.push({ label: f.name, layer: layer.name || '', feat: f });
+      }
+    }
+  }
+
+  // ② Titik 메모 텍스트
+  for (const m of (slot?.memos || [])) {
+    if (m.text && m.text.toUpperCase().includes(qU)) {
+      results.titik.push({ label: m.text, date: m.date, id: m.id,
+        px: m.pinX, py: m.pinY, lat: m.lat, lon: m.lon });
+    }
+  }
+
+  // ③ Jalur 이름
+  for (const l of (slot?.lines || [])) {
+    if (l.name && l.name.toUpperCase().includes(qU)) {
+      results.jalur.push({ label: l.name, date: l.date, id: l.id,
+        pts: l.pts, latlon: l.latlon });
+    }
+  }
+
+  // ③ Area 이름
+  for (const p of (slot?.polygons || [])) {
+    if (p.name && p.name.toUpperCase().includes(qU)) {
+      results.area.push({ label: p.name, date: p.date, id: p.id,
+        pts: p.pts, latlon: p.latlon });
+    }
+  }
+
+  // ⑤ 북마크 이름
+  for (const bm of (bookmarks || [])) {
+    if (bm.name && bm.name.toUpperCase().includes(qU)) {
+      results.bm.push({ label: bm.name, date: bm.date, bm });
+    }
+  }
+
+  const total = results.block.length + results.titik.length +
+                results.jalur.length + results.area.length + results.bm.length;
+
+  if (!total) {
+    box.innerHTML = '<div style="padding:16px;text-align:center;font-size:13px;color:var(--text3)">' + (T('no_results')||'검색 결과 없음') + '</div>';
+    return;
+  }
+
+  // ── 결과 렌더링 ─────────────────────────────────────────
+  const CATS = [
+    { key:'block', icon:'🔲', label:'블록',   items: results.block },
+    { key:'titik', icon:'📍', label:'Titik',  items: results.titik },
+    { key:'jalur', icon:'📐', label:'Jalur',  items: results.jalur },
+    { key:'area',  icon:'🗺', label:'Area',   items: results.area  },
+    { key:'bm',    icon:'🔖', label:'북마크', items: results.bm    },
+  ];
+
+  const ITEM_STYLE = [
+    'padding:9px 14px',
+    'display:flex;align-items:flex-start;gap:8px',
+    'cursor:pointer',
+    'border-bottom:.5px solid var(--border)',
+    'transition:background .1s'
+  ].join(';');
+
+  let html2 = '';
+  for (const cat of CATS) {
+    if (!cat.items.length) continue;
+    html2 += `<div style="padding:6px 14px 4px;font-size:10px;font-weight:600;
+      color:var(--text3);letter-spacing:.06em;background:var(--bg3);
+      border-bottom:.5px solid var(--border);text-transform:uppercase">
+      ${cat.icon} ${cat.label} (${cat.items.length})</div>`;
+
+    for (const item of cat.items.slice(0, 8)) {
+      // highlight query in label
+      const hl = item.label.replace(
+        new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')', 'gi'),
+        '<mark style="background:rgba(255,200,0,.35);border-radius:2px">$1</mark>'
+      );
+      const sub = item.date || item.layer || '';
+
+      let onclick = '';
+      if (cat.key === 'block') {
+        onclick = `_searchGoBlock('${item.feat.name.replace(/'/g,"\\'")}')`;
+      } else if (cat.key === 'titik') {
+        onclick = `_searchGoTitik('${item.id}')`;
+      } else if (cat.key === 'jalur') {
+        onclick = `_searchGoJalur('${item.id}')`;
+      } else if (cat.key === 'area') {
+        onclick = `_searchGoArea('${item.id}')`;
+      } else if (cat.key === 'bm') {
+        onclick = `_searchGoBm('${item.bm.id}')`;
+      }
+
+      html2 += `<div style="${ITEM_STYLE}" onclick="${onclick}"
+        onmouseenter="this.style.background='var(--bg3)'"
+        onmouseleave="this.style.background=''">
+        <span style="font-size:16px;flex-shrink:0">${cat.icon}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;color:var(--text);
+            white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${hl}</div>
+          ${sub ? `<div style="font-size:10px;color:var(--text3);margin-top:1px">${sub}</div>` : ''}
+        </div>
+        <span style="font-size:16px;color:var(--text3);flex-shrink:0">›</span>
+      </div>`;
+    }
+    if (cat.items.length > 8) {
+      html2 += `<div style="padding:6px 14px;font-size:11px;color:var(--text3)">
+        +${cat.items.length-8}개 더 있음 (키워드를 더 구체적으로)</div>`;
+    }
+  }
+  box.innerHTML = html2;
+}
+
+// ── 검색 결과 이동 함수들 ─────────────────────────────────
+function _searchGoBlock(name) {
+  for (const layer of layers) {
+    const feat = (layer.features||[]).find(f=>f.name===name);
     if (feat && feat.latlonPoly?.length > 0) {
-      const [lon, lat] = feat.latlonPoly[Math.floor(feat.latlonPoly.length / 2)];
+      const [lon, lat] = feat.latlonPoly[Math.floor(feat.latlonPoly.length/2)];
       if (calibPts.length >= 2) {
         const pt = ll2c(lat, lon);
-        if (pt) { panTo(pt.px, pt.py); }
+        if (pt) { panTo(pt.px, pt.py); toast('🔲 '+name); }
       }
-      toast(`🔍 ${feat.name}`);
       break;
     }
   }
+  document.getElementById('search-bar-inline')?.remove();
 }
+function _searchGoTitik(id) {
+  const m = curSlot()?.memos?.find(x=>x.id===id);
+  if (!m) return;
+  if (m.pinX != null) panTo(m.pinX, m.pinY);
+  else if (m.lat && calibPts.length>=2) {
+    const pt = ll2c(m.lat, m.lon);
+    if (pt) panTo(pt.px, pt.py);
+  }
+  toast('📍 '+m.text.slice(0,20));
+  document.getElementById('search-bar-inline')?.remove();
+}
+function _searchGoJalur(id) {
+  const l = curSlot()?.lines?.find(x=>x.id===id);
+  if (!l || !l.pts?.length) return;
+  const mid = l.pts[Math.floor(l.pts.length/2)];
+  panTo(mid[0], mid[1]);
+  toast('📐 '+l.name);
+  document.getElementById('search-bar-inline')?.remove();
+}
+function _searchGoArea(id) {
+  const p = curSlot()?.polygons?.find(x=>x.id===id);
+  if (!p || !p.pts?.length) return;
+  const mid = p.pts[Math.floor(p.pts.length/2)];
+  panTo(mid[0], mid[1]);
+  toast('🗺 '+p.name);
+  document.getElementById('search-bar-inline')?.remove();
+}
+function _searchGoBm(id) {
+  const bm = bookmarks.find(x=>x.id===id);
+  if (!bm) return;
+  ox=bm.ox; oy=bm.oy; scale=bm.scale||scale;
+  applyTx(); updateScaleBar();
+  toast('🔖 '+bm.name);
+  document.getElementById('search-bar-inline')?.remove();
+}
+
+// 블록 검색 (레이어 피처 이름 검색)
+// searchBlocks → runSearch로 통합
 
 // 모든 팝업 닫기
 function closeAllPopups() {
@@ -5265,18 +5827,40 @@ function _showDrawToolbar(mode){
 }
 
 function finishDraw(){
-  if(drawPts.length<2){ toast('포인트를 2개 이상 찍어주세요'); return; }
-  if(drawMode==='polygon'&&drawPts.length<3){ toast('폴리곤은 3개 이상'); return; }
-  // GeoJSON으로 저장
+  if(drawPts.length<2){ toast(curLang==='en'?'Add 2+ points':curLang==='id'?'Tambahkan 2+ titik':'2개 이상 찍어주세요'); return; }
+  if(drawMode==='polygon'&&drawPts.length<3){ toast(curLang==='en'?'Polygon needs 3+ points':curLang==='id'?'Poligon butuh 3+ titik':'폴리곤은 3개 이상'); return; }
+  const slot = curSlot(); if(!slot){ toast(T('no_map')); return; }
+  const now = new Date();
+  const nameBase = (drawMode==='line' ? 'Jalur' : 'Area') + '_' + now.toLocaleDateString();
+  // slot에 별도 저장 (목록 관리용)
+  const item = {
+    id: (drawMode==='line'?'line':'area')+'_'+Date.now(),
+    name: nameBase,
+    mode: drawMode,
+    pts: [...drawPts],
+    latlon: [...drawLatLon],
+    date: now.toLocaleDateString(),
+    time: now.toLocaleTimeString(),
+    color: drawMode==='line' ? '#3B82F6' : 'rgba(59,130,246,0.25)'
+  };
+  if(drawMode==='line'){
+    if(!slot.lines) slot.lines=[];
+    slot.lines.push(item);
+  } else {
+    if(!slot.polygons) slot.polygons=[];
+    slot.polygons.push(item);
+  }
+  // GeoJSON 레이어에도 추가 (기존 방식 유지)
   const geoType = drawMode==='line' ? 'LineString' : 'Polygon';
   const coords  = drawMode==='line' ? drawLatLon : [drawLatLon.concat([drawLatLon[0]])];
   const gj={type:'FeatureCollection',features:[{
     type:'Feature',
-    properties:{NAME:'Draw_'+new Date().toLocaleDateString()},
+    properties:{NAME:nameBase, _itemId:item.id},
     geometry:{type:geoType,coordinates:coords}
   }]};
-  importGeoJSON(gj, (drawMode==='line'?'선':'폴리곤')+'_'+new Date().toLocaleDateString());
-  toast('✅ ' + (drawMode==='line'?'선':'폴리곤') + ' 저장됨');
+  importGeoJSON(gj, nameBase);
+  saveSlot();
+  toast('✅ ' + nameBase + ' 저장됨');
   cancelDraw();
 }
 
@@ -5291,52 +5875,119 @@ function cancelDraw(){
 // 5. 공유 기능 (Web Share API + 폴백)
 // ══════════════════════════════════════════════════════════════
 async function shareMap(){
-  const slot = curSlot();
-  const title = 'PalmMap — ' + (slot?.name || 'Field Map');
-  const text  = '🌴 PalmMap 현장 지도\n'
-    + (slot?.name ? '지도: '+slot.name+'\n' : '')
-    + (curPos ? '현재 위치: '+curPos.lat.toFixed(5)+', '+curPos.lon.toFixed(5)+'\n' : '')
-    + '레이어: '+layers.length+'개, 메모: '+(curSlot()?.memos?.length||0)+'개';
-  const url = window.location.href;
+  const slot  = curSlot();
+  const mapName = slot?.name || 'PalmMap Field';
+  const lat   = curPos ? curPos.lat.toFixed(6) : null;
+  const lon   = curPos ? curPos.lon.toFixed(6) : null;
+  const locStr = lat ? lat+', '+lon : null;
+
+  // 공유 내용: 앱 링크 + 현재 GPS 위치 (있으면)
+  const url   = window.location.href.split('?')[0]; // 쿼리 제거
+  const text  = '🌴 PalmMap — '+mapName
+    + (locStr ? '\n📍 GPS: '+locStr : '')
+    + (locStr ? '\n🗺 구글지도: https://maps.google.com/?q='+lat+','+lon : '')
+    + '\n\n'+url;
+
+  // ── 1. Web Share API (네이티브 공유 시트 — WhatsApp·KakaoTalk 포함) ──
   if(navigator.share){
     try{
-      await navigator.share({ title, text, url });
+      await navigator.share({
+        title: '🌴 PalmMap — '+mapName,
+        text:  text,
+        url:   url
+      });
       return;
-    } catch(e){ if(e.name==='AbortError') return; }
+    } catch(e){
+      if(e.name==='AbortError') return; // 사용자 취소
+    }
   }
-  // 폴백: 클립보드 복사
-  try{
-    await navigator.clipboard.writeText(text+'\n'+url);
-    toast('📋 ' + T('share_copied'));
-  } catch(e){
-    // 폴백2: 공유 다이얼로그
-    _showShareDialog(title, text, url);
-  }
+
+  // ── 2. 폴백: 공유 다이얼로그 (WhatsApp·KakaoTalk 버튼 포함) ──
+  _showShareDialog(mapName, text, url, locStr);
 }
 
-function _showShareDialog(title, text, url){
-  const d=document.createElement('div');
-  d.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
-  const box=document.createElement('div');
-  box.style.cssText='background:var(--bg2);border-radius:12px;padding:20px;width:100%;max-width:320px';
-  const h3=document.createElement('h3');
-  h3.style.cssText='font-size:14px;font-weight:500;margin-bottom:12px';
-  h3.textContent=T('share_title');
-  const ta=document.createElement('textarea');
-  ta.readOnly=true; ta.value=text+'\n'+url;
-  ta.style.cssText='width:100%;height:80px;font-size:11px;font-family:var(--mono);border:.5px solid var(--border);border-radius:6px;padding:8px;background:var(--bg3);color:var(--text);resize:none';
-  const btnRow=document.createElement('div');
-  btnRow.style.cssText='display:flex;gap:8px;margin-top:12px';
-  const copyBtn=document.createElement('button');
-  copyBtn.textContent='📋 복사'; copyBtn.style.cssText='flex:1;padding:8px;border-radius:8px;border:.5px solid var(--border);background:var(--bg3);cursor:pointer;font-size:12px';
-  copyBtn.addEventListener('click',()=>{ navigator.clipboard?.writeText(ta.value).then(()=>{copyBtn.textContent='✅ 복사됨';}); });
-  const closeBtn=document.createElement('button');
-  closeBtn.textContent='닫기'; closeBtn.style.cssText='flex:1;padding:8px;border-radius:8px;border:none;background:var(--green2);color:#fff;cursor:pointer;font-size:12px';
-  closeBtn.addEventListener('click',()=>d.remove());
-  btnRow.appendChild(copyBtn); btnRow.appendChild(closeBtn);
-  box.appendChild(h3); box.appendChild(ta); box.appendChild(btnRow);
-  d.appendChild(box);
-  document.body.appendChild(d);
+function _showShareDialog(mapName, text, url, locStr){
+  const existing = document.getElementById('share-dialog-overlay');
+  if(existing) existing.remove();
+
+  const wa_url  = 'https://wa.me/?text=' + encodeURIComponent(text);
+  const kkt_url = 'kakaolink://send?msg=' + encodeURIComponent(text);
+  // KakaoTalk 웹 공유 (설치 여부 무관)
+  const kkt_web = 'https://story.kakao.com/share?url=' + encodeURIComponent(url)
+                + '&text=' + encodeURIComponent(text);
+
+  const ov = document.createElement('div');
+  ov.id = 'share-dialog-overlay';
+  ov.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;'
+    + 'background:rgba(0,0,0,.55);z-index:9999;'
+    + 'display:flex;align-items:flex-end;justify-content:center;padding:0 0 20px';
+
+  const box = document.createElement('div');
+  box.style.cssText = 'background:var(--bg2);border-radius:16px 16px 12px 12px;'
+    + 'padding:20px 16px;width:100%;max-width:360px;';
+
+  // 제목
+  const h3 = document.createElement('div');
+  h3.style.cssText = 'font-size:14px;font-weight:600;margin-bottom:14px;text-align:center;color:var(--text)';
+  h3.textContent = '🔗 ' + (T('share_title')||'공유');
+  box.appendChild(h3);
+
+  // 공유 버튼들
+  const btns = [
+    { label:'WhatsApp',  color:'#25D366', icon:'💬', href: wa_url },
+    { label:'KakaoTalk', color:'#FEE500', icon:'💛', href: kkt_web,
+      style:'color:#3C1E1E' },
+    { label:'Copy Link', color:'var(--bg3)', icon:'📋', onclick: async function(){
+        try{
+          await navigator.clipboard.writeText(text);
+          toast('📋 ' + (T('share_copied')||'복사됨'));
+          ov.remove();
+        }catch(e){ toast('복사 실패'); }
+      }
+    },
+  ];
+
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:10px;justify-content:center;margin-bottom:14px';
+
+  btns.forEach(function(b){
+    const a = document.createElement(b.href ? 'a' : 'button');
+    a.style.cssText = 'display:flex;flex-direction:column;align-items:center;'
+      + 'gap:6px;padding:12px 14px;border-radius:12px;'
+      + 'background:'+b.color+';border:none;cursor:pointer;flex:1;max-width:100px;'
+      + 'text-decoration:none;'+(b.style||'color:#fff');
+    const ic = document.createElement('span');
+    ic.style.fontSize = '22px';
+    ic.textContent = b.icon;
+    const lb = document.createElement('span');
+    lb.style.cssText = 'font-size:11px;font-weight:600;white-space:nowrap';
+    lb.textContent = b.label;
+    a.appendChild(ic); a.appendChild(lb);
+    if(b.href){ a.href = b.href; a.target = '_blank'; }
+    if(b.onclick) a.addEventListener('click', b.onclick);
+    row.appendChild(a);
+  });
+  box.appendChild(row);
+
+  // GPS 좌표 표시
+  if(locStr){
+    const loc = document.createElement('div');
+    loc.style.cssText = 'font-size:11px;color:var(--text3);text-align:center;margin-bottom:10px';
+    loc.textContent = '📍 ' + locStr;
+    box.appendChild(loc);
+  }
+
+  // 닫기
+  const cancel = document.createElement('button');
+  cancel.style.cssText = 'width:100%;padding:10px;border:none;border-radius:8px;'
+    + 'background:var(--bg3);color:var(--text2);font-size:13px;cursor:pointer';
+  cancel.textContent = T('close_btn') || '닫기';
+  cancel.addEventListener('click', function(){ ov.remove(); });
+  box.appendChild(cancel);
+
+  ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
+  ov.appendChild(box);
+  document.body.appendChild(ov);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -5736,12 +6387,20 @@ function _drawArrowMarker(svg, gx, gy, heading) {
   border.setAttribute('stroke-linejoin', 'round');
   g.appendChild(border);
 
-  // 정확도 링: 색상으로 정확도 표시, 화면 고정 크기(픽셀)
-  const _accM  = curPos.acc || 99;
-  const _mpp   = _getMetersPerPx() || 1;
-  // 실제 오차 반경을 화면 픽셀로 변환 (clamp 60~200px)
-  const accR   = Math.min(200, Math.max(60, _accM / _mpp));
-  // 정확도별 색상
+  // 정확도 링: 실제 반경(m) × 지도 축척 → 확대/축소 연동
+  const _accM = curPos.acc || 99;
+  const _mpp  = _getMetersPerPx() || 1;
+  const S_acc = scale || 1;
+  // 공식: 실제m ÷ mPerPx × scale = 화면 픽셀
+  // mPerPx는 캔버스 기준이므로 scale 곱해야 화면 픽셀
+  const accR_canvas = _accM / _mpp;                          // 캔버스 픽셀
+  const accR_screen = accR_canvas * S_acc;                   // 화면 픽셀
+  const SW_ref = (typeof MA !== 'undefined' ? MA.clientWidth : 400);
+  // clamp: 화면 8px ~ 화면너비 40% (캔버스 좌표로 변환)
+  const accR_min = 8  / S_acc;
+  const accR_max = (SW_ref * 0.40) / S_acc;
+  const accR = Math.min(accR_max, Math.max(accR_min, accR_canvas));
+
   let accColor;
   if     (_accM <=  5) accColor = '34,197,94';   // 초록 (≤5m)
   else if(_accM <= 15) accColor = '234,179,8';   // 노랑 (≤15m)
@@ -5750,10 +6409,10 @@ function _drawArrowMarker(svg, gx, gy, heading) {
   const acc = mkSVG('circle');
   acc.setAttribute('cx', String(gx)); acc.setAttribute('cy', String(gy));
   acc.setAttribute('r', String(accR));
-  acc.setAttribute('fill', 'rgba('+accColor+',0.10)');
-  acc.setAttribute('stroke', 'rgba('+accColor+',0.40)');
-  acc.setAttribute('stroke-width', '1.5');
-  acc.setAttribute('stroke-dasharray', '6,3');
+  acc.setAttribute('fill', 'rgba('+accColor+',0.08)');
+  acc.setAttribute('stroke', 'rgba('+accColor+',0.45)');
+  acc.setAttribute('stroke-width', String(1.5 / S_acc));
+  acc.setAttribute('stroke-dasharray', (5/S_acc)+','+(3/S_acc));
   acc.setAttribute('pointer-events', 'none');
   g.insertBefore(acc, g.firstChild);
 
@@ -5791,18 +6450,39 @@ function openCalibPanel(){
 
 // 1. openBookmarks: 북마크 패널 열기
 function openBookmarks() {
-  renderBookmarkList();
-  showPanel('bookmark-panel');
+  _updateHmenuBadges();
+    renderBookmarkList();
+    showPanel('bookmark-panel');
 }
 
 // 2. startMeasure: initMeasure의 wrapper (dist / area 모드)
+// 줄자 토글: 측정 중이면 종료, 아니면 시작
+function toggleMeasure() {
+  if (measureActive) {
+    closeMeasure();
+    toast('📏 측정 종료');
+    return;
+  }
+  startMeasure('dist');
+}
+
+// 측정 중 버튼 ON 스타일 갱신
+function _updateMeasureBtn() {
+  const btn = document.querySelector('[onclick*="toggleMeasure"]');
+  if (!btn) return;
+  if (measureActive) {
+    btn.style.background = '#e8f5e9';
+    btn.style.boxShadow  = '0 0 0 2px #5cba3c';
+  } else {
+    btn.style.background = '#fff';
+    btn.style.boxShadow  = '0 2px 8px rgba(0,0,0,.18)';
+  }
+}
+
 function startMeasure(mode) {
   if (!cW) { toast(T('no_map')); return; }
-  if (calibPts.length < 2) { toast(T('no_calib')); return; }
   measureMode = mode || 'dist';
   initMeasure();
-  toast(mode === 'area' ? '📐 ' + (T('msr_area_hint') || '면적 측정: 3점 이상 탭') :
-                          '📏 ' + (T('msr_dist_hint') || '거리 측정: 2점 이상 탭'));
 }
 
 // 3. replacePDF: 현재 슬롯의 지도 파일 교체
@@ -5961,33 +6641,67 @@ function showGPSAccuracyInfo(){
 
 // ── 앱 정보 팝업 ────────────────────────────────────────────
 function showAppInfoPopup(){
-  const ver = document.getElementById('app-ver')?.textContent || 'v0.131';
-  _showInfoPopup(`
-    <div style="padding:24px 20px 16px;text-align:center;
-                border-bottom:.5px solid var(--border)">
-      <div style="font-size:40px;margin-bottom:8px">🌴</div>
-      <div style="font-size:20px;font-weight:700;color:var(--green2);
-                  letter-spacing:-.3px">PALM MAP</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:4px">${ver} — Palm Farm GIS PWA</div>
-    </div>
-    <div style="padding:16px 20px">
-      <div style="font-size:13px;color:var(--text2);line-height:2">
-        <div>📂 GeoPDF · GeoTIFF · GPKG · GeoJSON</div>
-        <div>📡 GPS 실시간 트래킹</div>
-        <div>🧭 나침반 3단계 모드</div>
-        <div>📏 축척바 · UTM 좌표</div>
-        <div>🌐 한국어 · English · Bahasa ID</div>
-        <div>📲 오프라인 PWA · 단일 파일</div>
-      </div>
-    </div>
-    <div style="padding:0 20px 16px;border-top:.5px solid var(--border);
-                padding-top:12px;margin-top:4px">
-      <div style="font-size:11px;color:var(--text3);text-align:center;line-height:1.7">
-        © 2025 Sangatta · East Kalimantan<br>
-        탭하면 닫힙니다
-      </div>
-    </div>
-  `);
+  const ver = document.getElementById('app-ver')?.textContent || 'v0.169';
+  const L = curLang || 'ko';
+  const i18n = {
+    ko: {
+      gps:    'GPS 실시간 트래킹',
+      comp:   '나침반 3단계 모드',
+      scale:  '축척바 · UTM 좌표',
+      lang:   '한국어 · English · Bahasa ID',
+      offline:'오프라인 PWA · 단일 파일',
+      by:     '제작',
+      close:  '탭하면 닫힙니다'
+    },
+    en: {
+      gps:    'Real-time GPS tracking',
+      comp:   '3-mode compass',
+      scale:  'Scale bar · UTM coordinates',
+      lang:   'Korean · English · Bahasa ID',
+      offline:'Offline PWA · Single file',
+      by:     'Developer',
+      close:  'Tap to close'
+    },
+    id: {
+      gps:    'Pelacakan GPS real-time',
+      comp:   'Kompas 3 mode',
+      scale:  'Skala peta · Koordinat UTM',
+      lang:   '한국어 · English · Bahasa ID',
+      offline:'PWA offline · File tunggal',
+      by:     'Pengembang',
+      close:  'Ketuk untuk menutup'
+    }
+  };
+  const t = i18n[L] || i18n.ko;
+  _showInfoPopup(
+    '<div style="padding:24px 20px 16px;text-align:center;' +
+    'border-bottom:.5px solid var(--border)">' +
+      '<div style="font-size:40px;margin-bottom:8px">🌴</div>' +
+      '<div style="font-size:20px;font-weight:700;color:var(--green2);' +
+      'letter-spacing:-.3px">PALM MAP</div>' +
+      '<div style="font-size:11px;color:var(--text3);margin-top:4px">' + ver + ' — Palm Farm GIS PWA</div>' +
+    '</div>' +
+    '<div style="padding:16px 20px">' +
+      '<div style="font-size:13px;color:var(--text2);line-height:2">' +
+        '<div>📂 GeoPDF · GeoTIFF · GPKG · GeoJSON</div>' +
+        '<div>📡 ' + t.gps + '</div>' +
+        '<div>🧭 ' + t.comp + '</div>' +
+        '<div>📏 ' + t.scale + '</div>' +
+        '<div>🌐 ' + t.lang + '</div>' +
+        '<div>📲 ' + t.offline + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="padding:12px 20px;border-top:.5px solid var(--border)">' +
+      '<div style="font-size:12px;color:var(--text2);line-height:1.8">' +
+        '<div>👤 <strong>' + t.by + '</strong> · Sangpyo Park</div>' +
+        '<div>📍 TBSM/PAM/GUM · Kalbar</div>' +
+        '<div>© 2026 Palm Farm GIS</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="padding:8px 20px 14px;text-align:center">' +
+      '<div style="font-size:11px;color:var(--text3)">' + t.close + '</div>' +
+    '</div>'
+  );
 }
 
 function saveCalib(){ try{ localStorage.setItem('palmmap_calib',JSON.stringify(calibPts)); }catch(e){} }
@@ -6057,9 +6771,20 @@ function drawLayerSVG(){
   if(!cW) return;
   ['estate','division','block','road','other'].forEach(type=>{
     layers.filter(l=>l.type===type&&l.visible).forEach(layer=>{
-      const m=TYPE_META[type];
+      const m   = TYPE_META[type];
+      const st  = layer.style || {};  // 레이어별 커스텀 스타일
+
+      // 스타일 값: layer.style 우선, TYPE_META 기본값 폴백
+      const stroke      = st.stroke      || m.stroke;
+      const fill        = st.fill        || m.fill;
+      const fillOpacity = st.fillOpacity != null ? st.fillOpacity : 1;
+      const lineWidth   = st.lineWidth   || m.lw;
+      const dashArray   = st.dashArray   || 'none';
+      const fontSize    = st.fontSize    || m.ls;
+      const fontColor   = st.fontColor   || stroke;
+      const fontHalo    = st.fontHalo    != null ? st.fontHalo : true;
+
       layer.features.forEach(feat=>{
-        // calibPts 있으면 latlonPoly 실시간 변환 (polygon이 보정 전 값이거나 없을 때)
         let poly = feat.polygon || [];
         if (calibPts.length >= 2 && feat.latlonPoly?.length > 0) {
           const recomputed = feat.latlonPoly
@@ -6067,35 +6792,79 @@ function drawLayerSVG(){
             .filter(p => p && (p.px || p.py));
           if (recomputed.length > 1) {
             poly = recomputed;
-            feat.polygon = poly; // 캐시 업데이트
+            feat.polygon = poly;
           }
         }
         if(poly.length<2) return;
         const g=mkSVG('g'); g.style.cursor='pointer';
+
         if(type==='road'){
           const pl=mkSVG('polyline');
           pl.setAttribute('points',poly.map(p=>p.px+','+p.py).join(' '));
-          pl.setAttribute('fill','none'); pl.setAttribute('stroke',m.stroke);
-          pl.setAttribute('stroke-width',feat.roadType==='main'?3:feat.roadType==='collection'?2:1.5);
-          pl.setAttribute('stroke-linecap','round'); pl.setAttribute('stroke-linejoin','round');
+          pl.setAttribute('fill','none');
+          pl.setAttribute('stroke', stroke);
+          const rw = feat.roadType==='main'?3:feat.roadType==='collection'?2:1.5;
+          pl.setAttribute('stroke-width', st.lineWidth || rw);
+          pl.setAttribute('stroke-linecap','round');
+          pl.setAttribute('stroke-linejoin','round');
+          if(dashArray !== 'none') pl.setAttribute('stroke-dasharray', dashArray);
           g.appendChild(pl);
-          if(feat.name){ const mid=poly[Math.floor(poly.length/2)]; g.appendChild(svgTxt(feat.name,mid.px,mid.py-7,m.ls,m.stroke)); }
+          if(feat.name){
+            const mid=poly[Math.floor(poly.length/2)];
+            g.appendChild(svgTxtStyled(feat.name,mid.px,mid.py-7,fontSize,fontColor,fontHalo));
+          }
         } else {
           const pg=mkSVG('polygon');
           pg.setAttribute('points',poly.map(p=>p.px+','+p.py).join(' '));
-          pg.setAttribute('fill',m.fill); pg.setAttribute('stroke',m.stroke);
-          pg.setAttribute('stroke-width',m.lw); pg.setAttribute('stroke-linejoin','round');
+          // fill-opacity 조합
+          const fillCol = fill==='none' ? 'none' : fill;
+          pg.setAttribute('fill', fillCol);
+          if(fillCol!=='none') pg.setAttribute('fill-opacity', fillOpacity);
+          pg.setAttribute('stroke', stroke);
+          pg.setAttribute('stroke-width', lineWidth);
+          pg.setAttribute('stroke-linejoin','round');
+          if(dashArray !== 'none') pg.setAttribute('stroke-dasharray', dashArray);
           g.appendChild(pg);
           const cx=poly.reduce((s,p)=>s+p.px,0)/poly.length;
           const cy=poly.reduce((s,p)=>s+p.py,0)/poly.length;
-          if(feat.name) g.appendChild(svgTxt(feat.name,cx,cy,m.ls,m.stroke));
-          if(feat.code&&feat.code!==feat.name) g.appendChild(svgTxt(feat.code,cx,cy+m.ls*1.1,m.ls*.82,m.stroke.replace(/[\d.]+\)$/,'0.6)')));
+          if(feat.name)
+            g.appendChild(svgTxtStyled(feat.name,cx,cy,fontSize,fontColor,fontHalo));
+          if(feat.code&&feat.code!==feat.name)
+            g.appendChild(svgTxtStyled(feat.code,cx,cy+fontSize*1.1,fontSize*.82,fontColor,fontHalo,true));
         }
         g.addEventListener('click',e=>{ e.stopPropagation(); showPop({layer,feat}); });
         svg.appendChild(g);
       });
     });
   });
+}
+
+// svgTxt 확장: 후광(halo) 지원
+function svgTxtStyled(txt, x, y, size, color, halo, muted) {
+  const g = mkSVG('g');
+  g.setAttribute('pointer-events','none');
+  if(halo){
+    const shadow = mkSVG('text');
+    shadow.setAttribute('x',x); shadow.setAttribute('y',y);
+    shadow.setAttribute('text-anchor','middle');
+    shadow.setAttribute('dominant-baseline','central');
+    shadow.setAttribute('font-size',size); shadow.setAttribute('font-weight','600');
+    shadow.setAttribute('stroke','#ffffff'); shadow.setAttribute('stroke-width','3');
+    shadow.setAttribute('stroke-linejoin','round');
+    shadow.setAttribute('fill','none');
+    shadow.setAttribute('opacity', muted?'0.5':'0.85');
+    shadow.textContent = txt;
+    g.appendChild(shadow);
+  }
+  const text = mkSVG('text');
+  text.setAttribute('x',x); text.setAttribute('y',y);
+  text.setAttribute('text-anchor','middle');
+  text.setAttribute('dominant-baseline','central');
+  text.setAttribute('font-size',size); text.setAttribute('font-weight','600');
+  text.setAttribute('fill', muted ? color.replace(/[\d.]+\)$/,'0.6)') : color);
+  text.textContent = txt;
+  g.appendChild(text);
+  return g;
 }
 
 function svgTxt(txt,x,y,size,fill){
@@ -6170,6 +6939,9 @@ function renderLayerList(){
     `<button onclick="${fn}" style="background:rgba(220,80,80,.15);border:.5px solid rgba(220,80,80,.3);
      border-radius:50%;padding:5px 7px;cursor:pointer;margin-left:4px;color:var(--red)"
      title="${T('trk_del_title')}">${_trash}</button>`;
+  const _styleBtn = (lid) =>
+    `<button onclick="openStylePanel('${lid}')" class="layer-style-btn" title="스타일 편집"
+     style="margin-left:4px">${'<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.5 1.5M11.5 11.5l1.5 1.5M3 13l1.5-1.5M11.5 4.5L13 3"/></svg>'}</button>`;
 
   // ── 고정 레이어 섹션 헤더 ────────────────────────────────
   const _sectionHdr = (label) =>
@@ -6225,6 +6997,7 @@ function renderLayerList(){
           <div style="font-size:10px;color:var(--text3)">${fCount}${T('gpkg_feat_count')}</div>
         </div>
         ${_visBtn(l.visible,"toggleLayerVisible('"+l.id+"')")}
+        ${_styleBtn(l.id)}
         ${_delBtn("deleteLayer('"+l.id+"')")}
       </div>`;
     }).join('');
@@ -6487,6 +7260,7 @@ function toggleTrack(){
       });
     }
     document.getElementById('btn-track')?.classList.add('on');
+    _updateBtnIcon('btn-track', _TRK_SVG_ON);
     _showGpsPill(); // 트래킹 시작 → pill 숨김
     document.getElementById('track-recording-info').style.display='block';
     // 트래킹 시작: 화면 중앙 고정 활성화
@@ -6526,6 +7300,7 @@ function stopAndSaveTrack(){
   if(!trackOn||trkPts.length<2){
     toast(T('trk_few_pts')); trackOn=false;
     document.getElementById('btn-track')?.classList.remove('on');
+  _updateBtnIcon('btn-track', _TRK_SVG_OFF);
     document.getElementById('track-recording-info').style.display='none';
     _showGpsPill(); // 트래킹 종료 → pill 복원
     trackingLocked=false; _updateLockBtn();
@@ -6767,20 +7542,31 @@ function openMemo(pre){
   if(!cW){ toast(T('no_map')); return; }
   const slot=curSlot(); if(!slot){ toast(T('no_map')); return; }
 
-  // 기본 위치: GPS → 뷰포트 중앙 순
+  // ── 핀 초기 위치 결정 ──────────────────────────────────
+  // 1순위: GPS ON + 보정 완료 → GPS 실제 좌표
+  // 2순위: GPS ON + 미보정   → 뷰포트 중앙 (좌표 저장 불가)
+  // 3순위: GPS OFF           → 뷰포트 중앙
   let initPx, initPy;
-  if(curPos && calibPts.length>=2){
-    const c=ll2c(curPos.lat, curPos.lon);
-    if(c){
-      initPx = Math.max(0, Math.min(cW, c.px));
-      initPy = Math.max(0, Math.min(cH, c.py));
+
+  // GPS + 보정 완료 시 GPS 위치 사용
+  if(gpsOn && curPos && calibPts.length>=2){
+    const c = ll2c(curPos.lat, curPos.lon);
+    if(c && isFinite(c.px) && isFinite(c.py)){
+      initPx = c.px;
+      initPy = c.py;
     }
   }
-  if(initPx==null){
-    const S=scale||1;
-    initPx = Math.max(cW*.05, Math.min(cW*.95, (-ox + MA.clientWidth/2) / S));
-    initPy = Math.max(cH*.05, Math.min(cH*.95, (-oy + MA.clientHeight/2) / S));
+
+  // GPS 없거나 보정 미완료 → 뷰포트 정중앙 (캔버스 좌표)
+  if(initPx==null || initPy==null){
+    const S = scale||1;
+    initPx = (-ox + MA.clientWidth /2) / S;
+    initPy = (-oy + MA.clientHeight/2) / S;
   }
+
+  // 지도 영역 내로 clamp
+  initPx = Math.max(0, Math.min(cW, initPx));
+  initPy = Math.max(0, Math.min(cH, initPy));
   // 패널이 열려있을 때만 임시 핀 표시 (pinDragActive)
   pinDragActive=true; pinDragMemoId=null; pinDragX=initPx; pinDragY=initPy;
   drawGPS(); // 임시 핀 즉시 표시
@@ -7068,7 +7854,9 @@ function closeEditMemo(){
   const ep=document.getElementById('memo-edit-panel');
   if(ep) ep.style.display='none';
 }
-function openMemoList(){ renderMemoList(); document.getElementById('memo-list-panel')?.classList.add('show'); }
+function openMemoList(){ renderMemoList(); document.getElementById('memo-list-panel')?.classList.add('show');
+  _updateHmenuBadges();
+   }
 /* ─── 메모 TXT 내보내기 ─── */
 /* ═══════════════════════════════════════════════════════════════
    ① 거리 / 면적 측정 도구
@@ -7093,28 +7881,108 @@ function initMeasure() {
   drawMeasure();
   updateMeasureResult();
 
-  // 팝업 초기 상태
+  // 팝업 초기 숨김
   const popup = document.getElementById('measure-result-popup');
-  if (popup) {
-    popup.style.display = 'none'; // 2점 이후에 표시
-    popup.style.flexDirection = 'column';
-    popup.style.alignItems = 'center';
-    // 지도 클릭 버블링이 팝업에 전달되지 않도록 차단
-    popup.addEventListener('click', e => e.stopPropagation());
-    // touchend는 차단하지 않음 - measure-overlay가 처리해야 함
-    // 팝업 안의 닫기 버튼으로만 닫기
-    const closeBtn = document.getElementById('mrp-close-btn');
-    if (closeBtn) {
-      if (closeBtn._handler) closeBtn.removeEventListener('click', closeBtn._handler);
-      closeBtn._handler = (e) => { e.stopPropagation(); closeMeasure(); };
-      closeBtn.addEventListener('click', closeBtn._handler);
-    }
-  }
+  if(popup) popup.style.display = 'none';
 
-  // handleTap이 측정 모드를 처리하므로 overlay 불필요
-  document.getElementById('measure-overlay')?.remove();
-  // 커서만 crosshair로 변경
-  if(MA) MA.style.cursor = 'crosshair';
+  _updateMeasureBtn(); // 버튼 ON 스타일
+  // 전체화면 전환 후 canvas 생성 (크기 정확도 보장)
+  // 이미 전체화면이거나 전체화면 미지원이면 즉시 생성
+  const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  if(isFS) {
+    _createMeasureCanvas();
+  } else {
+    // 전체화면 전환 시도 후 canvas 생성
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if(req) {
+      req.call(el)
+        .then(() => { setTimeout(_createMeasureCanvas, 100); })
+        .catch(() => { _createMeasureCanvas(); }); // 실패해도 생성
+    } else {
+      _createMeasureCanvas();
+    }
+    return; // canvas는 콜백에서 생성
+  }
+  // ── Canvas 오버레이 생성 ───────────────────────────────
+  _createMeasureCanvas();
+}
+
+function _createMeasureCanvas(){
+  if(!measureActive) return;
+
+  // 기존 overlay 제거
+  const old = document.getElementById('measure-canvas-overlay');
+  if(old) old.remove();
+
+  const cv = document.createElement('canvas');
+  cv.id = 'measure-canvas-overlay';
+  const maEl = document.getElementById('map-area');
+  if(!maEl) return;
+
+  const rect = maEl.getBoundingClientRect();
+  cv.width  = Math.round(rect.width  || window.innerWidth);
+  cv.height = Math.round(rect.height || window.innerHeight);
+  cv.style.cssText = [
+    'position:absolute',
+    'top:0','left:0',
+    'width:100%','height:100%',
+    'z-index:200',
+    'cursor:crosshair',
+    'touch-action:none',
+    'background:transparent'
+  ].join(';');
+
+  // 더블탭 감지용 변수
+  let _lastTap = 0, _lastTapX = 0, _lastTapY = 0;
+
+  cv.addEventListener('pointerdown', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if(e.isPrimary === false) return;
+
+    // 닫기 버튼 영역 클릭 감지
+    const closeBtn = document.getElementById('mrp-close-btn');
+    if(closeBtn) {
+      const cr = closeBtn.getBoundingClientRect();
+      if(e.clientX >= cr.left && e.clientX <= cr.right &&
+         e.clientY >= cr.top  && e.clientY <= cr.bottom){
+        closeMeasure();
+        return;
+      }
+    }
+
+    // ── 더블탭 감지 (400ms 이내, 30px 이내) → 측정 종료 ──
+    const now = Date.now();
+    const dx  = e.clientX - _lastTapX;
+    const dy  = e.clientY - _lastTapY;
+    const dist = Math.hypot(dx, dy);
+    if (now - _lastTap < 400 && dist < 30) {
+      // 더블탭: 마지막 점 유지하고 종료
+      closeMeasure();
+      toast('✅ 측정 완료');
+      return;
+    }
+    _lastTap  = now;
+    _lastTapX = e.clientX;
+    _lastTapY = e.clientY;
+
+    // 화면 좌표 → 캔버스(지도) 좌표
+    const r = maEl.getBoundingClientRect();
+    const screenX = e.clientX - r.left;
+    const screenY = e.clientY - r.top;
+    const px = (screenX - ox) / scale;
+    const py = (screenY - oy) / scale;
+
+    _addMeasurePoint(px, py);
+  });
+
+  maEl.appendChild(cv);
+  maEl.style.cursor = 'crosshair';
+
+  toast(measureMode === 'area'
+    ? '📐 ' + (T('msr_area_hint') || '면적: 3점 이상 탭')
+    : '📏 ' + (T('msr_dist_hint') || '거리: 2점 이상 탭'));
 }
 
 function closeMeasure() {
@@ -7122,6 +7990,8 @@ function closeMeasure() {
   if(MA) MA.style.cursor = '';
   measurePoints = [];
   document.getElementById('measure-overlay')?.remove();
+  // Canvas 오버레이 제거
+  document.getElementById('measure-canvas-overlay')?.remove();
   // 측정 SVG 지우기
   const msvg = document.getElementById('measure-svg');
   if (msvg) msvg.innerHTML = '';
@@ -7133,6 +8003,7 @@ function closeMeasure() {
     popup.style.display = 'none';
     if (popup._closeHandler) popup.removeEventListener('click', popup._closeHandler);
   }
+  _updateMeasureBtn(); // 버튼 OFF 스타일
 }
 
 function clearMeasure() {
@@ -7179,8 +8050,7 @@ function onMeasureTouch(e) {
 }
 
 function _addMeasurePoint(px, py) {
-  const ll = c2ll(px, py);
-  if (!ll) { toast('⚠️ 보정 필요'); return; }
+  const ll = c2ll(px, py); // null 이면 px 좌표만으로 계산
 
   // 면적 모드: 시작점 근처 탭 → 폴리곤 닫기
   if (measureMode==='area' && measurePoints.length >= 3) {
@@ -7188,69 +8058,90 @@ function _addMeasurePoint(px, py) {
     const dp = Math.hypot(px-first.px, py-first.py);
     if (dp < 20/scale) { drawMeasure(true); _showMeasureToast(); return; }
   }
-  measurePoints.push({lat:ll.lat, lon:ll.lon, px, py});
+  // ll이 null이면 lat/lon 없이 px만 저장 (픽셀 거리로 계산)
+  measurePoints.push({
+    lat: ll ? ll.lat : null,
+    lon: ll ? ll.lon : null,
+    px, py
+  });
   drawMeasure(false);
   _showMeasureToast();
 }
 
 function drawMeasure(closed=false) {
-  // measure-svg 생성 (없으면 map-wrap 안에 생성)
   let msvg = document.getElementById('measure-svg');
   if (!msvg) {
     msvg = document.createElementNS('http://www.w3.org/2000/svg','svg');
     msvg.id = 'measure-svg';
     msvg.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;z-index:85;overflow:visible';
-    msvg.setAttribute('width',  cW||800);
-    msvg.setAttribute('height', cH||1200);
     document.getElementById('map-wrap')?.appendChild(msvg);
   }
-  msvg.setAttribute('width', cW||800);
+  msvg.setAttribute('width',  cW||800);
   msvg.setAttribute('height', cH||1200);
   msvg.innerHTML = '';
   if (!measurePoints.length) return;
 
   const pts = measurePoints;
-  const sw = 2/(scale||1);
+  const sw  = 2/(scale||1);
 
   // 라인
   if (pts.length >= 2) {
     const pl = document.createElementNS('http://www.w3.org/2000/svg','polyline');
-    let pstr = pts.map(p=>`${p.px},${p.py}`).join(' ');
-    if (closed && pts.length >= 3) pstr += ` ${pts[0].px},${pts[0].py}`;
+    let pstr = pts.map(p=>p.px+','+p.py).join(' ');
+    if (closed && pts.length >= 3) pstr += ' '+pts[0].px+','+pts[0].py;
     pl.setAttribute('points', pstr);
     pl.setAttribute('stroke','#e8a84a');
     pl.setAttribute('stroke-width', sw);
     pl.setAttribute('fill', closed ? 'rgba(232,168,74,.15)' : 'none');
-    pl.setAttribute('stroke-dasharray', measureMode==='area' ? 'none' : `${4/scale},${2/scale}`);
+    pl.setAttribute('stroke-dasharray', measureMode==='area' ? 'none' : (4/scale)+','+(2/scale));
     pl.setAttribute('stroke-linejoin','round');
     msvg.appendChild(pl);
   }
 
-  // 포인트 + 거리 라벨
-  pts.forEach((p, i) => {
+  // 포인트 + 구간 거리 라벨
+  pts.forEach(function(p, i) {
     const r = 4/(scale||1);
     const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
-    c.setAttribute('cx', p.px); c.setAttribute('cy', p.py); c.setAttribute('r', r);
-    c.setAttribute('fill', i===0 ? '#5cba3c' : '#e8a84a');
-    c.setAttribute('stroke','#fff'); c.setAttribute('stroke-width', 1/(scale||1));
+    c.setAttribute('cx', p.px);
+    c.setAttribute('cy', p.py);
+    c.setAttribute('r',  r);
+    c.setAttribute('fill',         i===0 ? '#5cba3c' : '#e8a84a');
+    c.setAttribute('stroke',       '#fff');
+    c.setAttribute('stroke-width', 1/(scale||1));
     msvg.appendChild(c);
 
-    // 구간 거리 라벨
+    // 구간 거리 라벨 (2점 이상, dist 모드)
     if (i > 0 && measureMode==='dist') {
       const prev = pts[i-1];
-      const segM = haversineDist(prev.lat, prev.lon, p.lat, p.lon);
-      const segTxt = segM < 1000 ? segM.toFixed(0)+'m' : (segM/1000).toFixed(2)+'km';
-      const mx = (prev.px+p.px)/2, my = (prev.py+p.py)/2 - 8/(scale||1);
-      const bg = document.createElementNS('http://www.w3.org/2000/svg','rect');
-      const fs = 9/(scale||1);
-      bg.setAttribute('x', mx-18/(scale||1)); bg.setAttribute('y', my-fs);
-      bg.setAttribute('width', 36/(scale||1)); bg.setAttribute('height', fs*1.4);
-      bg.setAttribute('fill','rgba(22,32,22,.75)'); bg.setAttribute('rx', 2/(scale||1));
+      let segM = 0;
+      if (prev.lat !== null && p.lat !== null) {
+        segM = _haversineDist(prev.lat, prev.lon, p.lat, p.lon);
+      } else {
+        const mpp = _getMetersPerPx();
+        const dpx = Math.hypot(p.px - prev.px, p.py - prev.py);
+        segM = mpp ? dpx * mpp : dpx;
+      }
+      const segTxt = segM < 1000
+        ? segM.toFixed(0)+'m'
+        : (segM/1000).toFixed(2)+'km';
+      const mx  = (prev.px+p.px)/2;
+      const my  = (prev.py+p.py)/2 - 8/(scale||1);
+      const fs  = 9/(scale||1);
+      const bg  = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      bg.setAttribute('x',      mx-18/(scale||1));
+      bg.setAttribute('y',      my-fs);
+      bg.setAttribute('width',  36/(scale||1));
+      bg.setAttribute('height', fs*1.4);
+      bg.setAttribute('fill',   'rgba(22,32,22,.75)');
+      bg.setAttribute('rx',     2/(scale||1));
       msvg.appendChild(bg);
       const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
-      lbl.setAttribute('x', mx); lbl.setAttribute('y', my);
-      lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('dominant-baseline','auto');
-      lbl.setAttribute('font-size', fs); lbl.setAttribute('fill','#e8a84a');
+      lbl.setAttribute('x',                mx);
+      lbl.setAttribute('y',                my);
+      lbl.setAttribute('text-anchor',      'middle');
+      lbl.setAttribute('dominant-baseline','auto');
+      lbl.setAttribute('font-size',        fs);
+      lbl.setAttribute('fill',             '#e8a84a');
       lbl.textContent = segTxt;
       msvg.appendChild(lbl);
     }
@@ -7266,16 +8157,7 @@ function _showMeasureToast(){
       toast('📏 1번째 점 — 다음 점을 탭하세요');
       return;
     }
-    let total = 0;
-    for(let k=1; k<n; k++){
-      total += _haversineDist(
-        measurePoints[k-1].lat, measurePoints[k-1].lon,
-        measurePoints[k].lat,   measurePoints[k].lon
-      );
-    }
-    const disp = total < 1000
-      ? total.toFixed(1)+' m'
-      : (total/1000).toFixed(3)+' km';
+    const disp = _calcMeasureDist();
     toast('📏 '+disp+' ('+n+'점)', 4000);
   } else {
     if(n < 3){
@@ -7288,8 +8170,32 @@ function _showMeasureToast(){
                : ha.toFixed(0)+' ha';
     toast('📐 '+disp+' ('+n+'점)', 4000);
   }
-  // 팝업도 함께 갱신
   updateMeasureResult();
+}
+
+// 거리 계산: 좌표 있으면 haversine, 없으면 px→m 환산
+function _calcMeasureDist(){
+  const n = measurePoints.length;
+  let total = 0;
+  const hasLL = measurePoints[0].lat !== null;
+  for(let k=1; k<n; k++){
+    if(hasLL){
+      total += _haversineDist(
+        measurePoints[k-1].lat, measurePoints[k-1].lon,
+        measurePoints[k].lat,   measurePoints[k].lon
+      );
+    } else {
+      // 픽셀 거리 → 미터 환산
+      const mpp = _getMetersPerPx();
+      const dpx = Math.hypot(
+        measurePoints[k].px - measurePoints[k-1].px,
+        measurePoints[k].py - measurePoints[k-1].py
+      );
+      total += mpp ? dpx * mpp : dpx; // mpp 없으면 px값 그대로
+    }
+  }
+  if(total < 1000) return total.toFixed(1)+' m';
+  return (total/1000).toFixed(3)+' km';
 }
 
 function updateMeasureResult() {
@@ -7301,16 +8207,7 @@ function updateMeasureResult() {
 
   // 거리 계산
   if(isDist && n >= 2) {
-    let total = 0;
-    for(let k=1; k<n; k++){
-      total += _haversineDist(
-        measurePoints[k-1].lat, measurePoints[k-1].lon,
-        measurePoints[k].lat,   measurePoints[k].lon
-      );
-    }
-    const disp = total < 1000
-      ? total.toFixed(1) + ' m'
-      : (total/1000).toFixed(3) + ' km';
+    const disp = _calcMeasureDist();
     const pm = document.getElementById('mrp-mode');
     const pv = document.getElementById('mrp-value');
     const pi = document.getElementById('mrp-info');
@@ -7364,6 +8261,241 @@ function _calcAreaHa(pts) {
 
 
 /* ─── KML 내보내기 ─── */
+
+// ════════════════════════════════════════════════════════════
+// Export: GPX
+// ════════════════════════════════════════════════════════════
+function exportGPX() {
+  const slot = curSlot();
+  if(!slot){ toast(T('no_map')); return; }
+  const tracks = slot.tracks || [];
+  const memos  = slot.memos  || [];
+  if(!tracks.length && !memos.length){ toast('내보낼 데이터 없음'); return; }
+
+  const esc = s => String(s||'')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  let lines = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<gpx version="1.1" creator="PalmMap" xmlns="http://www.topografix.com/GPX/1/1">',
+    '  <metadata><name>'+esc(slot.name)+'</name></metadata>'
+  ];
+
+  // 메모 → wpt
+  memos.forEach(m=>{
+    if(!m.lat) return;
+    lines.push('  <wpt lat="'+m.lat.toFixed(7)+'" lon="'+m.lon.toFixed(7)+'">');
+    lines.push('    <name>'+esc(m.text.slice(0,50))+'</name>');
+    if(m.alt != null) lines.push('    <ele>'+m.alt+'</ele>');
+    lines.push('    <time>'+new Date(m.date+' '+m.time).toISOString()+'</time>');
+    lines.push('  </wpt>');
+  });
+
+  // 트랙 → trk
+  tracks.forEach(t=>{
+    lines.push('  <trk><name>'+esc(t.name||'Track')+'</name><trkseg>');
+    (t.pts||[]).forEach(p=>{
+      if(!p.lat) return;
+      lines.push('    <trkpt lat="'+p.lat.toFixed(7)+'" lon="'+p.lon.toFixed(7)+'">');
+      if(p.alt != null) lines.push('      <ele>'+p.alt+'</ele>');
+      if(p.time) lines.push('      <time>'+p.time+'</time>');
+      lines.push('    </trkpt>');
+    });
+    lines.push('  </trkseg></trk>');
+  });
+
+  lines.push('</gpx>');
+
+  _downloadText(lines.join('\n'), (slot.name||'palmmap')+'.gpx', 'application/gpx+xml');
+  toast('📥 GPX 내보내기 완료');
+}
+
+// ════════════════════════════════════════════════════════════
+// Export: GeoJSON
+// ════════════════════════════════════════════════════════════
+function exportGeoJSONAll() {
+  const slot = curSlot();
+  if(!slot){ toast(T('no_map')); return; }
+
+  const feats = [];
+
+  // 메모 → Point
+  (slot.memos||[]).forEach(m=>{
+    if(!m.lat) return;
+    feats.push({type:'Feature',
+      properties:{NAME:m.text.slice(0,50),DATE:m.date,TIME:m.time,TYPE:'memo'},
+      geometry:{type:'Point',coordinates:[m.lon,m.lat]}});
+  });
+
+  // 트랙 → LineString
+  (slot.tracks||[]).forEach(t=>{
+    const pts = (t.pts||[]).filter(p=>p.lat).map(p=>[p.lon,p.lat]);
+    if(pts.length<2) return;
+    feats.push({type:'Feature',
+      properties:{NAME:t.name||'Track',COLOR:t.color||'#ff7814',TYPE:'track'},
+      geometry:{type:'LineString',coordinates:pts}});
+  });
+
+  // Jalur → LineString
+  (slot.lines||[]).forEach(l=>{
+    if(!l.latlon?.length) return;
+    feats.push({type:'Feature',
+      properties:{NAME:l.name,DATE:l.date,TYPE:'jalur'},
+      geometry:{type:'LineString',coordinates:l.latlon}});
+  });
+
+  // Area → Polygon
+  (slot.polygons||[]).forEach(p=>{
+    if(!p.latlon?.length) return;
+    const ring = [...p.latlon, p.latlon[0]];
+    feats.push({type:'Feature',
+      properties:{NAME:p.name,DATE:p.date,TYPE:'area'},
+      geometry:{type:'Polygon',coordinates:[ring]}});
+  });
+
+  // 레이어 features
+  layers.forEach(lyr=>{
+    (lyr.features||[]).forEach(f=>{
+      if(!f.latlonPoly?.length) return;
+      feats.push({type:'Feature',
+        properties:{NAME:f.name||'',LAYER:lyr.name,TYPE:'layer'},
+        geometry:{type:'Polygon',coordinates:[f.latlonPoly]}});
+    });
+  });
+
+  if(!feats.length){ toast('내보낼 데이터 없음'); return; }
+
+  const gj = {type:'FeatureCollection',
+    features:feats,
+    metadata:{source:'PalmMap',map:slot.name,date:new Date().toISOString()}};
+  _downloadText(JSON.stringify(gj,null,2),
+    (slot.name||'palmmap')+'.geojson','application/geo+json');
+  toast('📥 GeoJSON 내보내기 완료 ('+feats.length+'개)');
+}
+
+// ════════════════════════════════════════════════════════════
+// Export: KML (기존 확장)
+// ════════════════════════════════════════════════════════════
+// exportKML() 기존 함수 유지
+
+// ════════════════════════════════════════════════════════════
+// Export: SHP 안내 (순수 JS SHP 생성은 복잡 → GeoJSON 제공)
+// ════════════════════════════════════════════════════════════
+function exportSHPGuide() {
+  _showInfoPopup(
+    '<div style="padding:20px;text-align:center">' +
+    '<div style="font-size:32px;margin-bottom:8px">📦</div>' +
+    '<div style="font-size:15px;font-weight:600;margin-bottom:12px">SHP 내보내기 안내</div>' +
+    '<div style="font-size:12px;color:var(--text2);line-height:1.8;text-align:left">' +
+    '1. <b>GeoJSON 내보내기</b>로 .geojson 파일 저장<br>' +
+    '2. <a href="https://mapshaper.org" target="_blank" style="color:var(--green2)">mapshaper.org</a> 에서 GeoJSON → SHP 변환<br>' +
+    '3. QGIS: 레이어 → 내보내기 → Shapefile<br>' +
+    '<br>' +
+    '<div style="background:var(--bg3);border-radius:8px;padding:8px;font-size:11px">' +
+    '💡 GeoJSON은 SHP보다 더 유연하며 대부분의 GIS 소프트웨어에서 지원됩니다.' +
+    '</div>' +
+    '</div></div>'
+  );
+}
+
+// ════════════════════════════════════════════════════════════
+// 공통 다운로드 헬퍼
+// ════════════════════════════════════════════════════════════
+function _downloadText(content, filename, mime) {
+  const blob = new Blob([content], {type: mime||'text/plain'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+
+
+// ── Titik Export (GPX) ───────────────────────────────────────
+function exportTitikGPX() {
+  const slot = curSlot(); if(!slot){ toast(T('no_map')); return; }
+  const memos = (slot.memos||[]).filter(m=>m.lat);
+  if(!memos.length){ toast(T('titik_empty')||'저장된 Titik 없음'); return; }
+  const lines = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<gpx version="1.1" creator="PalmMap" xmlns="http://www.topografix.com/GPX/1/1">',
+    '  <metadata><name>'+_escXML(slot.name)+'</name></metadata>'
+  ];
+  memos.forEach(m=>{
+    lines.push('  <wpt lat="'+m.lat.toFixed(7)+'" lon="'+m.lon.toFixed(7)+'">');
+    lines.push('    <name>'+_escXML(m.text.slice(0,80))+'</name>');
+    lines.push('    <desc>'+m.date+' '+m.time+'</desc>');
+    lines.push('  </wpt>');
+  });
+  lines.push('</gpx>');
+  _downloadText(lines.join('\n'), (slot.name||'palmmap')+'_titik.gpx', 'application/gpx+xml');
+  toast('📥 Titik GPX ('+memos.length+'개)');
+}
+
+// ── Jalur Export (GPX) ───────────────────────────────────────
+function exportJalurGPX() {
+  const slot = curSlot(); if(!slot){ toast(T('no_map')); return; }
+  const lines_data = slot.lines||[];
+  if(!lines_data.length){ toast(T('jalur_empty')||'저장된 Jalur 없음'); return; }
+  const lines = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<gpx version="1.1" creator="PalmMap" xmlns="http://www.topografix.com/GPX/1/1">',
+    '  <metadata><name>'+_escXML(slot.name)+'</name></metadata>'
+  ];
+  lines_data.forEach(l=>{
+    if(!l.latlon?.length) return;
+    lines.push('  <trk><name>'+_escXML(l.name||'Jalur')+'</name><trkseg>');
+    l.latlon.forEach(([lon,lat])=>{
+      lines.push('    <trkpt lat="'+lat.toFixed(7)+'" lon="'+lon.toFixed(7)+'"></trkpt>');
+    });
+    lines.push('  </trkseg></trk>');
+  });
+  lines.push('</gpx>');
+  _downloadText(lines.join('\n'), (slot.name||'palmmap')+'_jalur.gpx', 'application/gpx+xml');
+  toast('📥 Jalur GPX ('+lines_data.length+'개)');
+}
+
+// ── Area Export (GeoJSON) ────────────────────────────────────
+function exportAreaGeoJSON() {
+  const slot = curSlot(); if(!slot){ toast(T('no_map')); return; }
+  const polys = slot.polygons||[];
+  if(!polys.length){ toast(T('area_empty')||'저장된 Area 없음'); return; }
+  const feats = polys.map(p=>({
+    type:'Feature',
+    properties:{NAME:p.name, DATE:p.date, TYPE:'area'},
+    geometry:{type:'Polygon', coordinates:[p.latlon ? [...p.latlon, p.latlon[0]] : []]}
+  })).filter(f=>f.geometry.coordinates[0].length>2);
+  if(!feats.length){ toast('위치 데이터 없음'); return; }
+  const gj = {type:'FeatureCollection', features:feats};
+  _downloadText(JSON.stringify(gj,null,2),
+    (slot.name||'palmmap')+'_area.geojson','application/geo+json');
+  toast('📥 Area GeoJSON ('+feats.length+'개)');
+}
+
+// ── Foto Export (공유/목록) ──────────────────────────────────
+function exportFotoList() {
+  const slot = curSlot(); if(!slot){ toast(T('no_map')); return; }
+  const fotoMemos = (slot.memos||[]).filter(m=>m.photos&&m.photos.length);
+  if(!fotoMemos.length){ toast(T('foto_empty')||'저장된 Foto 없음'); return; }
+  // 텍스트 목록으로 공유
+  const text = fotoMemos.map((m,i)=>
+    (i+1)+'. '+m.text.slice(0,50)+
+    (m.lat?' ('+m.lat.toFixed(5)+','+m.lon.toFixed(5)+')':'')+
+    ' '+m.date
+  ).join('\n');
+  const full = 'PalmMap Foto 목록 ('+fotoMemos.length+'개)\n'+text;
+  if(navigator.share){ navigator.share({title:'PalmMap Foto',text:full}).catch(()=>{}); }
+  else {
+    navigator.clipboard?.writeText(full).then(()=>toast('📋 목록 복사됨'))
+      .catch(()=>toast('공유 기능 없음'));
+  }
+}
+
+// XML 이스케이프 헬퍼
+function _escXML(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
 function exportKML() {
   const slot = curSlot();
   if (!slot) { toast(T('no_map')); return; }
@@ -8458,40 +9590,196 @@ function triggerGeo() {
 }
 
 // 파일 입력 핸들러 — 확장자별 분기
-async function loadGeo(input) {
-  const files = Array.from(input.files || []);
-  if (!files.length) return;
-  input.value = ''; // 동일 파일 재선택 허용
+async function loadGeo(input){
+  const files = Array.from(input.files);
+  input.value='';
+  if(!files.length) return;
 
-  // 다중 파일 순차 처리 (GPKG 5개까지 지원)
-  let totalLoaded = 0;
-  for (const file of files) {
-    const fname = file.name.toLowerCase();
-    const ext   = fname.split('.').pop();
-    showLoad(T('gpkg_loading') + (files.length > 1 ? ` (${totalLoaded+1}/${files.length})` : ''));
-    try {
-      if (ext === 'gpkg') {
-        const buf = await file.arrayBuffer();
-        await loadGPKG(buf, file.name);
-        totalLoaded++;
-      } else if (ext === 'geojson' || ext === 'json') {
-        const text = await file.text();
-        const gj = JSON.parse(text);
-        importGeoJSON(gj, file.name);
-        toast(T('gpkg_ok')); totalLoaded++;
-      } else if (ext === 'csv') {
-        const text = await file.text();
-        importCSV(text, file.name);
-        toast(T('gpkg_ok')); totalLoaded++;
-      } else {
-        toast('❌ ' + ext + ' 포맷 미지원');
-      }
-    } catch(e) {
-      console.error('loadGeo error:', file.name, e);
-      toast(T('gpkg_error') + ' [' + file.name.substring(0,20) + ']: ' + (e.message||'').substring(0,40));
-    }
+  // SHP: zip 또는 .shp+.dbf 세트
+  const shpFiles = files.filter(f=>f.name.toLowerCase().endsWith('.shp'));
+  const zipFiles = files.filter(f=>/\.(zip|kmz)$/i.test(f.name));
+  const kmlFiles = files.filter(f=>f.name.toLowerCase().endsWith('.kml'));
+  const gpxFiles = files.filter(f=>f.name.toLowerCase().endsWith('.gpx'));
+  const geoFiles = files.filter(f=>/\.(geojson|json|csv|gpkg)$/i.test(f.name));
+
+  geoFiles.forEach(f => _loadGeoFile(f));
+  shpFiles.forEach(f => _loadSHP(f, files));
+  zipFiles.forEach(f => _loadZipKMZ(f));
+  kmlFiles.forEach(f => _loadKML(f));
+  gpxFiles.forEach(f => _loadGPX(f));
+}
+
+// 기존 GeoJSON/CSV/GPKG 로더
+function _loadGeoFile(file){
+  const ext = file.name.split('.').pop().toLowerCase();
+  if(ext==='gpkg'){
+    _loadGPKG(file); return;
   }
-  hideLoad();
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      let gj;
+      if(ext==='csv') gj = _csvToGeoJSON(e.target.result, file.name);
+      else            gj = JSON.parse(e.target.result);
+      if(gj) importGeoJSON(gj, file.name);
+    }catch(err){ toast('❌ '+file.name+' 파싱 오류'); console.error(err); }
+  };
+  reader.readAsText(file);
+}
+
+// ── SHP 로더 ─────────────────────────────────────────────────
+async function _loadSHP(shpFile, allFiles) {
+  if(typeof shp === 'undefined'){
+    toast('⚠️ shpjs 로딩 중... 잠시 후 다시 시도하세요');
+    return;
+  }
+  showLoad('📦 SHP 불러오는 중...');
+  try{
+    const buf = await shpFile.arrayBuffer();
+    // 같은 이름의 .dbf 파일 찾기
+    const baseName = shpFile.name.replace(/\.shp$/i, '');
+    const dbfFile  = allFiles.find(f=>f.name.toLowerCase()===baseName.toLowerCase()+'.dbf');
+    let gj;
+    if(dbfFile){
+      const dbfBuf = await dbfFile.arrayBuffer();
+      gj = await shp.combine([shp.parseShp(buf), shp.parseDbf(dbfBuf)]);
+    } else {
+      gj = await shp(buf);
+    }
+    if(gj) importGeoJSON(gj, shpFile.name);
+    toast('✅ SHP 불러옴: '+shpFile.name);
+  }catch(e){ toast('❌ SHP 오류: '+e.message); console.error(e); }
+  finally{ hideLoad(); }
+}
+
+// ── ZIP/KMZ 로더 ─────────────────────────────────────────────
+async function _loadZipKMZ(file) {
+  const isKMZ = file.name.toLowerCase().endsWith('.kmz');
+  showLoad((isKMZ?'🗺 KMZ':'📦 ZIP')+' 불러오는 중...');
+  try{
+    const buf = await file.arrayBuffer();
+    // shpjs zip 처리
+    if(!isKMZ && typeof shp !== 'undefined'){
+      const gj = await shp(buf);
+      if(gj){ importGeoJSON(gj, file.name); toast('✅ SHP(ZIP) 불러옴'); hideLoad(); return; }
+    }
+    // KMZ: zip 안의 .kml 파싱
+    if(typeof JSZip !== 'undefined'){
+      const zip = await JSZip.loadAsync(buf);
+      const kmlEntry = Object.values(zip.files).find(f=>f.name.toLowerCase().endsWith('.kml'));
+      if(kmlEntry){
+        const kmlStr = await kmlEntry.async('string');
+        const gj = _kmlStringToGeoJSON(kmlStr);
+        if(gj){ importGeoJSON(gj, file.name); toast('✅ KMZ 불러옴'); }
+      }
+    }
+  }catch(e){ toast('❌ '+(isKMZ?'KMZ':'ZIP')+' 오류: '+e.message); console.error(e); }
+  finally{ hideLoad(); }
+}
+
+// ── KML 로더 ─────────────────────────────────────────────────
+function _loadKML(file){
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      const gj = _kmlStringToGeoJSON(e.target.result);
+      if(gj) importGeoJSON(gj, file.name);
+      toast('✅ KML 불러옴: '+file.name);
+    }catch(err){ toast('❌ KML 파싱 오류'); console.error(err); }
+  };
+  reader.readAsText(file);
+}
+
+function _kmlStringToGeoJSON(kmlStr){
+  const parser = new DOMParser();
+  const doc    = parser.parseFromString(kmlStr, 'text/xml');
+  const feats  = [];
+
+  const toCoordArr = txt => txt.trim().split(/\s+/).map(s=>{
+    const [lon,lat,alt] = s.split(',').map(Number);
+    return [lon, lat];
+  }).filter(c=>!isNaN(c[0])&&!isNaN(c[1]));
+
+  doc.querySelectorAll('Placemark').forEach(pm=>{
+    const name = pm.querySelector('name')?.textContent || '';
+    const desc = pm.querySelector('description')?.textContent || '';
+
+    // Point
+    const ptEl = pm.querySelector('Point coordinates');
+    if(ptEl){
+      const [lon,lat] = ptEl.textContent.trim().split(',').map(Number);
+      feats.push({type:'Feature',properties:{NAME:name,DESCRIPTION:desc},
+        geometry:{type:'Point',coordinates:[lon,lat]}});
+      return;
+    }
+    // LineString
+    const lsEl = pm.querySelector('LineString coordinates');
+    if(lsEl){
+      feats.push({type:'Feature',properties:{NAME:name},
+        geometry:{type:'LineString',coordinates:toCoordArr(lsEl.textContent)}});
+      return;
+    }
+    // Polygon
+    const pgEl = pm.querySelector('Polygon outerBoundaryIs LinearRing coordinates');
+    if(pgEl){
+      const ring = toCoordArr(pgEl.textContent);
+      feats.push({type:'Feature',properties:{NAME:name},
+        geometry:{type:'Polygon',coordinates:[ring]}});
+    }
+  });
+
+  return {type:'FeatureCollection', features:feats};
+}
+
+// ── GPX 로더 ─────────────────────────────────────────────────
+function _loadGPX(file){
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      const gj = _gpxStringToGeoJSON(e.target.result, file.name);
+      if(gj) importGeoJSON(gj, file.name);
+      toast('✅ GPX 불러옴: '+file.name);
+    }catch(err){ toast('❌ GPX 파싱 오류'); console.error(err); }
+  };
+  reader.readAsText(file);
+}
+
+function _gpxStringToGeoJSON(gpxStr, fname){
+  const parser = new DOMParser();
+  const doc    = parser.parseFromString(gpxStr, 'text/xml');
+  const feats  = [];
+  const ns     = 'http://www.topografix.com/GPX/1/1';
+
+  const getCoord = el => {
+    const lat = parseFloat(el.getAttribute('lat'));
+    const lon = parseFloat(el.getAttribute('lon'));
+    return [lon, lat];
+  };
+
+  // wpt (웨이포인트) → Point
+  doc.querySelectorAll('wpt').forEach(w=>{
+    const name = w.querySelector('name')?.textContent || '';
+    feats.push({type:'Feature',properties:{NAME:name},
+      geometry:{type:'Point',coordinates:getCoord(w)}});
+  });
+  // trk (트랙) → LineString
+  doc.querySelectorAll('trk').forEach(trk=>{
+    const name = trk.querySelector('name')?.textContent || fname;
+    const pts  = Array.from(trk.querySelectorAll('trkpt')).map(getCoord);
+    if(pts.length>=2)
+      feats.push({type:'Feature',properties:{NAME:name},
+        geometry:{type:'LineString',coordinates:pts}});
+  });
+  // rte (루트) → LineString
+  doc.querySelectorAll('rte').forEach(rte=>{
+    const name = rte.querySelector('name')?.textContent || fname;
+    const pts  = Array.from(rte.querySelectorAll('rtept')).map(getCoord);
+    if(pts.length>=2)
+      feats.push({type:'Feature',properties:{NAME:name},
+        geometry:{type:'LineString',coordinates:pts}});
+  });
+
+  return {type:'FeatureCollection', features:feats};
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -9205,6 +10493,13 @@ document.addEventListener('DOMContentLoaded',()=>{
     document.addEventListener('click',    _doFullscreen, { once: true });
   })();
   setTimeout(_fitZoomWrap, 200);
+  // 전체화면 전환 시 measure canvas 재생성 (크기 갱신)
+  document.addEventListener('fullscreenchange', function(){
+    if(measureActive) setTimeout(_createMeasureCanvas, 80);
+  });
+  document.addEventListener('webkitfullscreenchange', function(){
+    if(measureActive) setTimeout(_createMeasureCanvas, 80);
+  });
   setTimeout(_fitGpsPill, 200);
 
   // ── DeviceOrientation 등록 (나침반 모드 0) ──────────────
@@ -9246,6 +10541,15 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
   window.addEventListener('resize', _fitZoomWrap);
   window.addEventListener('resize', _fitGpsPill);
+  window.addEventListener('resize', function(){
+    const cv = document.getElementById('measure-canvas-overlay');
+    if(!cv) return;
+    const maEl = document.getElementById('map-area');
+    if(!maEl) return;
+    const r = maEl.getBoundingClientRect();
+    cv.width  = r.width  || window.innerWidth;
+    cv.height = r.height || window.innerHeight;
+  });
   const mapArea=document.getElementById('map-area'); if(!mapArea) return;
   let ptId=null;
   mapArea.addEventListener('touchstart',ev=>{if(!pinDragActive||ev.touches.length!==1) return; ptId=ev.touches[0].identifier;},{passive:true});
@@ -9408,6 +10712,518 @@ const slotGPSInfo = {};
 applyLang();
 // 멀티 지도 슬롯 초기화 (기존 단일 지도 복원 대체)
 initMultiMap();
+
+// ────────────────────────────────────────────────────────────
+// Titik 목록
+// ────────────────────────────────────────────────────────────
+function openTitikList(){
+  _updateHmenuBadges();
+  renderTitikList();
+  showPanel('titik-list-panel');
+}
+function renderTitikList(){
+  const body = document.getElementById('titik-list-body');
+  if(!body) return;
+  const memos = curSlot()?.memos || [];
+  if(!memos.length){
+    body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3)">'+(T('titik_empty')||'저장된 Titik 없음')+'</div>';
+    return;
+  }
+  body.innerHTML = [...memos].reverse().map((m,idx)=>`
+    <div style="background:var(--bg2);border-radius:10px;padding:10px 12px;
+                margin-bottom:8px;border:.5px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;color:var(--text);
+                      white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+            📍 ${escHTML(m.text.slice(0,40))}
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px">
+            ${m.date} ${m.time}
+            ${m.lat ? ' · '+m.lat.toFixed(5)+', '+m.lon.toFixed(5) : ''}
+          </div>
+          ${m.photos&&m.photos.length ? `<div style="font-size:10px;color:var(--text3)">📷 ${m.photos.length}장</div>` : ''}
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button onclick="editMemoText('${m.id}')" title="편집"
+            style="background:var(--bg3);border:none;border-radius:6px;
+                   padding:4px 8px;cursor:pointer;font-size:13px">✏️</button>
+          <button onclick="shareTitik('${m.id}')" title="공유"
+            style="background:var(--bg3);border:none;border-radius:6px;
+                   padding:4px 8px;cursor:pointer;font-size:13px">🔗</button>
+          <button onclick="delMemoFromList('${m.id}')" title="삭제"
+            style="background:var(--bg3);border:none;border-radius:6px;
+                   padding:4px 8px;cursor:pointer;font-size:13px">🗑</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+function delMemoFromList(id){
+  if(!confirm(T('del_confirm')||'삭제하시겠습니까?')) return;
+  delMemo(id);
+  renderTitikList();
+}
+function shareTitik(id){
+  const m = curSlot()?.memos?.find(x=>x.id===id);
+  if(!m) return;
+  const parts = ['Titik: '+m.text];
+  if(m.lat) parts.push('GPS: '+m.lat.toFixed(6)+', '+m.lon.toFixed(6));
+  if(m.lat) parts.push('https://maps.google.com/?q='+m.lat+','+m.lon);
+  parts.push(m.date+' '+m.time);
+  const text = parts.join('\n');
+  if(navigator.share){ navigator.share({title:'PalmMap Titik',text}).catch(()=>{}); return; }
+  _showShareDialog('Titik', text, window.location.href, m.lat ? m.lat.toFixed(6)+', '+m.lon.toFixed(6) : null);
+}
+
+// ────────────────────────────────────────────────────────────
+// Jalur 목록
+// ────────────────────────────────────────────────────────────
+function openJalurList(){
+  _updateHmenuBadges();
+  renderJalurList();
+  showPanel('jalur-list-panel');
+}
+function renderJalurList(){
+  const body = document.getElementById('jalur-list-body');
+  if(!body) return;
+  const lines = curSlot()?.lines || [];
+  if(!lines.length){
+    body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3)">'+(T('jalur_empty')||'저장된 Jalur 없음')+'</div>';
+    return;
+  }
+  body.innerHTML = [...lines].reverse().map(l=>`
+    <div style="background:var(--bg2);border-radius:10px;padding:10px 12px;
+                margin-bottom:8px;border:.5px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;color:var(--text)">
+            📐 ${escHTML(l.name)}
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px">
+            ${l.date} ${l.time} · ${l.pts ? l.pts.length : 0}점
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button onclick="renameLineItem('${l.id}')" title="이름 변경"
+            style="background:var(--bg3);border:none;border-radius:6px;
+                   padding:4px 8px;cursor:pointer;font-size:13px">✏️</button>
+          <button onclick="shareLineItem('${l.id}')" title="공유"
+            style="background:var(--bg3);border:none;border-radius:6px;
+                   padding:4px 8px;cursor:pointer;font-size:13px">🔗</button>
+          <button onclick="delLineItem('${l.id}')" title="삭제"
+            style="background:var(--bg3);border:none;border-radius:6px;
+                   padding:4px 8px;cursor:pointer;font-size:13px">🗑</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+function renameLineItem(id){
+  const slot = curSlot(); if(!slot) return;
+  const item = slot.lines?.find(x=>x.id===id); if(!item) return;
+  const newName = prompt('새 이름:', item.name);
+  if(newName && newName.trim()){ item.name=newName.trim(); saveSlot(); renderJalurList(); }
+}
+function delLineItem(id){
+  if(!confirm(T('del_confirm')||'삭제하시겠습니까?')) return;
+  const slot = curSlot(); if(!slot) return;
+  slot.lines = (slot.lines||[]).filter(x=>x.id!==id);
+  saveSlot(); renderJalurList();
+  toast('🗑 Jalur 삭제됨');
+}
+function shareLineItem(id){
+  const l = curSlot()?.lines?.find(x=>x.id===id);
+  if(!l) return;
+  const pts = l.latlon ? l.latlon.length : 0;
+  const text = ['📐 PalmMap Jalur', l.name, '점 수: '+pts, l.date].join('\n');
+  if(navigator.share){ navigator.share({title:'PalmMap Jalur',text}).catch(()=>{}); return; }
+  _showShareDialog('Jalur', text, window.location.href, null);
+}
+
+// ────────────────────────────────────────────────────────────
+// Area 목록
+// ────────────────────────────────────────────────────────────
+function openAreaList(){
+  _updateHmenuBadges();
+  renderAreaList();
+  showPanel('area-list-panel');
+}
+function renderAreaList(){
+  const body = document.getElementById('area-list-body');
+  if(!body) return;
+  const polys = curSlot()?.polygons || [];
+  if(!polys.length){
+    body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3)">'+(T('area_empty')||'저장된 Area 없음')+'</div>';
+    return;
+  }
+  body.innerHTML = [...polys].reverse().map(p=>`
+    <div style="background:var(--bg2);border-radius:10px;padding:10px 12px;
+                margin-bottom:8px;border:.5px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;color:var(--text)">
+            🔲 ${escHTML(p.name)}
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px">
+            ${p.date} ${p.time} · ${p.pts ? p.pts.length : 0}점
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button onclick="renamePolyItem('${p.id}')" title="이름 변경"
+            style="background:var(--bg3);border:none;border-radius:6px;
+                   padding:4px 8px;cursor:pointer;font-size:13px">✏️</button>
+          <button onclick="sharePolyItem('${p.id}')" title="공유"
+            style="background:var(--bg3);border:none;border-radius:6px;
+                   padding:4px 8px;cursor:pointer;font-size:13px">🔗</button>
+          <button onclick="delPolyItem('${p.id}')" title="삭제"
+            style="background:var(--bg3);border:none;border-radius:6px;
+                   padding:4px 8px;cursor:pointer;font-size:13px">🗑</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+function renamePolyItem(id){
+  const slot = curSlot(); if(!slot) return;
+  const item = slot.polygons?.find(x=>x.id===id); if(!item) return;
+  const newName = prompt('새 이름:', item.name);
+  if(newName && newName.trim()){ item.name=newName.trim(); saveSlot(); renderAreaList(); }
+}
+function delPolyItem(id){
+  if(!confirm(T('del_confirm')||'삭제하시겠습니까?')) return;
+  const slot = curSlot(); if(!slot) return;
+  slot.polygons = (slot.polygons||[]).filter(x=>x.id!==id);
+  saveSlot(); renderAreaList();
+  toast('🗑 Area 삭제됨');
+}
+function sharePolyItem(id){
+  const p = curSlot()?.polygons?.find(x=>x.id===id);
+  if(!p) return;
+  const pts = p.latlon ? p.latlon.length : 0;
+  const text = ['🔲 PalmMap Area', p.name, '점 수: '+pts, p.date].join('\n');
+  if(navigator.share){ navigator.share({title:'PalmMap Area',text}).catch(()=>{}); return; }
+  _showShareDialog('Area', text, window.location.href, null);
+}
+
+// ────────────────────────────────────────────────────────────
+// Foto 목록
+// ────────────────────────────────────────────────────────────
+function openFotoList(){
+  _updateHmenuBadges();
+  renderFotoList();
+  showPanel('foto-list-panel');
+}
+function renderFotoList(){
+  const body = document.getElementById('foto-list-body');
+  if(!body) return;
+  const memos = curSlot()?.memos || [];
+  // 사진이 있는 메모만
+  const fotoMemos = memos.filter(m=>m.photos&&m.photos.length>0);
+  if(!fotoMemos.length){
+    body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3)">'+(T('foto_empty')||'저장된 Foto 없음')+'</div>';
+    return;
+  }
+  body.innerHTML = [...fotoMemos].reverse().map(m=>`
+    <div style="background:var(--bg2);border-radius:10px;padding:10px 12px;
+                margin-bottom:8px;border:.5px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:500;color:var(--text)">
+            📷 ${escHTML(m.text.slice(0,30))}
+          </div>
+          <div style="font-size:10px;color:var(--text3)">${m.date} ${m.time}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button onclick="shareFoto('${m.id}')" title="공유"
+            style="background:var(--bg3);border:none;border-radius:6px;
+                   padding:4px 8px;cursor:pointer;font-size:13px">🔗</button>
+          <button onclick="delMemoFromList('${m.id}')" title="삭제"
+            style="background:var(--bg3);border:none;border-radius:6px;
+                   padding:4px 8px;cursor:pointer;font-size:13px">🗑</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${m.photos.map(p=>`
+          <img src="${p.dataURL}" onclick="viewFotoFull('${p.dataURL}')"
+            style="width:60px;height:60px;object-fit:cover;border-radius:6px;
+                   cursor:pointer;border:.5px solid var(--border)">`).join('')}
+      </div>
+    </div>`).join('');
+}
+function viewFotoFull(dataURL){
+  const ov = document.createElement('div');
+  ov.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.9);'
+    +'z-index:9999;display:flex;align-items:center;justify-content:center';
+  ov.onclick = ()=>ov.remove();
+  const img = document.createElement('img');
+  img.src = dataURL;
+  img.style.cssText='max-width:95%;max-height:90%;border-radius:8px;object-fit:contain';
+  ov.appendChild(img);
+  document.body.appendChild(ov);
+}
+function shareFoto(id){
+  const m = curSlot()?.memos?.find(x=>x.id===id);
+  if(!m) return;
+  const parts = ['Foto: '+m.text];
+  if(m.lat) parts.push('GPS: '+m.lat.toFixed(6)+', '+m.lon.toFixed(6));
+  parts.push(m.date+' '+m.time);
+  const text = parts.join('\n');
+  if(navigator.share){ navigator.share({title:'PalmMap Foto',text}).catch(()=>{}); return; }
+  _showShareDialog('Foto', text, window.location.href, null);
+}
+
+
+// ════════════════════════════════════════════════════════════
+// 레이어 스타일 편집 패널
+// ════════════════════════════════════════════════════════════
+let _styleLayerId = null;
+
+function openStylePanel(layerId) {
+  _styleLayerId = layerId;
+  const layer = layers.find(l => l.id === layerId);
+  if (!layer) return;
+
+  const m  = TYPE_META[layer.type] || TYPE_META.other;
+  const st = layer.style || {};
+
+  // 현재 값 (style 우선, TYPE_META 기본)
+  const cur = {
+    stroke:      st.stroke      || m.stroke,
+    fill:        st.fill        || (m.fill === 'none' ? '#3B82F6' : m.fill),
+    fillOpacity: st.fillOpacity != null ? st.fillOpacity : 0.1,
+    lineWidth:   st.lineWidth   || m.lw,
+    dashArray:   st.dashArray   || 'none',
+    fontSize:    st.fontSize    || m.ls,
+    fontColor:   st.fontColor   || st.stroke || m.stroke,
+    fontHalo:    st.fontHalo    != null ? st.fontHalo : true,
+    showLabel:   st.showLabel   != null ? st.showLabel : true,
+    fillEnabled: m.fill !== 'none',
+  };
+
+  // hex 색 추출 헬퍼
+  const toHex = color => {
+    if (!color || color === 'none') return '#3B82F6';
+    if (color.startsWith('#')) return color.slice(0,7);
+    const m2 = color.match(/rgba?\((\d+),(\d+),(\d+)/);
+    if (m2) return '#' + [m2[1],m2[2],m2[3]].map(n=>parseInt(n).toString(16).padStart(2,'0')).join('');
+    return '#3B82F6';
+  };
+
+  const strokeHex  = toHex(cur.stroke);
+  const fillHex    = toHex(cur.fill);
+  const fontHex    = toHex(cur.fontColor);
+
+  const isRoad = layer.type === 'road';
+
+  document.getElementById('lsp-title').textContent = layer.name.slice(0,20);
+
+  document.getElementById('lsp-body').innerHTML = `
+    <!-- 미리보기 -->
+    <div id="lsp-preview-box" style="height:48px;border-radius:8px;margin-bottom:14px;
+      border:.5px solid var(--border);display:flex;align-items:center;justify-content:center;
+      font-size:12px;font-weight:600;position:relative;overflow:hidden">
+      <div id="lsp-fill-preview" style="position:absolute;inset:0;background:${fillHex};
+        opacity:${isRoad?0:cur.fillOpacity}"></div>
+      <svg style="position:absolute;inset:0;width:100%;height:100%" viewBox="0 0 200 48" preserveAspectRatio="none">
+        ${isRoad
+          ? `<line x1="10" y1="24" x2="190" y2="24" stroke="${strokeHex}"
+               stroke-width="${cur.lineWidth*2}"
+               stroke-dasharray="${cur.dashArray==='dot'?'4 4':cur.dashArray==='dash'?'10 6':'none'}"
+               stroke-linecap="round"/>`
+          : `<rect x="4" y="4" width="192" height="40" rx="4"
+               fill="${fillHex}" fill-opacity="${cur.fillOpacity}"
+               stroke="${strokeHex}" stroke-width="${cur.lineWidth}"/>`
+        }
+      </svg>
+      <span id="lsp-font-preview" style="position:relative;font-size:${cur.fontSize}px;
+        color:${fontHex};${cur.fontHalo?'text-shadow:-1px -1px 2px #fff,1px -1px 2px #fff,-1px 1px 2px #fff,1px 1px 2px #fff':''}">
+        ${layer.name.slice(0,12)}
+      </span>
+    </div>
+
+    <!-- 선 색상 -->
+    <div class="lsp-row">
+      <div class="lsp-label">🎨 선 색상</div>
+      <div class="lsp-control">
+        <input type="color" class="lsp-color" id="lsp-stroke" value="${strokeHex}"
+          oninput="_lspUpdate()">
+        <span id="lsp-stroke-val" style="font-size:11px;color:var(--text3)">${strokeHex}</span>
+      </div>
+    </div>
+
+    <!-- 선 굵기 -->
+    <div class="lsp-row">
+      <div class="lsp-label">📏 선 굵기 <span id="lsp-lw-val"
+        style="margin-left:4px;color:var(--green2);font-weight:600">${cur.lineWidth}px</span></div>
+      <input type="range" class="lsp-slider" id="lsp-lw"
+        min="0.5" max="8" step="0.5" value="${cur.lineWidth}"
+        oninput="_lspUpdate()">
+    </div>
+
+    <!-- 선 스타일 -->
+    <div class="lsp-row">
+      <div class="lsp-label">〰 선 스타일</div>
+      <div class="lsp-control">
+        ${['none','dot','dash'].map(d=>`
+          <button class="lsp-dash-btn${cur.dashArray===d?' sel':''}" id="lsp-dash-${d}"
+            onclick="_lspSetDash('${d}')">${d==='none'?'실선':d==='dot'?'점선':'파선'}</button>
+        `).join('')}
+      </div>
+    </div>
+
+    ${!isRoad ? `
+    <!-- 면 색상 -->
+    <div class="lsp-row">
+      <div class="lsp-label">🎨 면 색상</div>
+      <div class="lsp-control">
+        <input type="color" class="lsp-color" id="lsp-fill" value="${fillHex}"
+          oninput="_lspUpdate()">
+        <span id="lsp-fill-val" style="font-size:11px;color:var(--text3)">${fillHex}</span>
+      </div>
+    </div>
+
+    <!-- 면 투명도 -->
+    <div class="lsp-row">
+      <div class="lsp-label">💧 면 투명도 <span id="lsp-fo-val"
+        style="margin-left:4px;color:var(--green2);font-weight:600">${Math.round(cur.fillOpacity*100)}%</span></div>
+      <input type="range" class="lsp-slider" id="lsp-fo"
+        min="0" max="1" step="0.05" value="${cur.fillOpacity}"
+        oninput="_lspUpdate()">
+    </div>
+    ` : ''}
+
+    <!-- 글씨 크기 -->
+    <div class="lsp-row">
+      <div class="lsp-label">🔤 글씨 크기 <span id="lsp-fs-val"
+        style="margin-left:4px;color:var(--green2);font-weight:600">${cur.fontSize}px</span></div>
+      <input type="range" class="lsp-slider" id="lsp-fs"
+        min="6" max="20" step="1" value="${cur.fontSize}"
+        oninput="_lspUpdate()">
+    </div>
+
+    <!-- 글씨 색 -->
+    <div class="lsp-row">
+      <div class="lsp-label">🖊 글씨 색상</div>
+      <div class="lsp-control">
+        <input type="color" class="lsp-color" id="lsp-fc" value="${fontHex}"
+          oninput="_lspUpdate()">
+        <span id="lsp-fc-val" style="font-size:11px;color:var(--text3)">${fontHex}</span>
+      </div>
+    </div>
+
+    <!-- 글씨 후광 -->
+    <div class="lsp-row">
+      <div class="lsp-label" style="justify-content:space-between">
+        <span>💡 글씨 후광 (흰색)</span>
+        <label class="lsp-toggle">
+          <input type="checkbox" id="lsp-halo" ${cur.fontHalo?'checked':''}
+            onchange="_lspUpdate()">
+          <div class="lsp-toggle-track"></div>
+        </label>
+      </div>
+    </div>
+
+    <!-- 라벨 표시 -->
+    <div class="lsp-row">
+      <div class="lsp-label" style="justify-content:space-between">
+        <span>🏷 라벨 표시</span>
+        <label class="lsp-toggle">
+          <input type="checkbox" id="lsp-label" ${cur.showLabel?'checked':''}
+            onchange="_lspUpdate()">
+          <div class="lsp-toggle-track"></div>
+        </label>
+      </div>
+    </div>
+
+    <!-- 초기화 -->
+    <button class="lsp-reset" onclick="_lspReset()">↺ 기본값으로 초기화</button>
+  `;
+
+  document.getElementById('layer-style-panel').classList.add('show');
+  _lspCurrentDash = cur.dashArray;
+}
+
+function closeStylePanel() {
+  document.getElementById('layer-style-panel').classList.remove('show');
+  _styleLayerId = null;
+}
+
+let _lspCurrentDash = 'none';
+
+function _lspSetDash(d) {
+  _lspCurrentDash = d;
+  ['none','dot','dash'].forEach(x => {
+    const b = document.getElementById('lsp-dash-'+x);
+    if(b) b.classList.toggle('sel', x===d);
+  });
+  _lspUpdate();
+}
+
+function _lspUpdate() {
+  if (!_styleLayerId) return;
+  const layer = layers.find(l => l.id === _styleLayerId);
+  if (!layer) return;
+
+  const stroke    = document.getElementById('lsp-stroke')?.value || '#000';
+  const fill      = document.getElementById('lsp-fill')?.value   || '#3B82F6';
+  const fillOp    = parseFloat(document.getElementById('lsp-fo')?.value  || 0.1);
+  const lw        = parseFloat(document.getElementById('lsp-lw')?.value  || 1.5);
+  const fs        = parseFloat(document.getElementById('lsp-fs')?.value  || 10);
+  const fc        = document.getElementById('lsp-fc')?.value      || stroke;
+  const halo      = document.getElementById('lsp-halo')?.checked  ?? true;
+  const showLabel = document.getElementById('lsp-label')?.checked ?? true;
+  const dash      = _lspCurrentDash;
+
+  // style 저장
+  layer.style = { stroke, fill, fillOpacity:fillOp, lineWidth:lw,
+    dashArray:dash, fontSize:fs, fontColor:fc, fontHalo:halo, showLabel };
+
+  // 값 표시 업데이트
+  const q = id => document.getElementById(id);
+  if(q('lsp-stroke-val')) q('lsp-stroke-val').textContent = stroke;
+  if(q('lsp-fill-val'))   q('lsp-fill-val').textContent   = fill;
+  if(q('lsp-lw-val'))     q('lsp-lw-val').textContent     = lw+'px';
+  if(q('lsp-fo-val'))     q('lsp-fo-val').textContent     = Math.round(fillOp*100)+'%';
+  if(q('lsp-fs-val'))     q('lsp-fs-val').textContent     = fs+'px';
+  if(q('lsp-fc-val'))     q('lsp-fc-val').textContent     = fc;
+
+  // 미리보기 업데이트
+  const isRoad = layer.type === 'road';
+  const dashAttr = dash==='dot'?'4 4':dash==='dash'?'10 6':'none';
+  const fpv = q('lsp-fill-preview');
+  if(fpv){ fpv.style.background = isRoad?'transparent':fill; fpv.style.opacity = isRoad?0:fillOp; }
+  const svgPv = q('lsp-preview-box')?.querySelector('svg');
+  if(svgPv){
+    const shp = svgPv.querySelector('rect,line');
+    if(shp){
+      shp.setAttribute('stroke',stroke); shp.setAttribute('stroke-width', isRoad?lw*2:lw);
+      if(!isRoad){ shp.setAttribute('fill',fill); shp.setAttribute('fill-opacity',fillOp); }
+      shp.setAttribute('stroke-dasharray', dashAttr);
+    }
+  }
+  const fprev = q('lsp-font-preview');
+  if(fprev){
+    fprev.style.fontSize = fs+'px';
+    fprev.style.color    = fc;
+    fprev.style.textShadow = halo
+      ? '-1px -1px 2px #fff,1px -1px 2px #fff,-1px 1px 2px #fff,1px 1px 2px #fff'
+      : '';
+  }
+
+  // 지도 즉시 반영
+  drawLayerSVG();
+  saveSlot();
+}
+
+function _lspReset() {
+  if (!_styleLayerId) return;
+  const layer = layers.find(l => l.id === _styleLayerId);
+  if (!layer) return;
+  layer.style = {};
+  drawLayerSVG();
+  saveSlot();
+  openStylePanel(_styleLayerId); // 패널 새로고침
+  toast('↺ 기본값으로 초기화');
+}
+
 </script>
 
 
@@ -9424,7 +11240,7 @@ initMultiMap();
   text-align:center;
   box-shadow:0 2px 12px rgba(0,0,0,.5);
   pointer-events:none;
-  user-select:none;position:relative">
+  user-select:none">
   <!-- 닫기 버튼 -->
   <div id="mrp-close-btn" style="position:absolute;top:6px;right:8px;
     font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;
@@ -9445,6 +11261,63 @@ initMultiMap();
     margin-top:6px">
     점을 탭하여 추가하세요
   </div>
+</div>
+
+<!-- ══ Titik 목록 패널 ══ -->
+<div id="titik-list-panel" class="side-panel">
+  <div class="panel-hdr">
+    <span id="t-panel-titik">📍 Titik 목록</span><span id="panel-titik-badge" style="display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;background:var(--green2);color:#fff;border-radius:9px;font-size:10px;font-weight:600;margin-left:4px;flex-shrink:0;display:none">0</span>
+    <button onclick="exportTitikGPX()" id="t-export-titik"
+      style="background:rgba(59,130,246,.12);border:.5px solid rgba(59,130,246,.3);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:11px;color:#185FA5;flex-shrink:0">📥</button>
+    <button onclick="hidePanel('titik-list-panel')" class="panel-close">×</button>
+  </div>
+  <div id="titik-list-body" style="overflow-y:auto;flex:1;padding:8px"></div>
+</div>
+
+<!-- ══ Jalur 목록 패널 ══ -->
+<div id="jalur-list-panel" class="side-panel">
+  <div class="panel-hdr">
+    <span id="t-panel-jalur">PALM MAP</span><span id="panel-jalur-badge" style="display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;background:var(--green2);color:#fff;border-radius:9px;font-size:10px;font-weight:600;margin-left:4px;flex-shrink:0;display:none">0</span>
+    <button onclick="exportJalurGPX()" id="t-export-jalur" style="background:rgba(59,130,246,.12);border:.5px solid rgba(59,130,246,.3);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:11px;color:#185FA5;flex-shrink:0">📥</button>
+    <button onclick="hidePanel('jalur-list-panel')" class="panel-close">×</button>
+  </div>
+  <div id="jalur-list-body" style="overflow-y:auto;flex:1;padding:8px"></div>
+</div>
+
+<!-- ══ Area 목록 패널 ══ -->
+<div id="area-list-panel" class="side-panel">
+  <div class="panel-hdr">
+    <span id="t-panel-area">PALM MAP</span><span id="panel-area-badge" style="display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;background:var(--green2);color:#fff;border-radius:9px;font-size:10px;font-weight:600;margin-left:4px;flex-shrink:0;display:none">0</span>
+    <button onclick="exportAreaGeoJSON()" id="t-export-area" style="background:rgba(59,130,246,.12);border:.5px solid rgba(59,130,246,.3);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:11px;color:#185FA5;flex-shrink:0">📥</button>
+    <button onclick="hidePanel('area-list-panel')" class="panel-close">×</button>
+  </div>
+  <div id="area-list-body" style="overflow-y:auto;flex:1;padding:8px"></div>
+</div>
+
+<!-- ══ Foto 목록 패널 ══ -->
+<div id="foto-list-panel" class="side-panel">
+  <div class="panel-hdr">
+    <span id="t-panel-foto">PALM MAP</span><span id="panel-foto-badge" style="display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;background:var(--green2);color:#fff;border-radius:9px;font-size:10px;font-weight:600;margin-left:4px;flex-shrink:0;display:none">0</span>
+    <button onclick="exportFotoList()" id="t-export-foto" style="background:rgba(59,130,246,.12);border:.5px solid rgba(59,130,246,.3);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:11px;color:#185FA5;flex-shrink:0">📥</button>
+    <button onclick="hidePanel('foto-list-panel')" class="panel-close">×</button>
+  </div>
+  <div id="foto-list-body" style="overflow-y:auto;flex:1;padding:8px"></div>
+</div>
+
+<!-- ══ 레이어 스타일 편집 패널 ══ -->
+<div id="layer-style-panel">
+  <div class="lsp-hdr">
+    <svg viewBox="0 0 20 20" width="18" height="18" fill="none"
+      stroke="var(--green2)" stroke-width="1.5">
+      <circle cx="10" cy="10" r="3"/>
+      <path d="M10 1v3M10 16v3M1 10h3M16 10h3
+               M3.5 3.5l2 2M14.5 14.5l2 2
+               M3.5 16.5l2-2M14.5 5.5l2-2"/>
+    </svg>
+    <span id="lsp-title">레이어 스타일</span>
+    <button onclick="closeStylePanel()">×</button>
+  </div>
+  <div class="lsp-body" id="lsp-body"></div>
 </div>
 </body>
 </html>

@@ -1,7 +1,7 @@
 {
   "name": "Palm Farm Field Map",
   "short_name": "PalmMap",
-  "description": "Palm oil farm GIS field mapping app — GPS tracking, GeoPDF/GeoTIFF/GPKG viewer, UTM coordinates, compass, layer management. KO/EN/ID. Offline PWA. v0.152",
+  "description": "Palm oil farm GIS field mapping app — GPS tracking, GeoPDF/GeoTIFF/GPKG/GeoJSON viewer, UTM coordinates, compass, layer management with style editor, Titik/Jalur/Area/Foto, SHP/KML/GPX import-export. KO/EN/ID. Offline PWA. v0.190",
   "id": "/",
   "start_url": "./index.html",
   "scope": "./",
@@ -188,5 +188,5 @@
     "new_note_url": "./index.html?action=new-memo"
   },
   "handle_links": "preferred",
-  "version": "0.152"
+  "version": "0.190"
 }
