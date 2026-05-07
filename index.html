@@ -459,7 +459,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     <div style="font-size:22px">🌴</div>
     <div>
       <div style="font-size:14px;font-weight:700;color:var(--green2);letter-spacing:-.2px">PALM MAP</div>
-      <div id="app-ver" style="font-size:10px;color:var(--text3);font-family:var(--mono)">v0.154</div>
+      <div id="app-ver" style="font-size:10px;color:var(--text3);font-family:var(--mono)">v0.155</div>
     </div>
     <button onclick="toggleHamburger()" style="margin-left:auto;background:none;border:none;color:var(--text3);font-size:22px;cursor:pointer;line-height:1;padding:4px">×</button>
   </div>
@@ -3021,16 +3021,19 @@ function _updateCompassIcon(){
 
 function applyTx(){
   if(mapRotation !== 0){
-    // 지도 회전: 화면 중앙 기준으로 회전
-    const cx = MA.clientWidth  / 2;
-    const cy = MA.clientHeight / 2;
-    // translate(ox,oy) scale(S) 에 rotate 추가
-    // transform-origin 대신 수동 계산
+    // 지도 회전: 화면 중앙 기준
+    // 수학적 순서 (CSS는 오른쪽→왼쪽 적용):
+    //   [2] translate(cx,cy) rotate(deg) translate(-cx,-cy)  ← 화면 중앙 기준 회전
+    //   [1] translate(ox,oy) scale(S)                        ← 캔버스 배치
+    // = translate(cx,cy) rotate(deg) translate(-cx+ox, -cy+oy) scale(S)
+    const cx = (MA ? MA.clientWidth  : window.innerWidth)  / 2;
+    const cy = (MA ? MA.clientHeight : window.innerHeight) / 2;
     MW.style.transformOrigin = '0 0';
     MW.style.transform =
-      `translate(${cx}px,${cy}px) rotate(${mapRotation}deg) translate(${-cx}px,${-cy}px) ` +
-      `translate(${ox}px,${oy}px) scale(${scale})`;
+      `translate(${cx}px,${cy}px) rotate(${mapRotation}deg) ` +
+      `translate(${ox - cx}px,${oy - cy}px) scale(${scale})`;
   } else {
+    MW.style.transformOrigin = '0 0';
     MW.style.transform = `translate(${ox}px,${oy}px) scale(${scale})`;
   }
   if(curPos) drawGPS();
@@ -3301,6 +3304,9 @@ function onGPSPos(p){
     const c=ll2c(lat,lon);
     if(c){ const h=hitTest(c.px,c.py); if(h) document.getElementById('gps-lbl').textContent=h.feat.name||h.feat.code||T('gps_active'); }
   }
+  // 나침반·지도 회전 업데이트
+  const hdg = heading != null && !isNaN(heading) ? heading : null;
+  if(hdg !== null) updateCompass(hdg);
 }
 
 function onGPSErr(err){
@@ -5029,8 +5035,14 @@ function toggleCompassMode(){
     // 북쪽 고정: 지도를 북쪽이 위로
     _setMapRotation(0);
   } else if(compassMode === 0){
-    // 자유회전: 현재 센서값으로 즉시 복원
+    // 자유회전: 지도 회전 초기화 + 센서값 복원
+    _setMapRotation(0);
     if(_deviceAlpha !== null) _applyDeviceOrientation(_deviceAlpha);
+  } else if(compassMode === 2){
+    // 진행방향 고정: 현재 GPS heading으로 즉시 회전
+    if(compassHeading !== null && !isNaN(compassHeading)){
+      _setMapRotation(compassHeading);
+    }
   }
 }
 

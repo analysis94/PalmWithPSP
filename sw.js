@@ -7,7 +7,7 @@
 //   - GPS 정확도 색상 원, 나침반 3단계, UTM 좌표 지원
 // ═══════════════════════════════════════════════════════════════
 
-const CACHE_NAME  = 'palmmap-v0154';
+const CACHE_NAME  = 'palmmap-v0155';
 const OFFLINE_URL = './offline.html';
 
 const CORE_ASSETS = [
