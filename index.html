@@ -532,7 +532,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     <div style="font-size:22px">🌴</div>
     <div>
       <div style="font-size:14px;font-weight:700;color:var(--green2);letter-spacing:-.2px">PALM MAP</div>
-      <div id="app-ver" style="font-size:10px;color:var(--text3);font-family:var(--mono)">v0.193</div>
+      <div id="app-ver" style="font-size:10px;color:var(--text3);font-family:var(--mono)">v0.194</div>
     </div>
     <button onclick="toggleHamburger()" style="margin-left:auto;background:none;border:none;color:var(--text3);font-size:22px;cursor:pointer;line-height:1;padding:4px">×</button>
   </div>
@@ -10528,27 +10528,36 @@ document.addEventListener('DOMContentLoaded',()=>{
   // PWA standalone/fullscreen 모드는 이미 전체화면이므로 스킵
   // 브라우저 탭으로 열린 경우만 첫 터치 후 전체화면 요청
   (function _autoFullscreen(){
+    // PWA standalone/fullscreen 모드는 이미 전체화면 → 스킵
     const isStandalone =
       window.navigator.standalone === true ||
       window.matchMedia('(display-mode: standalone)').matches ||
       window.matchMedia('(display-mode: fullscreen)').matches;
-    if(isStandalone) return; // PWA 모드: 이미 전체화면
+    if(isStandalone) return;
 
-    const el = document.documentElement;
-    const req = el.requestFullscreen || el.webkitRequestFullscreen ||
-                el.mozRequestFullScreen || el.msRequestFullscreen;
-    if(!req) return; // 지원 안 하는 브라우저
+    const el  = document.documentElement;
+    const req = el.requestFullscreen
+             || el.webkitRequestFullscreen
+             || el.mozRequestFullScreen
+             || el.msRequestFullscreen;
+    if(!req) return;
 
-    // 첫 번째 사용자 인터랙션 → 전체화면 (브라우저 보안 정책)
-    // touchstart: 가장 빠른 반응 (touchend 대기 없음)
-    let _fsRequested = false;
-    const _doFullscreen = () => {
-      if(_fsRequested) return;
-      _fsRequested = true;
+    // 브라우저 보안 정책: fullscreen은 사용자 인터랙션 직후 호출해야 함
+    // touchend / pointerup / click 세 가지 모두 등록 (첫 번째만 실행)
+    let _done = false;
+    function _tryFullscreen(e) {
+      if(_done) return;
+      _done = true;
+      // 등록한 모든 리스너 제거
+      ['touchend','pointerup','click'].forEach(t =>
+        document.removeEventListener(t, _tryFullscreen)
+      );
       req.call(el).catch(() => {});
-    };
-    document.addEventListener('touchstart', _doFullscreen, { once: true, passive: true });
-    document.addEventListener('click',      _doFullscreen, { once: true });
+    }
+    // passive 없이 등록 (passive:true 이면 preventDefault 불가 → fullscreen 거부)
+    document.addEventListener('touchend',  _tryFullscreen, { once: true });
+    document.addEventListener('pointerup', _tryFullscreen, { once: true });
+    document.addEventListener('click',     _tryFullscreen, { once: true });
   })();
   setTimeout(_fitZoomWrap, 200);
   // 전체화면 전환 시 measure canvas 재생성 (크기 갱신)
