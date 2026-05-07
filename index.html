@@ -459,7 +459,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     <div style="font-size:22px">🌴</div>
     <div>
       <div style="font-size:14px;font-weight:700;color:var(--green2);letter-spacing:-.2px">PALM MAP</div>
-      <div id="app-ver" style="font-size:10px;color:var(--text3);font-family:var(--mono)">v0.153</div>
+      <div id="app-ver" style="font-size:10px;color:var(--text3);font-family:var(--mono)">v0.154</div>
     </div>
     <button onclick="toggleHamburger()" style="margin-left:auto;background:none;border:none;color:var(--text3);font-size:22px;cursor:pointer;line-height:1;padding:4px">×</button>
   </div>
@@ -3212,6 +3212,15 @@ function startGPS(){
   );
 }
 
+// GPS 정보창 표시 조건: GPS ON + 트래킹 OFF
+function _showGpsPill(){
+  const pill = document.getElementById('gps-pill');
+  if(!pill) return;
+  const show = gpsOn && !trackOn;
+  pill.style.display = show ? 'flex' : 'none';
+  if(show) setTimeout(_fitGpsPill, 50);
+}
+
 function setGPSActive(on){
   gpsOn = on;
   document.getElementById('btn-gps').classList.toggle('on', on);
@@ -3219,9 +3228,7 @@ function setGPSActive(on){
   document.getElementById('gps-lbl').textContent = on ? T('gps_active') : 'GPS';
   if(!on){ document.getElementById('gps-val').textContent = T('gps_none'); document.getElementById('gps-acc-txt').textContent='—'; }
   // GPS 정보창 표시/숨김
-  const pill = document.getElementById('gps-pill');
-  if(pill) pill.style.display = on ? 'flex' : 'none';
-  if(on) setTimeout(_fitGpsPill, 50);
+  _showGpsPill();
 }
 
 function stopGPS(){
@@ -6468,6 +6475,7 @@ function toggleTrack(){
       });
     }
     document.getElementById('btn-track')?.classList.add('on');
+    _showGpsPill(); // 트래킹 시작 → pill 숨김
     document.getElementById('track-recording-info').style.display='block';
     // 트래킹 시작: 화면 중앙 고정 활성화
     trackingLocked = true;
@@ -6507,6 +6515,7 @@ function stopAndSaveTrack(){
     toast(T('trk_few_pts')); trackOn=false;
     document.getElementById('btn-track')?.classList.remove('on');
     document.getElementById('track-recording-info').style.display='none';
+    _showGpsPill(); // 트래킹 종료 → pill 복원
     trackingLocked=false; _updateLockBtn();
     const _e1=document.getElementById('compass-ticks-overlay');
     if(_e1){ _e1.style.display='none'; _e1.innerHTML=''; }
@@ -6557,6 +6566,7 @@ function discardTrack(){
   trackOn=false; trkPts=[];
   document.getElementById('btn-track')?.classList.remove('on');
   document.getElementById('track-recording-info').style.display='none';
+  _showGpsPill(); // 트래킹 종료 → pill 복원
   hidePanel('track-panel'); toast(T('track_clr'));
   trkDist=0; trkStartTime=null; trackingLocked=false; _updateLockBtn(); _updateTrackingInfo();
   // 트래킹 정보창 + 시계 눈금 즉시 숨기기
