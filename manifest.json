@@ -6,7 +6,7 @@
   "dir": "ltr",
   "start_url": "./index.html",
   "scope": "./",
-  "id": "/",
+  "id": "./index.html",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui", "browser"],
   "orientation": "any",
@@ -45,14 +45,14 @@
       "sizes": "540x720",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Palm Farm Field Map - Mobile"
+      "label": "Palm Farm Field Map - Mobile view with map and GPS tracking"
     },
     {
       "src": "screenshot-desktop.png",
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Palm Farm Field Map - Desktop"
+      "label": "Palm Farm Field Map - Desktop view"
     }
   ],
   "prefer_related_applications": false

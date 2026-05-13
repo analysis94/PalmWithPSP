@@ -1,20 +1,4 @@
-User-agent: Googlebot
-Disallow: /
-
-User-agent: Bingbot
-Disallow: /
-
-User-agent: Yandex
-Disallow: /
-
-User-agent: Baiduspider
-Disallow: /
-
-User-agent: DuckDuckBot
-Disallow: /
-
-User-agent: PWABuilder
-Allow: /
-
+# PamMap PWA - PWA Builder가 manifest를 정상적으로 읽도록 모든 봇 허용
+# 색인 차단은 index.html의 noindex meta로 처리 (PWA Builder 빌드 후 활성화)
 User-agent: *
-Disallow: /
+Allow: /
