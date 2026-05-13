@@ -1,2 +1,20 @@
+User-agent: Googlebot
+Disallow: /
+
+User-agent: Bingbot
+Disallow: /
+
+User-agent: Yandex
+Disallow: /
+
+User-agent: Baiduspider
+Disallow: /
+
+User-agent: DuckDuckBot
+Disallow: /
+
+User-agent: PWABuilder
+Allow: /
+
 User-agent: *
 Disallow: /
