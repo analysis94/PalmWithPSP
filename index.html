@@ -175,8 +175,11 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 
 /* ── LAYER POPUP ── */
 #layer-popup{position:absolute;left:0;right:0;bottom:74px;z-index:200;padding:0 10px 8px;display:none;
-  /* v0.363: 외부 레이어 많을 때 잘림 방지 */
-  max-height:calc(100vh - 140px); overflow-y:auto; overflow-x:hidden;
+  /* v0.363: 외부 레이어 많을 때 잘림 방지
+     v0.364: vh → dvh (모바일 동적 viewport) */
+  max-height:calc(100vh - 140px);       /* 폴백 */
+  max-height:calc(100dvh - 140px);      /* v0.364: dvh 지원 */
+  overflow-y:auto; overflow-x:hidden;
   -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
 }
 #layer-popup.show{display:block;animation:slideup .2s cubic-bezier(.2,.8,.3,1)}
@@ -211,11 +214,14 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 /* ── PANELS ── */
 .panel{position:absolute;left:10px;right:10px;background:var(--panel);border:.5px solid var(--border2);border-radius:12px;padding:13px;z-index:400;display:none;
   /* v0.363: 모바일 잘림 방지
+     v0.364: vh → dvh (모바일 동적 viewport — 주소창/하단 바 변화에 자동 적응)
      panel-bot: bottom:84px → 위로 화면 가득 늘어나는 경우 헤더(58px) 위 잘림
      panel-top: top:58px → 아래로 늘어나는 경우 하단 FAB(84px) 위 잘림
      해결: 두 패널 종류 모두 max-height + 내부 스크롤
      box-sizing: padding 포함 계산 (외부 위치 계산 일관성) */
-  max-height:calc(100vh - 150px); overflow-y:auto; overflow-x:hidden;
+  max-height:calc(100vh - 150px);       /* 폴백 */
+  max-height:calc(100dvh - 150px);      /* v0.364: dvh 지원 */
+  overflow-y:auto; overflow-x:hidden;
   -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
   box-sizing:border-box;
 }
@@ -241,7 +247,13 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 .fpanel h2{font-size:15px;font-weight:600;color:var(--green2);margin-bottom:14px}
 .fp-close-btn{width:100%;background:var(--bg3);border:.5px solid var(--border);color:var(--text2);font-family:var(--sans);font-size:13px;padding:10px;border-radius:8px;cursor:pointer;margin-top:8px}
 
-/* ══ v0.249: Bottom Sheet ══ */
+/* ══ v0.249: Bottom Sheet ══
+   v0.364: 모바일에서 정보창이 끝까지 안 보이는 문제 수정
+     - 100vh → 100dvh (dynamic viewport height — 모바일 주소창 변화에 자동 반영)
+     - max-height 85vh → 90dvh (더 많이 보이게)
+     - peek 높이 180px → 220px (콘텐츠 미리보기 더 보이도록)
+     - dvh 미지원 브라우저 폴백: vh 유지 (점진적 향상)
+*/
 .bottom-sheet{
   position:fixed;left:0;right:0;bottom:0;
   z-index:450;
@@ -252,16 +264,23 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
   transform:translateY(100%);
   transition:transform .3s cubic-bezier(.4,0,.2,1);
   display:flex;flex-direction:column;
-  max-height:85vh;
+  max-height:85vh;       /* 폴백 */
+  max-height:90dvh;      /* v0.364: dvh 지원 브라우저 */
   touch-action:none;
 }
-.bottom-sheet.peek{transform:translateY(calc(100% - 180px))}
+.bottom-sheet.peek{
+  transform:translateY(calc(100% - 220px));  /* v0.364: 180 → 220 */
+}
 .bottom-sheet.expanded{transform:translateY(0)}
 .bs-handle{
   width:36px;height:4px;border-radius:2px;
   background:var(--border2);margin:10px auto 6px;flex-shrink:0;cursor:grab;
 }
-.bs-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px 24px}
+.bs-body{
+  flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px 24px;
+  /* v0.364: 내부 스크롤이 부모(지도)로 전파되어 의도치 않은 패닝 일어나는 것 방지 */
+  overscroll-behavior:contain;
+}
 .bs-page-dots{
   display:flex;justify-content:center;gap:6px;padding:8px 0;flex-shrink:0;
 }
@@ -542,10 +561,13 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 /* 햄버거 메뉴 패널 */
 #hamburger-menu{position:absolute;top:52px;right:0;width:240px;background:var(--bg2);border-left:.5px solid var(--border);border-bottom:.5px solid var(--border);border-bottom-left-radius:12px;z-index:310;display:none;padding:8px 0;
   /* v0.363: 모바일 화면 잘림 방지 — 작은 화면에서 메뉴가 22+ 아이템이라 화면 아래로 흘러나갔음
+     v0.364: vh → dvh (모바일 동적 viewport 단위)
      max-height: 헤더(52px) + 약간의 하단 여유(20px) 제외
      overflow-y: 부드러운 터치 스크롤 + 자체 스크롤바
      -webkit-overflow-scrolling: iOS Safari에서 관성 스크롤 활성화 */
-  max-height:calc(100vh - 72px); overflow-y:auto; overflow-x:hidden;
+  max-height:calc(100vh - 72px);       /* 폴백 */
+  max-height:calc(100dvh - 72px);      /* v0.364: dvh 지원 */
+  overflow-y:auto; overflow-x:hidden;
   -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
 }
 #hamburger-menu.open{display:block}
@@ -970,7 +992,7 @@ document.addEventListener('webkitfullscreenchange', _onFsChange);
   <div style="font-size:80px;filter:drop-shadow(0 4px 24px rgba(0,180,80,.45))">🌴</div>
   <div style="font-size:32px;font-weight:800;letter-spacing:2px;color:#fff;
               text-shadow:0 2px 16px rgba(0,200,100,.5)">PalmMap</div>
-  <div id="splash-ver" style="font-size:13px;color:rgba(255,255,255,.45);letter-spacing:1px;margin-top:-8px">v0.363</div>
+  <div id="splash-ver" style="font-size:13px;color:rgba(255,255,255,.45);letter-spacing:1px;margin-top:-8px">v0.365</div>
 </div>
 
 <!-- v0.247: 마지막 프로젝트 복원 다이얼로그 -->
@@ -1016,7 +1038,7 @@ document.addEventListener('webkitfullscreenchange', _onFsChange);
     <div style="font-size:22px">🌴</div>
     <div>
       <div style="font-size:14px;font-weight:700;color:var(--green2);letter-spacing:-.2px">PALM MAP</div>
-      <div id="app-ver" style="font-size:10px;color:var(--text3);font-family:var(--mono)">v0.363</div>
+      <div id="app-ver" style="font-size:10px;color:var(--text3);font-family:var(--mono)">v0.365</div>
     </div>
     <button title="메뉴" onclick="toggleHamburger()" style="margin-left:auto;background:none;border:none;color:var(--text3);font-size:22px;cursor:pointer;line-height:1;padding:4px">×</button>
   </div>
@@ -6098,12 +6120,18 @@ function _applyDeviceOrientation(alpha){
 
 // ── 나침반 아이콘 시각 피드백 ─────────────────────────────────
 function _updateCompassIcon(){
-  const el = document.querySelector('[onclick="toggleCompassMode()"]');
+  // v0.365: 옛 셀렉터 수정 — onclick="toggleCompassMode()"는 v0.277 이후 _compassClick로 변경됨
+  //   이전: querySelector('[onclick="toggleCompassMode()"]') → 항상 null → 함수가 일찍 return
+  //   현재: id 'compass-btn'으로 직접 조회 (확실하고 빠름)
+  const el = document.getElementById('compass-btn');
   if(!el) return;
-  // 모드별 테두리 색상
-  const colors = {0:'rgba(255,255,255,0.92)', 1:'#1976d2', 2:'#e53935'};
-  const inner = el.querySelector('div');
-  if(inner) inner.style.background = colors[compassMode] || 'rgba(255,255,255,0.92)';
+  // 모드별 테두리 색상 — 버튼 자체에 box-shadow inset로 표시 (기존 div 구조와 무관)
+  const borderColors = {
+    0: 'rgba(255,255,255,0.92)',  // 자유회전: 흰색
+    1: '#1976d2',                   // 북쪽고정: 파랑
+    2: '#e65100'                    // 진행방향: 주황
+  };
+  el.style.boxShadow = `inset 0 0 0 2px ${borderColors[compassMode] || borderColors[0]}, 0 2px 8px rgba(0,0,0,.18)`;
 
   // N 글자 색상 (나침반 SVG의 빨간 삼각형으로 모드 표시)
   const needle = document.getElementById('compass-needle');
@@ -20111,33 +20139,70 @@ async function _cancelRestoreMap(){
 
   // v0.252: Long-press → "Place on the map" 메뉴
   // v0.363: 모바일 민감도 개선 — 지연 600 → 900ms, 이동 임계값 8 → 12px
-  //   사용자 보고: "너무 민감하다 — 단순 탭에도 메뉴 뜸"
-  //   해결: 더 길게 눌러야 하고, 손가락 흔들림 허용 범위 확대
+  // v0.364: 멀티터치/pinch/zoom 시에도 트리거되는 문제 수정
+  //   사용자 보고: "스와이프나 화면 확대/축소 중에도 메뉴가 뜸"
+  //   원인 3가지:
+  //     1) touchstart 시 첫 손가락만 검사 → 두 번째 손가락 늦게 닿으면 타이머 살아남음
+  //     2) pointerdown은 각 손가락마다 호출 → 멀티터치 검사 없어 타이머 중복 시작
+  //     3) _lpStart가 기존 타이머를 cancel 안 하고 덮어쓰기 → 이전 타이머 살아서 실행
+  //   해결:
+  //     A) _lpStart에서 항상 _lpCancel 먼저 호출 (이전 타이머 확실히 제거)
+  //     B) 활성 터치 개수 추적 (_lpActiveTouches) → 2개 이상이면 즉시 cancel
+  //     C) touchstart에서 새 손가락 닿으면 _lpCancel (멀티터치 시작 감지)
+  //     D) pointerdown에서 멀티터치 상태이면 무시
   (function(){
     const ma = document.getElementById('map-area'); if(!ma) return;
     let _lpTimer = null, _lpX = 0, _lpY = 0, _lpMoved = false;
+    let _lpActiveTouches = 0;  // v0.364: 활성 터치 개수 추적
     const LP_DELAY = 900;       // v0.363: 600 → 900 ms (안드로이드 기본 500ms보다 충분히 길게)
     const LP_MOVE_TOL = 12;     // v0.363: 8 → 12 px (패닝 시작 시 트리거 방지)
     function _lpCancel(){ if(_lpTimer){ clearTimeout(_lpTimer); _lpTimer=null; } }
     function _lpStart(cx, cy){
+      _lpCancel();  // v0.364: 항상 이전 타이머 제거 후 새로 시작
       _lpX=cx; _lpY=cy; _lpMoved=false;
-      _lpTimer = setTimeout(()=>{ _lpTimer=null; _showLongpressMenu(cx, cy); }, LP_DELAY);
+      _lpTimer = setTimeout(()=>{
+        _lpTimer=null;
+        // v0.364: 발동 직전 최종 안전 검사 — 멀티터치 상태면 발동 안 함
+        if(_lpActiveTouches > 1) return;
+        _showLongpressMenu(cx, cy);
+      }, LP_DELAY);
     }
     ma.addEventListener('touchstart', ev=>{
-      if(pinDragActive||ev.touches.length!==1) return;
+      _lpActiveTouches = ev.touches.length;  // v0.364: 실제 손가락 개수 즉시 반영
+      if(pinDragActive) { _lpCancel(); return; }
+      // v0.364: 멀티터치(2개 이상)이면 즉시 cancel + 시작 안 함
+      if(_lpActiveTouches !== 1) { _lpCancel(); return; }
       // v0.280: 측정 모드 활성 중에는 길게 누르기 메뉴 차단
       if(typeof measureActive !== 'undefined' && measureActive) return;
       const t=ev.touches[0]; _lpStart(t.clientX, t.clientY);
     },{passive:true});
-    ma.addEventListener('touchmove', ()=>{ _lpMoved=true; _lpCancel(); },{passive:true});
-    ma.addEventListener('touchend', ()=>{ _lpCancel(); },{passive:true});
+    ma.addEventListener('touchmove', ev=>{
+      // v0.364: 멀티터치 중 손가락 이동(pinch) — 즉시 cancel
+      if(ev.touches.length > 1) { _lpCancel(); _lpActiveTouches = ev.touches.length; return; }
+      _lpMoved=true; _lpCancel();
+    },{passive:true});
+    ma.addEventListener('touchend', ev=>{
+      _lpActiveTouches = ev.touches.length;  // v0.364: 남은 손가락 개수 갱신
+      _lpCancel();
+    },{passive:true});
+    ma.addEventListener('touchcancel', ev=>{
+      _lpActiveTouches = ev.touches.length;  // v0.364
+      _lpCancel();
+    },{passive:true});
     ma.addEventListener('pointerdown', ev=>{
       if(ev.button!==0||pinDragActive) return;
+      // v0.364: 멀티터치 진행 중이면 무시 (두 번째 손가락의 pointerdown 차단)
+      if(_lpActiveTouches > 1) { _lpCancel(); return; }
+      // v0.364: pen/mouse가 아닌 touch 포인터인데 _lpActiveTouches=0이면
+      //   touchstart가 먼저 호출됐어야 함. 일관성 검증.
+      if(ev.pointerType === 'touch' && _lpActiveTouches === 0) return;
       // v0.280: 측정 모드 활성 중에는 길게 누르기 메뉴 차단
       if(typeof measureActive !== 'undefined' && measureActive) return;
       _lpStart(ev.clientX, ev.clientY);
     },{passive:true});
     ma.addEventListener('pointermove', ev=>{
+      // v0.364: 멀티터치 중이면 cancel
+      if(_lpActiveTouches > 1) { _lpCancel(); return; }
       if(Math.abs(ev.clientX-_lpX)>LP_MOVE_TOL||Math.abs(ev.clientY-_lpY)>LP_MOVE_TOL){ _lpMoved=true; _lpCancel(); }
     },{passive:true});
     ma.addEventListener('pointerup', ()=>{ _lpCancel(); },{passive:true});
@@ -21290,7 +21355,19 @@ const BS = {
     this._renderPage();
     this._renderDots();
     this.el.classList.remove('expanded');
-    this.el.classList.add('peek');
+    // v0.364: 사용자가 "정보창이 끝까지 안 보임"이라고 보고 — 자동으로 expanded 시작
+    //   판단 기준:
+    //     - 페이지 2개 이상 → 사용자가 페이지 전환을 위해 expanded 상태가 자연스러움
+    //     - 페이지 1개라도 첫 페이지 HTML이 길면 (대략 400자 이상) → expanded
+    //     - 그 외 (단순 메모 1개 등) → peek 유지
+    //   사용자가 줄이고 싶으면 핸들 탭으로 peek 복귀 가능
+    const _firstLen = (this.pages[0] && this.pages[0].html) ? this.pages[0].html.length : 0;
+    const _autoExpand = (this.pages.length > 1) || (_firstLen > 400);
+    if (_autoExpand) {
+      this.el.classList.add('expanded');
+    } else {
+      this.el.classList.add('peek');
+    }
   },
 
   hide(){
@@ -22467,13 +22544,31 @@ function _updateDestinationInfo(){
 /* ════════════════════════════════════════════════════════════
    v0.277: 나침반 버튼 long-press → GPS 토글
 ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════
+   v0.277: 나침반 버튼 long-press → GPS 토글
+   v0.365: 짧은 탭에서 모드 전환이 안 되는 버그 수정
+     원인:
+       - _compassPressStart에서 e.preventDefault() 호출 → 모바일에서 합성 click 이벤트 차단
+       - 그 결과 짧은 탭 시 onclick="_compassClick"가 발동 안 함 → toggleCompassMode 호출 안 됨
+       - 사용자: "GPS 승인 후 나침반 눌러도 모드 전환 안 됨"
+     해결:
+       - click 이벤트 의존을 제거하고 touchend/mouseup에서 직접 판단
+       - 타이머가 살아있으면(=600ms 이내 손 뗌) 짧은 탭 → 모드 전환
+       - 타이머가 이미 발동했으면(=긴 누름) → GPS 토글 (이미 발동됨)
+       - preventDefault는 long-press 발동 시점에만 (스크롤 방지)
+     추가: _updateCompassIcon의 옛 셀렉터 수정 (dead code)
+════════════════════════════════════════════════════════════ */
 let _compassPressTimer = null;
 let _compassLongPressed = false;
 
 function _compassPressStart(e){
-  if(e && e.cancelable) try { e.preventDefault(); } catch(_){}
+  // v0.365: preventDefault 제거 — click 이벤트가 정상 발생하도록
+  //   (long-press 발동 시점에만 별도로 처리)
   _compassLongPressed = false;
+  // 기존 타이머 정리 (안전장치)
+  if(_compassPressTimer){ clearTimeout(_compassPressTimer); }
   _compassPressTimer = setTimeout(() => {
+    _compassPressTimer = null;
     _compassLongPressed = true;
     if(navigator.vibrate) try { navigator.vibrate(50); } catch(_){}
     if(typeof handleGPS === 'function'){
@@ -22490,19 +22585,28 @@ function _compassPressStart(e){
 }
 
 function _compassPressEnd(e){
+  // v0.365: 타이머가 살아있으면(짧은 탭) → 즉시 모드 전환
+  //   타이머가 이미 발동했으면(긴 누름) → 이미 GPS 토글 처리됨, 추가 작업 불필요
   if(_compassPressTimer){
     clearTimeout(_compassPressTimer);
     _compassPressTimer = null;
+    // 짧은 탭으로 판단 → 모드 전환
+    if(!_compassLongPressed && typeof toggleCompassMode === 'function'){
+      toggleCompassMode();
+    }
   }
+  // long-press 플래그 리셋 (다음 탭 준비)
+  // 단, 같은 이벤트 시퀀스에서 click이 추가로 발생할 수 있어 약간 지연 후 리셋
+  setTimeout(() => { _compassLongPressed = false; }, 50);
 }
 
 function _compassClick(e){
-  if(_compassLongPressed){
-    if(e){ try { e.preventDefault(); e.stopPropagation(); } catch(_){} }
-    _compassLongPressed = false;
-    return;
-  }
-  if(typeof toggleCompassMode === 'function') toggleCompassMode();
+  // v0.365: touchend/mouseup에서 이미 처리하므로 click은 비활성화
+  //   (마우스 환경에서 mouseup으로도 동일하게 처리됨)
+  //   long-press 후 발생할 수 있는 합성 click 무시
+  if(e){ try { e.preventDefault(); e.stopPropagation(); } catch(_){} }
+  // 노트: PC 마우스 환경에서도 mousedown → mouseup 순서로 동작하므로
+  //       _compassPressEnd에서 모드 전환이 일어남. click은 추가 호출일 뿐.
 }
 
 function _updateCompassGpsOverlay(){
