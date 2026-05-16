@@ -1,6 +1,6 @@
 /*
  * Palm Farm Field Map - Service Worker
- * v0.362
+ * v0.363
  *
  * 전략:
  *  - 앱 셸(index.html, manifest, icons)은 precache
@@ -9,7 +9,7 @@
  *  - 네트워크 실패 시 캐시 → 그래도 없으면 503
  */
 
-const CACHE_VERSION = 'palmmap-v0362';
+const CACHE_VERSION = 'palmmap-v0363';
 const APP_SHELL = [
   './',
   './index.html',

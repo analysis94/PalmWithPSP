@@ -17,6 +17,25 @@
 <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
 <link rel="apple-touch-icon" sizes="192x192" href="./icon-192.png">
 <style>
+/* v0.363: 모바일 패널/메뉴 자체 스크롤바 스타일 — 얇고 은은하게
+   영향 범위: max-height+overflow가 적용된 #hamburger-menu, .panel, #layer-popup
+   기본 모바일 스크롤바는 굵고 눈에 띄어 콘텐츠를 가리는 느낌을 줘서 다듬음 */
+#hamburger-menu::-webkit-scrollbar,
+.panel::-webkit-scrollbar,
+#layer-popup::-webkit-scrollbar { width:4px; height:4px; }
+#hamburger-menu::-webkit-scrollbar-thumb,
+.panel::-webkit-scrollbar-thumb,
+#layer-popup::-webkit-scrollbar-thumb {
+  background:rgba(255,255,255,.18); border-radius:2px;
+}
+#hamburger-menu::-webkit-scrollbar-track,
+.panel::-webkit-scrollbar-track,
+#layer-popup::-webkit-scrollbar-track { background:transparent; }
+/* Firefox */
+#hamburger-menu, .panel, #layer-popup {
+  scrollbar-width:thin; scrollbar-color:rgba(255,255,255,.18) transparent;
+}
+
 /* ══ side-panel 공통 ══ */
 .side-panel{
   position:fixed;top:0;right:0;bottom:0;
@@ -155,7 +174,11 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 .pnav-btn{background:none;border:none;color:var(--text2);cursor:pointer;font-size:14px;padding:0 2px;line-height:1}
 
 /* ── LAYER POPUP ── */
-#layer-popup{position:absolute;left:0;right:0;bottom:74px;z-index:200;padding:0 10px 8px;display:none}
+#layer-popup{position:absolute;left:0;right:0;bottom:74px;z-index:200;padding:0 10px 8px;display:none;
+  /* v0.363: 외부 레이어 많을 때 잘림 방지 */
+  max-height:calc(100vh - 140px); overflow-y:auto; overflow-x:hidden;
+  -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
+}
 #layer-popup.show{display:block;animation:slideup .2s cubic-bezier(.2,.8,.3,1)}
 @keyframes slideup{from{transform:translateY(20px);opacity:0}to{transform:none;opacity:1}}
 .lp-card{background:var(--panel);border:.5px solid var(--border2);border-radius:12px;overflow:hidden;box-shadow:0 -4px 24px rgba(0,0,0,.4)}
@@ -186,7 +209,16 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 .la-nav{background:var(--green);color:#0f1a0f}
 
 /* ── PANELS ── */
-.panel{position:absolute;left:10px;right:10px;background:var(--panel);border:.5px solid var(--border2);border-radius:12px;padding:13px;z-index:400;display:none}
+.panel{position:absolute;left:10px;right:10px;background:var(--panel);border:.5px solid var(--border2);border-radius:12px;padding:13px;z-index:400;display:none;
+  /* v0.363: 모바일 잘림 방지
+     panel-bot: bottom:84px → 위로 화면 가득 늘어나는 경우 헤더(58px) 위 잘림
+     panel-top: top:58px → 아래로 늘어나는 경우 하단 FAB(84px) 위 잘림
+     해결: 두 패널 종류 모두 max-height + 내부 스크롤
+     box-sizing: padding 포함 계산 (외부 위치 계산 일관성) */
+  max-height:calc(100vh - 150px); overflow-y:auto; overflow-x:hidden;
+  -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
+  box-sizing:border-box;
+}
 .panel.show{display:block;animation:slideup .2s ease}
 .panel-bot{bottom:84px}
 .panel-top{top:58px}
@@ -508,7 +540,14 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 .popup-toolbar button svg{width:22px;height:22px}
 .popup-toolbar.hidden{display:none}
 /* 햄버거 메뉴 패널 */
-#hamburger-menu{position:absolute;top:52px;right:0;width:240px;background:var(--bg2);border-left:.5px solid var(--border);border-bottom:.5px solid var(--border);border-bottom-left-radius:12px;z-index:310;display:none;padding:8px 0}
+#hamburger-menu{position:absolute;top:52px;right:0;width:240px;background:var(--bg2);border-left:.5px solid var(--border);border-bottom:.5px solid var(--border);border-bottom-left-radius:12px;z-index:310;display:none;padding:8px 0;
+  /* v0.363: 모바일 화면 잘림 방지 — 작은 화면에서 메뉴가 22+ 아이템이라 화면 아래로 흘러나갔음
+     max-height: 헤더(52px) + 약간의 하단 여유(20px) 제외
+     overflow-y: 부드러운 터치 스크롤 + 자체 스크롤바
+     -webkit-overflow-scrolling: iOS Safari에서 관성 스크롤 활성화 */
+  max-height:calc(100vh - 72px); overflow-y:auto; overflow-x:hidden;
+  -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
+}
 #hamburger-menu.open{display:block}
 .hmenu-item{display:flex;align-items:center;gap:12px;padding:12px 16px;color:var(--text);font-size:14px;cursor:pointer;border:none;background:transparent;width:100%;text-align:left}
 .hmenu-item:active{background:var(--bg3)}
@@ -931,7 +970,7 @@ document.addEventListener('webkitfullscreenchange', _onFsChange);
   <div style="font-size:80px;filter:drop-shadow(0 4px 24px rgba(0,180,80,.45))">🌴</div>
   <div style="font-size:32px;font-weight:800;letter-spacing:2px;color:#fff;
               text-shadow:0 2px 16px rgba(0,200,100,.5)">PalmMap</div>
-  <div id="splash-ver" style="font-size:13px;color:rgba(255,255,255,.45);letter-spacing:1px;margin-top:-8px">v0.362</div>
+  <div id="splash-ver" style="font-size:13px;color:rgba(255,255,255,.45);letter-spacing:1px;margin-top:-8px">v0.363</div>
 </div>
 
 <!-- v0.247: 마지막 프로젝트 복원 다이얼로그 -->
@@ -977,7 +1016,7 @@ document.addEventListener('webkitfullscreenchange', _onFsChange);
     <div style="font-size:22px">🌴</div>
     <div>
       <div style="font-size:14px;font-weight:700;color:var(--green2);letter-spacing:-.2px">PALM MAP</div>
-      <div id="app-ver" style="font-size:10px;color:var(--text3);font-family:var(--mono)">v0.362</div>
+      <div id="app-ver" style="font-size:10px;color:var(--text3);font-family:var(--mono)">v0.363</div>
     </div>
     <button title="메뉴" onclick="toggleHamburger()" style="margin-left:auto;background:none;border:none;color:var(--text3);font-size:22px;cursor:pointer;line-height:1;padding:4px">×</button>
   </div>
@@ -20071,10 +20110,14 @@ async function _cancelRestoreMap(){
   })();
 
   // v0.252: Long-press → "Place on the map" 메뉴
+  // v0.363: 모바일 민감도 개선 — 지연 600 → 900ms, 이동 임계값 8 → 12px
+  //   사용자 보고: "너무 민감하다 — 단순 탭에도 메뉴 뜸"
+  //   해결: 더 길게 눌러야 하고, 손가락 흔들림 허용 범위 확대
   (function(){
     const ma = document.getElementById('map-area'); if(!ma) return;
     let _lpTimer = null, _lpX = 0, _lpY = 0, _lpMoved = false;
-    const LP_DELAY = 600;
+    const LP_DELAY = 900;       // v0.363: 600 → 900 ms (안드로이드 기본 500ms보다 충분히 길게)
+    const LP_MOVE_TOL = 12;     // v0.363: 8 → 12 px (패닝 시작 시 트리거 방지)
     function _lpCancel(){ if(_lpTimer){ clearTimeout(_lpTimer); _lpTimer=null; } }
     function _lpStart(cx, cy){
       _lpX=cx; _lpY=cy; _lpMoved=false;
@@ -20095,7 +20138,7 @@ async function _cancelRestoreMap(){
       _lpStart(ev.clientX, ev.clientY);
     },{passive:true});
     ma.addEventListener('pointermove', ev=>{
-      if(Math.abs(ev.clientX-_lpX)>8||Math.abs(ev.clientY-_lpY)>8){ _lpMoved=true; _lpCancel(); }
+      if(Math.abs(ev.clientX-_lpX)>LP_MOVE_TOL||Math.abs(ev.clientY-_lpY)>LP_MOVE_TOL){ _lpMoved=true; _lpCancel(); }
     },{passive:true});
     ma.addEventListener('pointerup', ()=>{ _lpCancel(); },{passive:true});
     ma.addEventListener('pointercancel', ()=>{ _lpCancel(); },{passive:true});

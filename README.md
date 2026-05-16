@@ -1,6 +1,6 @@
 # Palm Farm Field Map (PamMap)
 
-> **Version: v0.362** · PWA Builder APK 빌드용 패키지
+> **Version: v0.363** · PWA Builder APK 빌드용 패키지
 
 야자수 농장 현장용 GIS 필드 매핑 PWA — GPS 추적, PDF 지도 뷰어, 레이어 관리, 오프라인 지원.
 
@@ -10,7 +10,7 @@
 
 | 파일 | 용도 |
 |---|---|
-| `index.html` | 앱 본체 (단일 파일 SPA, v0.362) |
+| `index.html` | 앱 본체 (단일 파일 SPA, v0.363) |
 | `manifest.json` | PWA 매니페스트 (모든 필수 필드 포함) |
 | `sw.js` | 서비스 워커 (오프라인 + 캐싱) |
 | `icon-192.png` / `icon-512.png` | 일반 아이콘 (`purpose: any`) |
@@ -56,7 +56,7 @@
 ## 🔄 업데이트 시
 
 `index.html` 수정 후:
-1. `sw.js` 안의 `CACHE_VERSION` 값 증가 (`palmmap-v0362` → `v0363`)
+1. `sw.js` 안의 `CACHE_VERSION` 값 증가 (`palmmap-v0363` → `v0364`)
 2. GitHub push
 3. 사용자 기기에서 다음 접속 시 자동 갱신
 
@@ -74,4 +74,4 @@ Service Worker는 `http://localhost` 또는 `https://` 에서만 동작.
 
 ---
 
-Palm Farm Field Map · v0.362
+Palm Farm Field Map · v0.363
