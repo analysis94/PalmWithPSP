@@ -992,7 +992,7 @@ document.addEventListener('webkitfullscreenchange', _onFsChange);
   <div style="font-size:80px;filter:drop-shadow(0 4px 24px rgba(0,180,80,.45))">🌴</div>
   <div style="font-size:32px;font-weight:800;letter-spacing:2px;color:#fff;
               text-shadow:0 2px 16px rgba(0,200,100,.5)">PalmMap</div>
-  <div id="splash-ver" style="font-size:13px;color:rgba(255,255,255,.45);letter-spacing:1px;margin-top:-8px">v0.365</div>
+  <div id="splash-ver" style="font-size:13px;color:rgba(255,255,255,.45);letter-spacing:1px;margin-top:-8px">v0.366</div>
 </div>
 
 <!-- v0.247: 마지막 프로젝트 복원 다이얼로그 -->
@@ -1038,7 +1038,7 @@ document.addEventListener('webkitfullscreenchange', _onFsChange);
     <div style="font-size:22px">🌴</div>
     <div>
       <div style="font-size:14px;font-weight:700;color:var(--green2);letter-spacing:-.2px">PALM MAP</div>
-      <div id="app-ver" style="font-size:10px;color:var(--text3);font-family:var(--mono)">v0.365</div>
+      <div id="app-ver" style="font-size:10px;color:var(--text3);font-family:var(--mono)">v0.366</div>
     </div>
     <button title="메뉴" onclick="toggleHamburger()" style="margin-left:auto;background:none;border:none;color:var(--text3);font-size:22px;cursor:pointer;line-height:1;padding:4px">×</button>
   </div>
@@ -2786,7 +2786,18 @@ document.addEventListener('webkitfullscreenchange', _onFsChange);
 <div id="toast"></div>
 
 <input type="file" id="pdf-input" accept=".pdf,application/pdf" style="display:none" onchange="loadPDF(this)">
-<input type="file" id="geo-input" accept=".geojson,.json,.csv,.gpkg,.shp,.zip,.kml,.kmz,.gpx" style="display:none" onchange="loadGeo(this)" multiple>
+<!-- v0.366: accept 속성에 MIME type 추가
+     이전: accept=".geojson,.json,.csv,.gpkg,.shp,.zip,.kml,.kmz,.gpx" (확장자만)
+     문제: Android에서 확장자만 있고 MIME 없으면 OS가 라우팅 못 해 "작업 선택" 메뉴로 폴백 → 사진/동영상 등 잘못된 앱들이 옵션으로 표시됨
+     수정: 표준 MIME type 추가 (Android Storage Access Framework 라우팅 정확화)
+       - application/json: GeoJSON/JSON 처리 가능 앱
+       - application/geo+json: GeoJSON 공식 MIME (일부 앱 인식)
+       - text/csv: 스프레드시트 앱
+       - application/vnd.google-earth.kml+xml: Google Earth
+       - application/vnd.google-earth.kmz: Google Earth (압축)
+       - application/gpx+xml: GPS 앱
+       주의: SHP/GPKG/ZIP은 공식 등록 MIME이 모호하거나 다른 앱들도 끌어들이므로 확장자만 유지 -->
+<input type="file" id="geo-input" accept=".geojson,.json,.csv,.gpkg,.shp,.zip,.kml,.kmz,.gpx,application/json,application/geo+json,text/csv,application/vnd.google-earth.kml+xml,application/vnd.google-earth.kmz,application/gpx+xml" style="display:none" onchange="loadGeo(this)" multiple>
 <input type="file" id="tiff-input" accept="image/tiff,image/geo+tiff,.tif,.tiff,.tfw" style="display:none" onchange="loadGeoTIFF(this)" multiple>
 
 <!-- ══════════════════════════════════════════════════════════
