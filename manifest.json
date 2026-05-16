@@ -13,6 +13,52 @@
   "background_color": "#0d1610",
   "theme_color": "#1a2e1a",
   "categories": ["productivity", "utilities", "navigation"],
+
+  "share_target": {
+    "action": "./index.html?share-target=1",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            "application/json",
+            "application/geo+json",
+            "text/csv",
+            "application/vnd.google-earth.kml+xml",
+            "application/vnd.google-earth.kmz",
+            "application/gpx+xml",
+            "application/pdf",
+            "image/tiff",
+            "image/geo+tiff",
+            ".geojson", ".json", ".csv", ".gpkg", ".shp", ".kml", ".kmz", ".gpx", ".pdf", ".tif", ".tiff", ".tfw"
+          ]
+        }
+      ]
+    }
+  },
+
+  "file_handlers": [
+    {
+      "action": "./index.html?file-handler=1",
+      "accept": {
+        "application/json": [".json", ".geojson"],
+        "application/geo+json": [".geojson"],
+        "text/csv": [".csv"],
+        "application/vnd.google-earth.kml+xml": [".kml"],
+        "application/vnd.google-earth.kmz": [".kmz"],
+        "application/gpx+xml": [".gpx"],
+        "application/pdf": [".pdf"],
+        "image/tiff": [".tif", ".tiff"]
+      },
+      "launch_type": "single-client"
+    }
+  ],
+
   "icons": [
     {
       "src": "icon-192.png",

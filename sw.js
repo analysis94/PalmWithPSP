@@ -1,15 +1,17 @@
 /*
  * Palm Farm Field Map - Service Worker
- * v0.366
+ * v0.367
  *
  * 전략:
  *  - 앱 셸(index.html, manifest, icons)은 precache
  *  - 동일 출처 GET 요청은 stale-while-revalidate
  *  - CDN(https) 자원은 cache-first 폴백
  *  - 네트워크 실패 시 캐시 → 그래도 없으면 503
+ *  - v0.367: share_target POST 처리 — 카카오톡/공유 시트 → PalmMap 파일 import
  */
 
-const CACHE_VERSION = 'palmmap-v0366';
+const CACHE_VERSION = 'palmmap-v0367';
+const SHARE_CACHE = 'palmmap-share-inbox';  // v0.367: 공유받은 파일 임시 보관용
 const APP_SHELL = [
   './',
   './index.html',
@@ -50,7 +52,63 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const req = event.request;
 
-  // GET 요청만 처리, http(s) 스킴만 캐싱
+  // v0.367: share_target POST 처리 — 카카오톡 등에서 파일 공유 시
+  //   manifest.json의 share_target.action = "./index.html?share-target=1"
+  //   이 URL로 POST 요청이 오면 SW가 가로채 파일을 임시 캐시에 저장 후
+  //   index.html로 리다이렉트. JS가 진입 시 URL 파라미터 감지 → 캐시에서 파일 꺼내 처리.
+  const url = new URL(req.url);
+  if (req.method === 'POST' && url.searchParams.has('share-target')) {
+    event.respondWith((async () => {
+      try {
+        const formData = await req.formData();
+        const files = formData.getAll('files');
+        // 텍스트/URL도 받을 수 있지만 우선 파일만 처리
+        const fileList = [];
+        for (const f of files) {
+          if (f && f.name && f.size > 0) {
+            fileList.push({
+              name: f.name,
+              type: f.type || '',
+              size: f.size,
+              blob: f
+            });
+          }
+        }
+        // 임시 캐시에 파일들을 저장 (각 파일을 Response로 래핑)
+        const cache = await caches.open(SHARE_CACHE);
+        // 기존 공유 캐시 정리 (이전 공유 잔재 제거)
+        const oldKeys = await cache.keys();
+        await Promise.all(oldKeys.map(k => cache.delete(k)));
+        // 새 파일들 저장 — 키는 share-file-<index>-<filename>
+        const fileMeta = [];
+        for (let i = 0; i < fileList.length; i++) {
+          const f = fileList[i];
+          const key = `/__share/${i}/${encodeURIComponent(f.name)}`;
+          const response = new Response(f.blob, {
+            headers: {
+              'Content-Type': f.type || 'application/octet-stream',
+              'X-File-Name': f.name,
+              'X-File-Size': String(f.size)
+            }
+          });
+          await cache.put(key, response);
+          fileMeta.push({ key, name: f.name, type: f.type, size: f.size });
+        }
+        // 메타데이터도 캐시에 저장 (JSON)
+        await cache.put('/__share/meta', new Response(JSON.stringify(fileMeta), {
+          headers: { 'Content-Type': 'application/json' }
+        }));
+        // 진입 페이지로 리다이렉트 — JS가 share-inbox 플래그를 보고 처리
+        return Response.redirect('./index.html?share-inbox=1', 303);
+      } catch (err) {
+        // 에러 시 일반 페이지로 리다이렉트 (조용히 실패)
+        return Response.redirect('./index.html?share-error=1', 303);
+      }
+    })());
+    return;
+  }
+
+  // GET 요청만 캐싱 처리, http(s) 스킴만 캐싱
   if (req.method !== 'GET') return;
   if (!req.url.startsWith('http')) return;
 
