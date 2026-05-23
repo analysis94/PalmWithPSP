@@ -1,6 +1,6 @@
 /*
  * Palm Farm Field Map - Service Worker
- * v0.367
+ * v0.368
  *
  * 전략:
  *  - 앱 셸(index.html, manifest, icons)은 precache
@@ -10,7 +10,7 @@
  *  - v0.367: share_target POST 처리 — 카카오톡/공유 시트 → PalmMap 파일 import
  */
 
-const CACHE_VERSION = 'palmmap-v0367';
+const CACHE_VERSION = 'palmmap-v0368';
 const SHARE_CACHE = 'palmmap-share-inbox';  // v0.367: 공유받은 파일 임시 보관용
 const APP_SHELL = [
   './',
