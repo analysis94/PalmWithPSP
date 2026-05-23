@@ -108,7 +108,8 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 
 /* ── BOTTOM BAR ── */
 #bottombar{position:absolute;bottom:0;left:0;right:0;height:76px;background:transparent;border-top:none;display:flex;align-items:center;padding:0 10px;gap:6px;z-index:100}
-#gps-pill{display:flex;align-items:flex-start;gap:8px;background:rgba(0,0,0,.55);border:.5px solid rgba(255,255,255,.15);border-radius:10px;padding:10px 14px;overflow:hidden}
+/* v0.371: 폰트 크기 축소 (16→14, 15→13, 11→10) + 패딩 축소 (10/14 → 7/10) — 스케일 바와 겹침 방지 */
+#gps-pill{display:flex;align-items:flex-start;gap:6px;background:rgba(0,0,0,.55);border:.5px solid rgba(255,255,255,.15);border-radius:10px;padding:7px 10px;overflow:hidden}
 #gps-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:.3s}
 #gps-dot.on{background:var(--green);animation:pulse 2s infinite}
 #gps-dot.err{background:var(--red)}
@@ -360,16 +361,25 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
   box-shadow:0 0 0 2px rgba(43,125,233,.35),0 2px 10px rgba(0,0,0,.2);
 }
 
-/* ── MEMO LIST ── */
+/* ── MEMO LIST ──
+   v0.370: 가독성 개선
+   이전: 좌표 9px monospace + 날짜 헤더 10px — 모바일에서 너무 작음
+   변경:
+     - 좌표/메타: 9 → 11px
+     - 날짜 헤더: 10 → 12px (계층 명확)
+     - 본문(제목): 13 → 14px, 굵게 (500)
+     - 새 .memo-subtitle: 좌표/시간을 작게 표시 (제목과 시각 구분)
+   접근성: 모바일 최소 11px 이상 권장 (WCAG iOS HIG) */
 .memo-date-group{margin-bottom:14px}
-.memo-date-hdr{font-size:10px;color:var(--text3);font-family:var(--mono);padding:5px 0 7px;border-bottom:.5px solid var(--border);margin-bottom:8px;letter-spacing:.05em}
-.memo-item{background:var(--panel);border:.5px solid var(--border);border-radius:9px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:flex-start;gap:9px}
+.memo-date-hdr{font-size:12px;color:var(--text2);font-family:var(--mono);padding:6px 0 8px;border-bottom:.5px solid var(--border);margin-bottom:8px;letter-spacing:.05em;font-weight:600}
+.memo-item{background:var(--panel);border:.5px solid var(--border);border-radius:9px;padding:11px 13px;margin-bottom:6px;display:flex;align-items:flex-start;gap:9px}
 .memo-body{flex:1;min-width:0}
 .memo-meta{display:flex;align-items:center;gap:7px;margin-bottom:3px}
-.memo-time{font-size:9px;font-family:var(--mono);color:var(--text3)}
-.memo-layer-tag{font-size:9px;color:var(--amber);font-weight:700;background:rgba(232,168,74,.12);padding:1px 6px;border-radius:4px}
-.memo-coords{font-size:9px;font-family:var(--mono);color:var(--text3);margin-bottom:3px}
-.memo-text{font-size:13px;color:var(--text);line-height:1.5;word-break:break-word}
+.memo-time{font-size:11px;font-family:var(--mono);color:var(--text3)}
+.memo-layer-tag{font-size:10px;color:var(--amber);font-weight:700;background:rgba(232,168,74,.12);padding:1px 6px;border-radius:4px}
+.memo-coords{font-size:11px;font-family:var(--mono);color:var(--text3);margin-top:3px}
+.memo-text{font-size:14px;color:var(--text);line-height:1.45;word-break:break-word;font-weight:500}
+.memo-subtitle{font-size:11px;color:var(--text3);margin-top:2px;font-family:var(--mono)}
 .memo-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:17px;padding:2px 4px;flex-shrink:0;line-height:1;border-radius:4px}
 .memo-del:active{color:var(--red);background:rgba(224,85,85,.1)}
 .memo-empty{font-size:13px;color:var(--text3);padding:24px 0;text-align:center}
@@ -523,13 +533,14 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 .maps-badge{position:absolute;top:-4px;right:-4px;width:14px;height:14px;border-radius:50%;background:var(--amber);color:#111;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1}
 
 /* ══ 트랙 목록 패널 ══ */
-/* v0.368: visible=false 트랙은 opacity:0.55로 흐리게 (renderTrackList inline style) — 부드러운 전환 */
-.track-item{display:flex;align-items:center;gap:8px;background:var(--panel);border:.5px solid var(--border);border-radius:8px;padding:9px 11px;margin-bottom:6px;transition:opacity .15s ease}
+/* v0.368: visible=false 트랙은 opacity:0.55로 흐리게 (renderTrackList inline style) — 부드러운 전환
+   v0.370: 가독성 개선 — 이름 12 → 14px (굵게), 메타 10 → 11px */
+.track-item{display:flex;align-items:center;gap:8px;background:var(--panel);border:.5px solid var(--border);border-radius:8px;padding:10px 11px;margin-bottom:6px;transition:opacity .15s ease}
 .track-item-info:hover .track-item-name{color:var(--green2)}  /* v0.368: 탭 가능 힌트 */
 .track-color-swatch{width:24px;height:10px;border-radius:3px;flex-shrink:0;cursor:pointer}
 .track-item-info{flex:1;min-width:0}
-.track-item-name{font-size:12px;color:var(--text);font-weight:500}
-.track-item-meta{font-size:10px;color:var(--text3);font-family:var(--mono)}
+.track-item-name{font-size:14px;color:var(--text);font-weight:500;word-break:break-word}
+.track-item-meta{font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:2px}
 .track-vis-btn{background:none;border:.5px solid var(--border);color:var(--text3);border-radius:5px;padding:2px 8px;font-size:10px;cursor:pointer}
 .track-vis-btn.on{border-color:var(--green);color:var(--green2)}
 .track-del-btn{background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:2px 4px}
@@ -722,9 +733,9 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
    .is-landscape-only 버튼은 완전히 숨김 (HTML에서도 제거됨)
    .is-portrait-only 클래스는 HTML에서 제거되어 항상 표시 */
 .is-landscape-only { display: none !important; }  /* 가로모드 재설계 전까지 완전 숨김 */
-.is-gps-big { font-size:16px;font-weight:700;font-family:Arial,sans-serif;color:#fff }
-.is-gps-lbl { font-size:11px;color:rgba(255,255,255,.7);font-family:Arial,sans-serif;width:22px;flex-shrink:0 }
-.is-gps-val { font-size:15px;font-weight:600;font-family:Arial,sans-serif;color:#fff;text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000 }
+.is-gps-big { font-size:14px;font-weight:700;font-family:Arial,sans-serif;color:#fff;white-space:nowrap }
+.is-gps-lbl { font-size:10px;color:rgba(255,255,255,.7);font-family:Arial,sans-serif;width:20px;flex-shrink:0 }
+.is-gps-val { font-size:13px;font-weight:600;font-family:Arial,sans-serif;color:#fff;text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;white-space:nowrap }
 .is-heading-12 { font-size:12px;font-weight:700;color:var(--text) }
 .is-hint { font-size:10px;color:var(--text3) }
 .is-hint-12-pad { font-size:12px;color:var(--text3);padding:8px 0 }
@@ -994,7 +1005,7 @@ document.addEventListener('webkitfullscreenchange', _onFsChange);
   <div style="font-size:80px;filter:drop-shadow(0 4px 24px rgba(0,180,80,.45))">🌴</div>
   <div style="font-size:32px;font-weight:800;letter-spacing:2px;color:#fff;
               text-shadow:0 2px 16px rgba(0,200,100,.5)">PalmMap</div>
-  <div id="splash-ver" style="font-size:13px;color:rgba(255,255,255,.45);letter-spacing:1px;margin-top:-8px">v0.368</div>
+  <div id="splash-ver" style="font-size:13px;color:rgba(255,255,255,.45);letter-spacing:1px;margin-top:-8px">v0.371</div>
 </div>
 
 <!-- v0.247: 마지막 프로젝트 복원 다이얼로그 -->
@@ -1040,7 +1051,7 @@ document.addEventListener('webkitfullscreenchange', _onFsChange);
     <div style="font-size:22px">🌴</div>
     <div>
       <div style="font-size:14px;font-weight:700;color:var(--green2);letter-spacing:-.2px">PALM MAP</div>
-      <div id="app-ver" style="font-size:10px;color:var(--text3);font-family:var(--mono)">v0.368</div>
+      <div id="app-ver" style="font-size:10px;color:var(--text3);font-family:var(--mono)">v0.371</div>
     </div>
     <button title="메뉴" onclick="toggleHamburger()" style="margin-left:auto;background:none;border:none;color:var(--text3);font-size:22px;cursor:pointer;line-height:1;padding:4px">×</button>
   </div>
@@ -1554,7 +1565,7 @@ document.addEventListener('webkitfullscreenchange', _onFsChange);
 <!-- BOTTOM BAR -->
 <div id="gps-pill" onclick="toggleGpsPopup()" style="cursor:pointer;position:fixed;bottom:10px;left:10px;z-index:101;display:none">
     <div id="gps-dot"></div>
-    <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+    <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
       <!-- 위도/경도 -->
       <div class="is-row-base">
         <span class="is-gps-lbl">Lat</span>
@@ -1580,7 +1591,7 @@ document.addEventListener('webkitfullscreenchange', _onFsChange);
       <!-- 고도 -->
       <div class="is-row-base">
         <span class="is-gps-lbl">Elv</span>
-        <span id="gps-elv" style="font-size:15px;font-weight:600;font-family:Arial,sans-serif;color:#FFCC44;text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000">— m</span>
+        <span id="gps-elv" style="font-size:13px;font-weight:600;font-family:Arial,sans-serif;color:#FFCC44;text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;white-space:nowrap">— m</span>
       </div>
     </div>
     <!-- 하위호환 숨김 요소 (JS 참조용) -->
@@ -6317,7 +6328,13 @@ function applyTx(){
     MW.style.transformOrigin = '0 0';
     MW.style.transform = `translate(${ox}px,${oy}px) scale(${scale})`;
   }
-  if(curPos) drawGPS();
+  // v0.369: 트랙 흐림 버그 수정 — 조건 'if(curPos)' 제거
+  //   이전: GPS 위치가 잡혀야만 drawGPS 호출 → 줌인할 때 stroke-width 재계산 안 됨
+  //   결과: 초기 트랙은 stroke-width=4 (scale=1 기준)로 그려진 채 transform으로만 확대
+  //         → GPU가 비트맵 합성하여 흐릿하게 표시
+  //   수정: 줌/팬마다 항상 drawGPS 호출 — 트랙 SVG가 항상 현재 scale에 맞춰 재생성
+  //   비용: drawGPS는 SVG 재생성만 (1ms 미만), 모바일에서도 무시할 수준
+  drawGPS();
   if(GpsState.isTracking && curPos) _drawCompassTicks();
   if(GpsState.isTracking) _positionTrackOverlay();
   updateScaleBar();
@@ -6440,17 +6457,35 @@ function zoomBy(f){ zoomAt(MA.clientWidth/2, MA.clientHeight/2, f);
 
 /* ─── TAP DETECTION ─── */
 let tapT=0, tapX=0, tapY=0, tapMoved=false;
+// v0.371: 트랙 라인/외부 레이어 polygon 탭 처리 버그 수정
+//   사용자 보고: "지도의 트래킹 라인을 탭해도 정보창 안 뜸"
+//   원인: 'e.target === MA' 조건이 너무 엄격
+//     - 트랙 라인은 #gps-svg 안 <path>, 외부 레이어도 #layer-svg 안 <path>
+//     - PDF 화면은 #pdf-canvas (canvas 요소)
+//     - 사용자가 이런 시각 요소를 탭하면 e.target이 MA가 아닌 자식 요소가 됨
+//     - 그 결과 handleTap 호출 자체가 차단되어 hit-test 시도조차 못 함
+//   v0.368에서 hitTestTracks를 추가했지만 진입이 차단되어 무용지물이었음
+//   수정: UI 인터랙티브 요소(button/input/패널 등)만 명시적 차단, 시각 요소는 통과
+function _isInteractiveTarget(t){
+  if(!t || !t.closest) return false;
+  // 인터랙티브 UI 요소 차단 (버튼/입력/패널/팝업 등 — 자체 클릭 처리 있음)
+  return !!t.closest('button, input, select, textarea, a, '
+    + '.bbtn, .is-fab2, .fpanel, .popup-toolbar, .panel, .side-panel, '
+    + '#bottom-sheet, #right-bottom-fab, #zoom-wrap, #gps-pill, '
+    + '#scale-bar, #hamburger-menu, #layer-popup, #longpress-menu, '
+    + '#hamburger-btn, #compass-btn, #install-bar');
+}
 MA.addEventListener('touchstart', e => {
   if(e.touches.length===1){ tapT=Date.now(); tapX=e.touches[0].clientX; tapY=e.touches[0].clientY; tapMoved=false; }
 }, {passive:true});
 MA.addEventListener('touchmove', e => { if(e.touches.length===1&&Math.hypot(e.touches[0].clientX-tapX,e.touches[0].clientY-tapY)>8) tapMoved=true; }, {passive:true});
 MA.addEventListener('touchend', e => {
   if(!tapMoved && Date.now()-tapT < 300 && e.changedTouches.length===1
-     && e.target === MA)
+     && !_isInteractiveTarget(e.target))
     handleTap(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
 });
 MA.addEventListener('click', e => {
-  if(e.target !== MA) return; // 버튼 버블링 무시
+  if(_isInteractiveTarget(e.target)) return; // UI 요소만 무시 (버튼 등)
   handleTap(e.clientX, e.clientY);
 });
 
@@ -7577,7 +7612,11 @@ function drawGPS(){
       pa.setAttribute('fill','none');
       pa.setAttribute('stroke',t.color||'#ff7814');
       // v0.242: 저장된 트랙도 화면 4px 고정 (녹화 중 트랙과 일관성)
-      pa.setAttribute('stroke-width',String(4/scale));
+      // v0.369: vector-effect="non-scaling-stroke" 적용 — 브라우저가 자동으로 stroke를 화면 픽셀 단위로 유지
+      //   이전: stroke-width=4/scale 로 보정 → scale>=4일 때 sub-pixel(<1px) 흐림 발생
+      //   수정: stroke-width=4 고정 + vector-effect로 transform 영향 제거 → 항상 화면 4px 선명
+      pa.setAttribute('stroke-width','4');
+      pa.setAttribute('vector-effect','non-scaling-stroke');
       pa.setAttribute('stroke-linecap','round');
       pa.setAttribute('stroke-linejoin','round');
       pa.setAttribute('opacity','0.9');
@@ -7595,9 +7634,11 @@ function drawGPS(){
       pa.setAttribute('stroke',trkCurrentColor||'#39FF14');
       // v0.242: 화면 고정 4px (Google/Strava 표준 패턴)
       // PDF 좌표(stroke-width=2)는 줌 4× 시 8px로 너무 굵어지는 문제 해결
-      pa.setAttribute('stroke-width',String(4/scale));
+      // v0.369: non-scaling-stroke로 더 안정적 — sub-pixel 흐림 제거
+      pa.setAttribute('stroke-width','4');
+      pa.setAttribute('vector-effect','non-scaling-stroke');
       pa.setAttribute('stroke-linecap','round');
-      pa.setAttribute('stroke-dasharray',String(8/scale)+','+String(4/scale));
+      pa.setAttribute('stroke-dasharray','8,4');
       pa.setAttribute('opacity','0.95');
       svg.appendChild(pa);
     }
@@ -14320,7 +14361,8 @@ function renderTrackList(){
 
   let html2 = '';
   Object.keys(grps).forEach(date=>{
-    html2 += `<div style="font-size:10px;color:var(--text3);padding:4px 2px 2px;font-family:var(--mono)">${date} (${grps[date].length}${T('trk_count')})</div>`;
+    // v0.370: 트랙 날짜 헤더도 가독성 개선 — 10 → 12px, 메모 헤더와 일관성
+    html2 += `<div style="font-size:12px;color:var(--text2);padding:6px 2px 4px;font-family:var(--mono);font-weight:600;letter-spacing:.05em">📅 ${date} (${grps[date].length}${T('trk_count')})</div>`;
     html2 += grps[date].map(t=>`
       <div class="track-item" data-track-id="${t.id}" style="${t.visible?'':'opacity:0.55'}">
         <div class="track-color-swatch" style="background:${t.color}" onclick="toggleTrackVisible('${t.id}');event.stopPropagation()" title="${T('trk_vis_title')}"></div>
@@ -14994,8 +15036,11 @@ function editMemoText(memoId){
       <h3 style="font-size:13px;font-weight:700;color:var(--amber)">✏️ ${T('memo_edit_title')}</h3>
       <button title="편집 닫기" onclick="closeEditMemo()" style="background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer">×</button>
     </div>
-    <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:6px">
+    <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:6px">
       📅 ${m.date} ${m.time}${m.lat?' | '+m.lat.toFixed(5)+', '+m.lon.toFixed(5):''}
+    </div>
+    <div style="font-size:10px;color:var(--text3);margin-bottom:6px;line-height:1.4">
+      💡 첫 줄이 메모 제목이 됩니다. 다음 줄부터는 상세 내용을 적으세요.
     </div>
     <textarea id="memo-edit-input"
       style="width:100%;min-height:80px;background:var(--bg3);border:.5px solid var(--border2);
@@ -16282,7 +16327,13 @@ function renderMemoList(){
     // v0.230: photoImgTag 헬퍼 사용 (옛 dataURL / 새 photoId 모두 처리)
     const photoThumb = (m.photos&&m.photos.length)
       ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">${m.photos.slice(0,4).map(p=>photoImgTag(p, 'style="width:44px;height:44px;object-fit:cover;border-radius:4px;border:.5px solid var(--border)"')).join('')}${m.photos.length>4?`<div style="font-size:9px;color:var(--text3);align-self:center">+${m.photos.length-4}</div>`:''}</div>` : '';
-    return `<div class="memo-item" id="mi-${m.id}"><div class="memo-body" style="display:flex;gap:6px;align-items:flex-start">${pinIcon}<div>${m.lat?'<div class="memo-coords">'+m.lat.toFixed(5)+', '+m.lon.toFixed(5)+altLabel+'</div>':''}<div class="memo-text">${escHTML(m.text)}</div>${photoThumb}</div></div><div style="display:flex;flex-direction:row;gap:2px;align-self:center;flex-shrink:0"><button class="memo-del" onclick="editMemoText('${m.id}')"
+    // v0.370: 표시 우선순위 — 제목(첫 줄) → 좌표 (사용자 보고: "메모 입력하면 첫 단어로 자동 설정")
+    //   _displayTitle: text 첫 줄을 짧게 잘라 제목으로 표시 (Apple Notes/Notion UX 패턴)
+    //   좌표는 부제(.memo-subtitle)로 표시 — 작아도 의미 유지
+    const _title = _displayTitle(m);
+    const _hasText = m.text && m.text.trim().length > 0;
+    const _coordsStr = m.lat != null ? `${m.lat.toFixed(5)}, ${m.lon.toFixed(5)}${altLabel}` : '';
+    return `<div class="memo-item" id="mi-${m.id}"><div class="memo-body" style="display:flex;gap:6px;align-items:flex-start">${pinIcon}<div style="flex:1;min-width:0"><div class="memo-text">${escHTML(_title)}</div>${_coordsStr && _hasText ? '<div class="memo-subtitle">'+_coordsStr+'</div>' : ''}${photoThumb}</div></div><div style="display:flex;flex-direction:row;gap:2px;align-self:center;flex-shrink:0"><button class="memo-del" onclick="editMemoText('${m.id}')"
         style="color:var(--amber)" title="${T('memo_edit_title')||'편집'}">✏️</button>
       <button class="memo-del" onclick="tapMemoPinToEdit('${m.id}')"
         style="color:var(--blue)" title="${T('memo_move_pin')||'위치'}">📌</button>
@@ -16291,6 +16342,37 @@ function renderMemoList(){
   }).join('')}</div>`).join('');
   // v0.230: lazy 사진 로드 (data-photo-id가 있는 img들)
   hydratePhotoImgs(body);
+}
+
+// v0.370: 메모 표시용 제목 추출 (Apple Notes 스타일)
+//   우선순위:
+//     1. text 비어있지 않으면 첫 줄(개행 전까지)을 사용
+//        - 30자 이하: 그대로 (짧은 제목)
+//        - 30자 초과: 28자 잘라서 … 표시 (긴 메모의 첫 부분)
+//     2. text 비어있으면 좌표 (lat, lon)
+//     3. 둘 다 없으면 '(메모)'
+//   이유: 메모 데이터 구조에 별도 title 필드를 추가하면 회귀 위험 크고
+//        모든 export/import/IDB 영향 → 표시 로직만 변경하여 안전하게 해결
+//        사용자가 첫 줄을 짧게 쓰면 자연히 제목처럼 보임
+function _displayTitle(memo){
+  // v0.370: 메모 표시용 제목 추출 (Apple Notes 스타일)
+  //   다국어: '(메모)' 폴백은 T() 헬퍼 시도 → 없으면 한국어 기본
+  const _fallback = (typeof T === 'function' && T('memo_default')) || '(메모)';
+  if(!memo) return _fallback;
+  const txt = (memo.text || '').trim();
+  if(txt){
+    const firstLine = txt.split(/\r?\n/)[0].trim();
+    if(firstLine.length === 0){
+      // 첫 줄이 빈 줄이면 두 번째 줄 시도
+      const lines = txt.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+      if(lines.length > 0) return lines[0].length <= 30 ? lines[0] : lines[0].slice(0,28)+'…';
+    }
+    return firstLine.length <= 30 ? firstLine : firstLine.slice(0,28)+'…';
+  }
+  if(memo.lat != null && memo.lon != null){
+    return `${memo.lat.toFixed(5)}, ${memo.lon.toFixed(5)}`;
+  }
+  return _fallback;
 }
 
 /* ─── DEMO / IMPORT ─── */
@@ -22077,7 +22159,7 @@ function showMemoIDCard(memo){
   if(memo.time)         history.push({time: memo.time.replace('T',' ').slice(0,16), event:'생성'});
   if(memo.modifiedTime) history.push({time: memo.modifiedTime.replace('T',' ').slice(0,16), event:'수정'});
   showIDCard({
-    type:'memo', id: memo.id, name: memo.text||'메모', layerName:'메모',
+    type:'memo', id: memo.id, name: _displayTitle(memo), layerName:'메모',
     lat, lon,
     props:[
       // v0.293 Phase 5: 활성 스키마의 속성 먼저 (있을 때만)
@@ -22091,6 +22173,10 @@ function showMemoIDCard(memo){
       ['정확도', memo.acc != null ? '±' + Math.round(memo.acc) + ' m' : null],
       ['사진 수', memo.photos?.length ? memo.photos.length + '개' : null],
       ['레이어명', memo.layerName],
+      // v0.370: 메모 내용 전체를 props에 추가
+      //   이전: name이 본문 전체였는데, _displayTitle로 짧게 자르므로 전체 내용을 별도 표시 필요
+      //   '내용' 행에 전체 텍스트가 wrap되어 보임 (긴 메모도 모두 확인 가능)
+      ['내용', memo.text || null],
     ],
     photos: memo.photos || [],
     viewPhotoFn: 'viewFotoFromMemo',
