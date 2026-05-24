@@ -1005,7 +1005,7 @@ document.addEventListener('webkitfullscreenchange', _onFsChange);
   <div style="font-size:80px;filter:drop-shadow(0 4px 24px rgba(0,180,80,.45))">🌴</div>
   <div style="font-size:32px;font-weight:800;letter-spacing:2px;color:#fff;
               text-shadow:0 2px 16px rgba(0,200,100,.5)">PalmMap</div>
-  <div id="splash-ver" style="font-size:13px;color:rgba(255,255,255,.45);letter-spacing:1px;margin-top:-8px">v0.371</div>
+  <div id="splash-ver" style="font-size:13px;color:rgba(255,255,255,.45);letter-spacing:1px;margin-top:-8px">v0.383</div>
 </div>
 
 <!-- v0.247: 마지막 프로젝트 복원 다이얼로그 -->
@@ -1051,7 +1051,7 @@ document.addEventListener('webkitfullscreenchange', _onFsChange);
     <div style="font-size:22px">🌴</div>
     <div>
       <div style="font-size:14px;font-weight:700;color:var(--green2);letter-spacing:-.2px">PALM MAP</div>
-      <div id="app-ver" style="font-size:10px;color:var(--text3);font-family:var(--mono)">v0.371</div>
+      <div id="app-ver" style="font-size:10px;color:var(--text3);font-family:var(--mono)">v0.383</div>
     </div>
     <button title="메뉴" onclick="toggleHamburger()" style="margin-left:auto;background:none;border:none;color:var(--text3);font-size:22px;cursor:pointer;line-height:1;padding:4px">×</button>
   </div>
@@ -1479,16 +1479,36 @@ document.addEventListener('webkitfullscreenchange', _onFsChange);
   
 
   <!-- 트래킹 정보 바 (트랙 중 표시) -->
+  <!-- v0.374: track-info-bar 디자인 변경 (안 2 - Komoot 스타일)
+       구조: [●] [HH:MM:SS]  |  [🕐] [HH:MM]
+       - 좌: 빨간 점 + 녹화 시간 (HH:MM:SS) — 1초마다 갱신
+       - 구분선 (반투명 흰색)
+       - 우: 시계 아이콘 + 시스템 시간 (HH:MM) — 1초마다 갱신
+       동일한 시각 위계 (둘 다 16px monospace) — 농장 작업자가 마감 시간과 녹화 시간 동시 확인
+       크기는 기존 위젯과 거의 동일 (회귀 최소) -->
   <div id="track-info-bar" style="display:none;position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:85;
-    background:rgba(0,0,0,.62);color:#fff;border-radius:10px;padding:7px 18px;font-size:16px;
-    font-family:Arial,sans-serif;display:none;align-items:center;gap:6px;white-space:nowrap">
-    <span style="color:#f66;font-size:13px">●</span>
-    <span id="tib-hh" class="is-val-lg">00</span>
-    <span class="is-unit">h</span>
-    <span id="tib-mm" class="is-val-lg">00</span>
-    <span class="is-unit">m</span>
-    <span id="tib-ss" class="is-val-lg">00</span>
-    <span class="is-unit">s</span>
+    background:rgba(0,0,0,.62);color:#fff;border-radius:10px;padding:8px 14px;
+    font-family:Arial,sans-serif;align-items:center;gap:12px;white-space:nowrap">
+    <!-- 좌: 녹화 시간 -->
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="width:8px;height:8px;border-radius:50%;background:#ef4444;display:inline-block;flex-shrink:0"></span>
+      <span style="font-family:'Courier New',monospace;font-size:16px;font-weight:600;letter-spacing:0.5px;line-height:1">
+        <span id="tib-hh">00</span>:<span id="tib-mm">00</span>:<span id="tib-ss">00</span>
+      </span>
+    </div>
+    <!-- 구분선 -->
+    <div style="width:1px;height:18px;background:rgba(255,255,255,0.25);flex-shrink:0"></div>
+    <!-- 우: 시스템 시간 -->
+    <div style="display:flex;align-items:center;gap:5px">
+      <!-- 시계 아이콘 (SVG, 외부 폰트 없이) -->
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+        <circle cx="12" cy="12" r="10"></circle>
+        <polyline points="12 6 12 12 16 14"></polyline>
+      </svg>
+      <span style="font-family:'Courier New',monospace;font-size:16px;font-weight:600;color:rgba(255,255,255,0.92);letter-spacing:0.5px;line-height:1">
+        <span id="tib-clock-hh">--</span>:<span id="tib-clock-mm">--</span>
+      </span>
+    </div>
   </div>
 
   <!-- 트랙 정보 오버레이 (GPS 위치 아래, 트래킹 중) -->
@@ -6669,6 +6689,8 @@ function _stopAllTrackingUI(){
 
   // 11. trkStartTime 초기화 (타이머 정지)
   trkStartTime = null;
+  // v0.373: 시계 타이머 안전망 정리 (어떤 경로로든 트래킹이 멈추면 시계도 정지)
+  if(_trkBarTimer){ clearInterval(_trkBarTimer); _trkBarTimer=null; }
 }function setGPSActive(on){
   gpsOn = on;
   // v0.242: GPS ON 상태를 localStorage에 저장 (자동 재개용)
@@ -7603,43 +7625,63 @@ function drawGPS(){
   const S=scale||1;
 
   // ── 저장된 트랙 ──────────────────────────────────────────────
+  // v0.375: 3D 명암 효과 — 어두운 그림자 + 밝은 본체 2겹 (CarryMap/Strava 패턴)
+  //   효과: 트랙이 지도 위에 살짝 떠 있는 듯한 입체감
+  //   순서: 그림자 먼저 그리고 본체 위에 올림 (z-order 자연 처리)
   if(slot && calibPts.length>=2){
     (slot.tracks||[]).filter(t=>t.visible&&(t.pts||[]).length>=2).forEach(t=>{
       const pts=t.pts.map(p=>ll2c(p.lat,p.lon)).filter(Boolean);
       if(pts.length<2) return;
+      const d='M'+pts.map(p=>p.px+','+p.py).join('L');
+      // ── 그림자 layer (어둡고 약간 두꺼움) ──
+      const sh=mkSVG('path');
+      sh.setAttribute('d',d);
+      sh.setAttribute('fill','none');
+      sh.setAttribute('stroke','#000');
+      sh.setAttribute('stroke-width','2.5');     // 본체보다 1px 두꺼움
+      sh.setAttribute('stroke-linecap','round');
+      sh.setAttribute('stroke-linejoin','round');
+      sh.setAttribute('opacity','0.55');         // 반투명 그림자
+      svg.appendChild(sh);
+      // ── 본체 layer (트랙 색상, 얇음) ──
       const pa=mkSVG('path');
-      pa.setAttribute('d','M'+pts.map(p=>p.px+','+p.py).join('L'));
+      pa.setAttribute('d',d);
       pa.setAttribute('fill','none');
       pa.setAttribute('stroke',t.color||'#ff7814');
-      // v0.242: 저장된 트랙도 화면 4px 고정 (녹화 중 트랙과 일관성)
-      // v0.369: vector-effect="non-scaling-stroke" 적용 — 브라우저가 자동으로 stroke를 화면 픽셀 단위로 유지
-      //   이전: stroke-width=4/scale 로 보정 → scale>=4일 때 sub-pixel(<1px) 흐림 발생
-      //   수정: stroke-width=4 고정 + vector-effect로 transform 영향 제거 → 항상 화면 4px 선명
-      pa.setAttribute('stroke-width','4');
-      pa.setAttribute('vector-effect','non-scaling-stroke');
+      pa.setAttribute('stroke-width','1.5');
       pa.setAttribute('stroke-linecap','round');
       pa.setAttribute('stroke-linejoin','round');
-      pa.setAttribute('opacity','0.9');
+      pa.setAttribute('opacity','1');
       svg.appendChild(pa);
     });
   }
 
   // ── 현재 녹화 중 트랙 ────────────────────────────────────────
+  // v0.375: 3D 명암 효과 적용 — 저장 트랙과 동일 패턴
+  //   녹화 중 본체는 점선(dasharray)이라 그림자도 같은 dash 사용해야 일관됨
   if(GpsState.isTracking && trkPts.length>=2 && calibPts.length>=2){
     const pts=trkPts.map(p=>ll2c(p.lat,p.lon)).filter(Boolean);
     if(pts.length>=2){
+      const d='M'+pts.map(p=>p.px+','+p.py).join('L');
+      // ── 그림자 layer ──
+      const sh=mkSVG('path');
+      sh.setAttribute('d',d);
+      sh.setAttribute('fill','none');
+      sh.setAttribute('stroke','#000');
+      sh.setAttribute('stroke-width','2.5');
+      sh.setAttribute('stroke-linecap','round');
+      sh.setAttribute('stroke-dasharray','3,1.5');
+      sh.setAttribute('opacity','0.55');
+      svg.appendChild(sh);
+      // ── 본체 layer ──
       const pa=mkSVG('path');
-      pa.setAttribute('d','M'+pts.map(p=>p.px+','+p.py).join('L'));
+      pa.setAttribute('d',d);
       pa.setAttribute('fill','none');
       pa.setAttribute('stroke',trkCurrentColor||'#39FF14');
-      // v0.242: 화면 고정 4px (Google/Strava 표준 패턴)
-      // PDF 좌표(stroke-width=2)는 줌 4× 시 8px로 너무 굵어지는 문제 해결
-      // v0.369: non-scaling-stroke로 더 안정적 — sub-pixel 흐림 제거
-      pa.setAttribute('stroke-width','4');
-      pa.setAttribute('vector-effect','non-scaling-stroke');
+      pa.setAttribute('stroke-width','1.5');
       pa.setAttribute('stroke-linecap','round');
-      pa.setAttribute('stroke-dasharray','8,4');
-      pa.setAttribute('opacity','0.95');
+      pa.setAttribute('stroke-dasharray','3,1.5');
+      pa.setAttribute('opacity','1');
       svg.appendChild(pa);
     }
     const ep=document.getElementById('trk-pts'); if(ep) ep.textContent=trkPts.length;
@@ -7888,29 +7930,44 @@ function drawGPS(){
 
 // 24×24 viewBox 기준 SVG path 정의
 // 각 아이콘은 핀의 머리(원형 영역) 안에 자리잡도록 중앙 정렬
+// v0.381: cx, cy 추가 (path 좌표계 24x24 안에서의 실제 시각 중심)
+//   사용자 보고: "별의 위치가 핀 원 중심에 있지 않고 너무 아래쪽에 있음"
+//   원인: 일부 아이콘은 path 디자인이 (12, 12) 중심이 아님 (예: harvest=12,10.5 / vehicle=12,10.5)
+//   해결: 각 path별 실제 중심을 명시 → 정렬 시 보정
+//   기본값 (cx, cy 생략 시): (12, 12)
 const PIN_ICONS = {
   // 기본
-  pin:      { label: '핀',      path: 'M12 4 L12 16 M12 16 L8 14 L8 8 L16 8 L16 14 L12 16 Z' },
+  pin:      { label: '핀',      cy: 10,   path: 'M12 4 L12 16 M12 16 L8 14 L8 8 L16 8 L16 14 L12 16 Z' },
   note:     { label: '메모',    path: 'M7 6 L17 6 L17 18 L7 18 Z M9 9 L15 9 M9 12 L15 12 M9 15 L13 15' },
-  circle:   { label: '원',      path: 'M12 6 a6 6 0 1 0 0.01 0 Z' },
+  circle:   { label: '원',      cy: 12,   path: 'M12 6 a6 6 0 1 0 0.01 0 Z' },
   // 농장 특화
   palm:     { label: '야자수',  path: 'M12 3 C 9 3, 6 4, 6 7 C 6 6, 8 6, 12 8 C 16 6, 18 6, 18 7 C 18 4, 15 3, 12 3 Z M11 8 L11 21 L13 21 L13 8 Z' },
   tree:     { label: '나무',    path: 'M12 3 L6 12 L9 12 L6 17 L10 17 L10 21 L14 21 L14 17 L18 17 L15 12 L18 12 Z' },
   block:    { label: '블록',    path: 'M5 6 L19 6 L19 18 L5 18 Z M5 12 L19 12 M12 6 L12 18' },
   // 작업
-  worker:   { label: '작업자',  path: 'M12 5 a3 3 0 1 0 0.01 0 Z M7 21 L7 15 L9 13 L15 13 L17 15 L17 21' },
-  vehicle:  { label: '차량',    path: 'M4 14 L4 9 L8 5 L16 5 L20 9 L20 14 L16 14 L16 11 L8 11 L8 14 Z M6 14 a2 2 0 1 0 0.01 0 Z M18 14 a2 2 0 1 0 0.01 0 Z' },
-  harvest:  { label: '수확',    path: 'M12 3 L14 8 L19 9 L15 13 L16 18 L12 16 L8 18 L9 13 L5 9 L10 8 Z' },
+  worker:   { label: '작업자',  cy: 11.5, path: 'M12 5 a3 3 0 1 0 0.01 0 Z M7 21 L7 15 L9 13 L15 13 L17 15 L17 21' },
+  vehicle:  { label: '차량',    cy: 10.5, path: 'M4 14 L4 9 L8 5 L16 5 L20 9 L20 14 L16 14 L16 11 L8 11 L8 14 Z M6 14 a2 2 0 1 0 0.01 0 Z M18 14 a2 2 0 1 0 0.01 0 Z' },
+  harvest:  { label: '수확',    cy: 10.5, path: 'M12 3 L14 8 L19 9 L15 13 L16 18 L12 16 L8 18 L9 13 L5 9 L10 8 Z' },
   // 경고
-  warning:  { label: '경고',    path: 'M12 4 L22 20 L2 20 Z M12 10 L12 15 M12 17 L12 18' },
-  bug:      { label: '해충',    path: 'M12 6 a4 4 0 1 0 0.01 0 Z M8 11 L4 9 M16 11 L20 9 M8 14 L4 16 M16 14 L20 16 M12 14 L12 19' },
+  warning:  { label: '경고',    cy: 14,   path: 'M12 4 L22 20 L2 20 Z M12 10 L12 15 M12 17 L12 18' },
+  bug:      { label: '해충',    cy: 10.5, path: 'M12 6 a4 4 0 1 0 0.01 0 Z M8 11 L4 9 M16 11 L20 9 M8 14 L4 16 M16 14 L20 16 M12 14 L12 19' },
   disease:  { label: '병해',    path: 'M12 3 L12 21 M3 12 L21 12 M5 5 L19 19 M19 5 L5 19' },
   // 시설
   road:     { label: '도로',    path: 'M9 3 L7 21 M15 3 L17 21 M11 8 L13 8 M11 13 L13 13 M11 18 L13 18' },
-  water:    { label: '물',      path: 'M12 3 C 8 9, 5 13, 5 16 A7 7 0 1 0 19 16 C 19 13, 16 9, 12 3 Z' },
+  water:    { label: '물',      cx: 12, cy: 13, path: 'M12 3 C 8 9, 5 13, 5 16 A7 7 0 1 0 19 16 C 19 13, 16 9, 12 3 Z' },
   // 마커
-  flag:     { label: '깃발',    path: 'M6 3 L6 21 M6 4 L18 4 L15 9 L18 14 L6 14' },
-  star:     { label: '별',      path: 'M12 3 L14.5 9 L21 9.5 L16 14 L17.5 21 L12 17.5 L6.5 21 L8 14 L3 9.5 L9.5 9 Z' }
+  flag:     { label: '깃발',    cx: 12,   path: 'M6 3 L6 21 M6 4 L18 4 L15 9 L18 14 L6 14' },
+  star:     { label: '별',      path: 'M12 3 L14.5 9 L21 9.5 L16 14 L17.5 21 L12 17.5 L6.5 21 L8 14 L3 9.5 L9.5 9 Z' },
+  // v0.382: 조합 1 (도구 정통) — 새 4개 아이콘
+  //   각 path는 24x24 viewBox 안에서 시각 중심이 (12, 12)에 오도록 설계
+  // 수확 — 낫/machete (사선 칼 + 손잡이)
+  machete:  { label: '낫',      path: 'M19 5 L21 7 L9 19 L5 19 L5 15 Z M7 17 L5 19' },
+  // 시비 — 알약 (가로 캡슐 + 중앙 분할선)
+  pill:     { label: '알약',    path: 'M5 12 a4 4 0 1 0 0 0.01 L19 12.01 a4 4 0 1 0 0 -0.01 Z M12 8 L12 16' },
+  // 무육 — 가위 (두 원 + X자 칼날)
+  scissors: { label: '가위',    path: 'M7 6 a2.5 2.5 0 1 0 0.01 0 Z M7 18 a2.5 2.5 0 1 0 0.01 0 Z M9 8 L19 18 M9 16 L19 6' },
+  // QC — 돋보기 (원 + 손잡이)
+  magnifier:{ label: '돋보기',  cx: 10.5, cy: 10.5, path: 'M10 4 a6 6 0 1 0 0.01 0 Z M14.5 14.5 L20 20' }
 };
 
 // 8개 의미별 색상
@@ -8124,14 +8181,24 @@ function _drawIconPin(gEl, sx, sy, baseR, visual, numberLabel, hasPhotos, isNear
   }
 
   // 4. 아이콘 (머리 안쪽에 흰색으로) — headCX, headCY 사용
+  // v0.380: 아이콘 크기 + stroke 버그 수정
+  // v0.381: path 중심 보정 (사용자 보고: "별의 위치가 핀 원 중심에 있지 않고 너무 아래쪽")
+  //   원인: 일부 아이콘 path가 (12,12) 중심이 아님 (예: harvest=12,10.5 → 위로 1.5 어긋남)
+  //   해결: 각 PIN_ICONS 항목의 cx/cy 메타로 path 실제 중심을 명시 → 정렬 시 보정
+  //   기본값: cx=12, cy=12 (24x24 viewBox 중앙)
   const iconDef = PIN_ICONS[visual.icon] || PIN_ICONS.pin;
   if(iconDef && iconDef.path){
     // 깃발 스타일은 깃발 크기에 맞춰 더 작게
-    const iconR = (pinStyle === 'flag') ? r * 0.65 : r * 1.35;
+    const iconR = (pinStyle === 'flag') ? r * 0.55 : r * 0.85;
     const iconScale = (iconR * 2) / 24;
     const iconG = mkSVG('g');
-    const tx = headCX - iconR;
-    const ty = headCY - iconR;
+    // v0.381: path 중심 보정 — cx/cy 메타 활용
+    //   변환: path 좌표 (cx, cy)가 화면 (headCX, headCY)에 정렬되도록
+    //   tx = headCX - cx * iconScale (기존: headCX - 12 * iconScale = headCX - iconR)
+    const pathCX = (iconDef.cx != null) ? iconDef.cx : 12;
+    const pathCY = (iconDef.cy != null) ? iconDef.cy : 12;
+    const tx = headCX - pathCX * iconScale;
+    const ty = headCY - pathCY * iconScale;
     iconG.setAttribute('transform',
       `translate(${tx}, ${ty}) scale(${iconScale})`);
     iconG.setAttribute('pointer-events', 'none');
@@ -8139,16 +8206,21 @@ function _drawIconPin(gEl, sx, sy, baseR, visual, numberLabel, hasPhotos, isNear
     iconPath.setAttribute('d', iconDef.path);
     iconPath.setAttribute('fill', 'none');
     iconPath.setAttribute('stroke', '#ffffff');
-    iconPath.setAttribute('stroke-width', String(2.2 / iconScale));
+    // stroke-width 화면 단위 고정
+    //   화면 stroke = strokeUnits * iconScale * S → strokeUnits = 원하는화면px / (iconScale * S)
+    iconPath.setAttribute('stroke-width', String(1.6 / (iconScale * S)));
     iconPath.setAttribute('stroke-linecap', 'round');
     iconPath.setAttribute('stroke-linejoin', 'round');
     // circle / star 등 닫힌 도형은 fill도 흰색
+    // v0.382: 조합 1 신규 아이콘 — machete(낫), pill(알약)은 면적 도형이라 fill 적합
+    //   scissors(가위), magnifier(돋보기)는 stroke만이 더 깔끔 (안쪽 비어있어야 함)
     if(visual.icon === 'circle' || visual.icon === 'star' ||
        visual.icon === 'water' || visual.icon === 'flag' ||
        visual.icon === 'palm'  || visual.icon === 'harvest' ||
-       visual.icon === 'warning' || visual.icon === 'tree'){
+       visual.icon === 'warning' || visual.icon === 'tree' ||
+       visual.icon === 'machete' || visual.icon === 'pill'){
       iconPath.setAttribute('fill', '#ffffff');
-      iconPath.setAttribute('stroke-width', String(0.8 / iconScale));
+      iconPath.setAttribute('stroke-width', String(0.5 / (iconScale * S)));
     }
     iconG.appendChild(iconPath);
     gEl.appendChild(iconG);
@@ -8168,17 +8240,24 @@ function _drawIconPin(gEl, sx, sy, baseR, visual, numberLabel, hasPhotos, isNear
   }
 
   // 6. 라벨 — 사용자 정의 라벨 우선, 없으면 번호
+  // v0.383: 폰트 크기 + stroke 화면 단위 일정 (사용자 보고: "화면 확대/축소 하더라도 숫자 크기 일정")
+  //   이전 버그: Math.max(7, 8/S * sizeMult) — 캔버스 좌표 7 하한 강제
+  //              → 줌 5배 시 캔버스 7 = 화면 35px, 줌 10배 시 화면 70px (글자 폭발)
+  //   수정: font-size = 11/S (캔버스) → 화면 11px 일정 (sizeMult 적용)
+  //         stroke-width = 1.6/S → 화면 1.6px (글자 윤곽선 일정)
   const displayLabel = visual.label || numberLabel;
   if(displayLabel){
+    const screenFontPx = 11 * sizeMult;  // 화면 폰트 (sizeMult: s=0.8, m=1.0, l=1.3)
+    const screenStrokePx = 1.6 * sizeMult;
     const txt = mkSVG('text');
     txt.setAttribute('x', String(headCX + r * 0.85));
     txt.setAttribute('y', String(headCY - r * 0.85));
-    txt.setAttribute('font-size', String(Math.max(7, 8 / S * sizeMult)));
+    txt.setAttribute('font-size', String(screenFontPx / S));   // 캔버스 = 화면/S → 화면 = screenFontPx 일정
     txt.setAttribute('text-anchor', 'middle');
     txt.setAttribute('dominant-baseline', 'middle');
     txt.setAttribute('fill', colDark);
     txt.setAttribute('stroke', '#ffffff');
-    txt.setAttribute('stroke-width', String(2/S));
+    txt.setAttribute('stroke-width', String(screenStrokePx / S));
     txt.setAttribute('paint-order', 'stroke');
     txt.setAttribute('font-weight', '700');
     txt.setAttribute('font-family', 'system-ui,Arial,sans-serif');
@@ -8327,7 +8406,7 @@ const BUILTIN_SCHEMAS = [
   // 3. 수확량 기록 (TBS)
   {
     id: 'harvest_yield_v1',
-    name: '🌾 수확량 기록',
+    name: '🔪 수확량 기록',
     description: '일별 블록별 수확량 (TBS = 신선 과방 단위)',
     builtin: true,
     appliesTo: ['placemark'],
@@ -8360,7 +8439,7 @@ const BUILTIN_SCHEMAS = [
   // 4. 시비 작업
   {
     id: 'fertilization_v1',
-    name: '🧪 시비 작업',
+    name: '💊 시비 작업',
     description: '비료 살포 기록 (반기/연간 비료 계획 추적)',
     builtin: true,
     appliesTo: ['placemark'],
@@ -8422,7 +8501,7 @@ const BUILTIN_SCHEMAS = [
   // 6. QC / 병해충 점검
   {
     id: 'qc_pest_v1',
-    name: '🔬 QC / 병해충 점검',
+    name: '🔍 QC / 병해충 점검',
     description: '병해충 모니터링 + 방제 작업 (발생 위치별 정밀 추적)',
     builtin: true,
     appliesTo: ['placemark'],
@@ -8491,7 +8570,7 @@ const BUILTIN_SCHEMAS = [
   // 8. 기타 작업 / 일반
   {
     id: 'general_misc_v1',
-    name: '📝 기타 작업',
+    name: '🚩 기타 작업',
     description: '교육/검사/측량 등 기타 작업 (위 7개에 해당하지 않는 것)',
     builtin: true,
     appliesTo: ['placemark'],
@@ -8868,9 +8947,86 @@ function openAttrEdit(placemarkId, overrideSchemaId){
     values: { ...(pm.attributes || {}) }
   };
 
+  // v0.376: Phase 1 — Hard defaults 자동 채움
+  //   사용자 보고: "오늘 날짜, 해당 위치의 블록은 자동으로 채워질 수 있게"
+  //   조건: 이미 값이 있으면 덮어쓰지 않음 (기존 데이터 보호)
+  //   매핑: placemark의 직접 필드(pm.blockCode, pm.date) → 스키마 필드 ID(block_code, harvest_date 등)
+  _applyHardDefaults(window._attrEditState.values, schema, pm);
+
   _renderAttrEditForm();
   const panel = document.getElementById('attr-edit-panel');
   if(panel) panel.classList.add('show');
+}
+
+// v0.376: Phase 1 — Hard defaults 헬퍼
+//   각 스키마 필드 ID별로 안전하게 알 수 있는 default를 채움
+//   원칙:
+//     - 이미 값이 있으면 절대 덮어쓰지 않음 (사용자가 입력한 값 보호)
+//     - placemark의 직접 필드를 우선 활용 (pm.blockCode, pm.date, pm.time 등)
+//     - 블록 자동 매칭이 가능하면 즉시 채움 (_findBlockFeatureAt)
+//     - 명백한 기본 상태값 (작업 완료율 100, 우선순위 보통, 상태 진행 중)만 채움
+function _applyHardDefaults(values, schema, pm){
+  if(!values || !schema || !pm) return;
+  // 오늘 날짜 (ISO 형식 YYYY-MM-DD — type="date" input과 호환)
+  const _today = (typeof pm.date === 'string' && pm.date)
+    ? pm.date
+    : new Date().toISOString().slice(0,10);
+  // 블록 코드 — pm에 이미 있으면 사용, 없으면 위치로 자동 매칭 시도
+  let _blockCode = pm.blockCode || '';
+  if(!_blockCode && pm.lat != null && pm.lon != null && typeof _findBlockFeatureAt === 'function'){
+    try {
+      const found = _findBlockFeatureAt(pm.lat, pm.lon);
+      if(found && found.blockCode) _blockCode = found.blockCode;
+    } catch(_){}
+  }
+
+  for(const f of schema.fields){
+    // 이미 값이 있으면 건너뜀 (사용자 입력 보호)
+    if(values[f.id] !== undefined && values[f.id] !== '' && values[f.id] !== null) continue;
+
+    // ── 날짜 필드 (모든 스키마 공통) ──
+    if(f.id === 'harvest_date' || f.id === 'fert_date' || f.id === 'work_date'
+       || f.id === 'inspection_date'){
+      values[f.id] = _today;
+      continue;
+    }
+
+    // ── 블록 코드 (수확 스키마) ──
+    if(f.id === 'block_code' && _blockCode){
+      values[f.id] = _blockCode;
+      continue;
+    }
+
+    // ── 기본 상태값 (안전한 명확한 기본) ──
+    // 작업 완료율 — 새 작업은 기본 100% (사용자가 미완료면 줄임)
+    //   주의: 'coverage_pct'가 시비/무육에 있음. 수확에는 없음.
+    if(f.id === 'coverage_pct'){
+      values[f.id] = 100;
+      continue;
+    }
+    // QC 상태 — 새 점검은 "진행 중"으로 시작
+    if(f.id === 'qc_status'){
+      values[f.id] = '진행 중';
+      continue;
+    }
+    // 인프라 작업 상태 — 새 작업은 "진행 중"
+    if(f.id === 'infra_status'){
+      values[f.id] = '진행 중';
+      continue;
+    }
+    // 기타 작업 완료 상태 — "진행 중"
+    if(f.id === 'completion_status'){
+      values[f.id] = '진행 중';
+      continue;
+    }
+    // 기타 작업 우선순위 — "보통"
+    if(f.id === 'priority'){
+      values[f.id] = '보통';
+      continue;
+    }
+    // 후속 점검 필요 (QC) — 기본 false (사용자가 심각도 보고 결정)
+    //   주의: boolean 필드는 명시적 false도 의미 있음, 자동 채움 안 함
+  }
 }
 
 function closeAttrEdit(){
@@ -8890,6 +9046,20 @@ function _renderAttrEditForm(){
   if(titleEl) titleEl.textContent = '📋 ' + schema.name;
 
   let html = '';
+
+  // v0.376: 자동 채움 안내 — 사용자가 자동 값을 확인하도록
+  //   조건: 신규 작업(attributes에 _schemaId 없거나 빈 상태)일 때만 표시
+  //   목적: 사용자에게 일부 값이 자동 채움됐음을 알림
+  const _pmHasExisting = Object.keys(state.values).some(k => k !== '_schemaId');
+  // 신규 추가(처음 폼 열기)인지 판단: pm.attributes._schemaId가 없으면 신규
+  const _isNewForm = !state.values._schemaId || Object.keys(state.values).filter(k => k !== '_schemaId').length <= 3;
+  if(_isNewForm){
+    html += '<div style="background:rgba(105,170,80,.08);border:.5px solid rgba(105,170,80,.3);'+
+      'border-radius:6px;padding:8px 10px;margin-bottom:14px;font-size:11px;color:var(--text2);line-height:1.5">'+
+      '💡 오늘 날짜와 블록 정보가 자동으로 채워졌습니다. 값을 확인 후 저장해 주세요.'+
+      '</div>';
+  }
+
   for(const f of schema.fields){
     const val = state.values[f.id];
     html += '<div style="margin-bottom:12px">';
@@ -9351,6 +9521,20 @@ function _drawMemoPins(svg){
   const slot = curSlot();
   // ── 메모 핀 ─────────────────────────────────────────────────
   const memoList=slot?.memos||[];
+  // v0.383: 스키마별 번호 카운팅 (사용자 보고: "스키마별로 숫자를 각각 카운팅")
+  //   이전: i+1 = 전체 배열 인덱스 (예: 9번째 placemark = 9 표시)
+  //   수정: 같은 스키마 안에서만 카운트 (수확 1,2,3 / 시비 1,2,3 / QC 1,2,3 별개)
+  //   기준: pm.attributes._schemaId (없으면 'unknown' 그룹으로 카운팅)
+  //   visual.label이 있으면 그것 우선 (사용자 정의 라벨 보호)
+  const _schemaCounter = {};   // { schemaId: nextNumber } — 1부터 증가
+  const _numberMap = {};        // { memoId: 표시할 숫자 }
+  memoList.forEach(m => {
+    if(m.kind === 'point') return;  // point는 _drawPoints가 처리
+    const sid = (m.attributes && m.attributes._schemaId) || '_no_schema';
+    _schemaCounter[sid] = (_schemaCounter[sid] || 0) + 1;
+    _numberMap[m.id] = _schemaCounter[sid];
+  });
+
   memoList.forEach((m,i)=>{
     // v0.286 Phase 1: kind='point'는 _drawPoints가 전담 (중복 그리기 방지)
     if(m.kind === 'point') return;
@@ -9614,19 +9798,22 @@ function _drawMemoPins(svg){
                             m.visual.label || m.visual.pinStyle));
     const isMemoKind = (!m.kind || m.kind === 'memo');
 
+    // v0.383: 스키마별 번호 사용 (이전: 전체 i+1)
+    const _displayNum = String(_numberMap[m.id] || (i+1));
+
     if(hasUserVisual){
       // 사용자 정의 시각 → 통합 _drawIconPin 사용
       const visual = _getPlacemarkVisual(m);
-      _drawIconPin(g, sx, sy, pinR, visual, String(i+1),
+      _drawIconPin(g, sx, sy, pinR, visual, _displayNum,
                    (m.photos && m.photos.length > 0), isNearGPS);
     } else if(isMemoKind){
       // 메모 기본: 주황 노트 (Phase 1)
       const memoColor = isNearGPS ? '#00f0ff' : '#ff7700';
-      _drawMemoNoteShape(g, sx, sy, pinR, memoColor, String(i+1),
+      _drawMemoNoteShape(g, sx, sy, pinR, memoColor, _displayNum,
                          (m.photos && m.photos.length > 0));
     } else {
       // Titik 기본: 빨간 핀 (Phase 1)
-      drawPinShape(g, String(sx), String(sy), pinR, pinColor, String(i+1));
+      drawPinShape(g, String(sx), String(sy), pinR, pinColor, _displayNum);
     }
 
     // 근접 시: 펄스 링 애니메이션
@@ -10983,6 +11170,7 @@ let trkDist = 0;        // 트랙 누적 거리 (m)
 let trackingLocked = false; // true=트래킹 중 화면 중앙 GPS 고정
 let showCalibMarkers = true;  // 보정 마커 표시 여부 (보정 패널 열릴 때만)
 let trkStartTime = null;// 트랙 시작 시각
+let _trkBarTimer = null;// v0.373: track-info-bar 1초 갱신 타이머 ID
 let compassHeading = 0; // 현재 방위각
 let drawMode = null;    // 'line' | 'polygon' | null
 let drawPts  = [];      // 그리기 포인트 (캔버스 좌표)
@@ -11890,20 +12078,37 @@ function _drawCompassTicks() {
 }
 
 // _updateTrackingInfo 재정의 (tib-* 요소 업데이트)
+// v0.373: 버그 수정 — HTML element ID는 tib-hh/tib-mm/tib-ss 인데 코드가 tib-time/tib-dist/tib-spd 참조
+//   → getElementById가 항상 null 반환 → 시간 갱신 안 됨 (사용자: "녹화 시간 00 h 00 m 00 s 그대로")
+//   수정: 실제 HTML element ID와 매칭 (tib-hh, tib-mm, tib-ss)
+//   거리/속도 element는 track-info-bar에 없음 (track-overlay에 별도 있음) → 시간만 갱신
+// v0.374: 시스템 시간 표시 추가 (Komoot 스타일 좌우 분할 pill)
+//   tib-clock-hh / tib-clock-mm 갱신 — 1초마다 현재 시각도 함께 표시
 function _updateTrackingInfo() {
   const bar = document.getElementById('track-info-bar');
   if (bar) {
     if (!trackOn) { bar.style.display='none'; }
     else {
       bar.style.display = 'flex';
+      // ── 녹화 시간 (HH:MM:SS) ──
       const elapsed = trkStartTime ? Math.floor((Date.now()-trkStartTime)/1000) : 0;
-      const mm = String(Math.floor(elapsed/60)).padStart(2,'0');
+      const hh = String(Math.floor(elapsed/3600)).padStart(2,'0');
+      const mm = String(Math.floor((elapsed%3600)/60)).padStart(2,'0');
       const ss = String(elapsed%60).padStart(2,'0');
-      const spd = curPos?.speed!=null ? _fmtSpeed(curPos.speed*3.6) : '—';
-      const d=document.getElementById('tib-dist'), t=document.getElementById('tib-time'), s=document.getElementById('tib-spd');
-      if(d) d.textContent=_fmtDist(trkDist);
-      if(t) t.textContent=mm+':'+ss;
-      if(s) s.textContent=spd;
+      const eHH = document.getElementById('tib-hh');
+      const eMM = document.getElementById('tib-mm');
+      const eSS = document.getElementById('tib-ss');
+      if (eHH) eHH.textContent = hh;
+      if (eMM) eMM.textContent = mm;
+      if (eSS) eSS.textContent = ss;
+      // ── 시스템 시간 (HH:MM) — v0.374 ──
+      const now = new Date();
+      const chh = String(now.getHours()).padStart(2,'0');
+      const cmm = String(now.getMinutes()).padStart(2,'0');
+      const eCHH = document.getElementById('tib-clock-hh');
+      const eCMM = document.getElementById('tib-clock-mm');
+      if (eCHH) eCHH.textContent = chh;
+      if (eCMM) eCMM.textContent = cmm;
     }
   }
   // track-overlay: GpsState.isTracking 일 때만 갱신
@@ -14218,6 +14423,11 @@ function toggleTrack(){
     trackOn=true; trkStart=new Date(); trkPts=[];
     trkDist=0; trkStartTime=Date.now(); // 거리/시간 초기화
     _updateTrackingInfo();
+    // v0.373: track-info-bar 시계 1초마다 갱신 (GPS 위치와 무관)
+    //   사용자가 가만히 있어도 시간이 정확히 흐르도록
+    //   기존엔 GPS watch callback에서만 갱신 → GPS 이동 없으면 시계 멈춤
+    if(_trkBarTimer){ clearInterval(_trkBarTimer); }
+    _trkBarTimer = setInterval(_updateTrackingInfo, 1000);
     // 트래킹 시작 시 화면 꺼짐 방지 자동 활성화
     if (!_wakeLock) {
       requestWakeLock().then(()=>{
@@ -14258,12 +14468,11 @@ function toggleTrack(){
     const st=trkStart;
     const timeStr=pad2(st.getHours())+':'+pad2(st.getMinutes())+':'+pad2(st.getSeconds());
     const el=document.getElementById('trk-start'); if(el) el.textContent=timeStr;
-    showPanel('track-panel'); _syncTrackColorSwatches();
+    // v0.375: 사용자 요청 — 트래킹 버튼 누르면 정보창(track-panel) 열지 말고 즉시 녹화 시작
+    //   이전: showPanel('track-panel') + 3초 후 자동 닫기 → 사용자가 매번 패널 보고 기다려야 함
+    //   수정: 패널 열지 않음, 토스트만 표시 — 상단 track-info-bar로 녹화 상태 충분히 확인 가능
+    //   _syncTrackColorSwatches는 패널이 열렸을 때만 의미가 있어 함께 제거
     toast(T('track_on'));
-    // 3초 후 패널 자동 닫기 (녹화는 계속)
-    setTimeout(()=>{
-      hidePanel('track-panel');
-    }, 3000);
   } else {
     // ── 녹화 중 재클릭 → 즉시 정지+저장 ───────────────────
     stopAndSaveTrack();
@@ -14272,6 +14481,8 @@ function toggleTrack(){
 function stopAndSaveTrack(){
   if(!trackOn||trkPts.length<2){
     toast(T('trk_few_pts')); trackOn=false;
+    // v0.373: 타이머 정리
+    if(_trkBarTimer){ clearInterval(_trkBarTimer); _trkBarTimer=null; }
     document.getElementById('btn-track')?.classList.remove('on');
   _updateBtnIcon('btn-track', _TRK_SVG_OFF);
     document.getElementById('track-recording-info').style.display='none';
@@ -14305,6 +14516,8 @@ function stopAndSaveTrack(){
     dist: calcDist()
   });
   saveSlotsMeta(); trackOn=false; trkPts=[]; trkDist=0; trkStartTime=null; trackingLocked=false; _updateLockBtn(); _updateTrackingInfo();
+  // v0.373: 시계 타이머 정리
+  if(_trkBarTimer){ clearInterval(_trkBarTimer); _trkBarTimer=null; }
   // 트래킹 정보창 + 시계 눈금 즉시 숨기기
   const _tov=document.getElementById('track-overlay');
   if(_tov){ _tov.classList.remove('active'); _tov.style.display='none'; }
@@ -14327,6 +14540,8 @@ function stopAndSaveTrack(){
 }
 function discardTrack(){
   trackOn=false; trkPts=[];
+  // v0.373: 시계 타이머 정리
+  if(_trkBarTimer){ clearInterval(_trkBarTimer); _trkBarTimer=null; }
   document.getElementById('btn-track')?.classList.remove('on');
   document.getElementById('track-recording-info').style.display='none';
   document.getElementById('track-info-bar')?.style && (document.getElementById('track-info-bar').style.display='none');
@@ -19637,13 +19852,34 @@ function _analyzeHarvestCycle(blockFeat){
 
 // v0.308 Phase 2b: 빠른 추가에서 사용할 5개 핵심 스키마 (옵션 3)
 // 사용자가 자주 사용할 농장 운영 핵심 스키마 + 아이콘
+// v0.382: "조합 1 — 도구 정통" 일괄 적용 (사용자 결정)
+//   원칙: 메뉴 이모지와 지도 핀 아이콘이 같은 도구를 가리키도록 통일
+//   변경: 수확 🌾→🔪 (낫), QC 🔬→🔍 (돋보기)
+//   유지: 시비 💊, 무육 ✂️, 장비 🚜
+//   핀 SVG: harvest→machete, water→pill, tree→scissors, bug→magnifier (4개 신규)
 const QUICK_ADD_SCHEMAS = [
-  { id: 'harvest_yield_v1', icon: '🌾', label: '수확' },
-  { id: 'fertilization_v1', icon: '🧪', label: '시비' },
+  { id: 'harvest_yield_v1', icon: '🔪', label: '수확' },
+  { id: 'fertilization_v1', icon: '💊', label: '시비' },
   { id: 'maintenance_v1',   icon: '✂️', label: '무육' },
-  { id: 'qc_pest_v1',       icon: '🔬', label: 'QC' },
+  { id: 'qc_pest_v1',       icon: '🔍', label: 'QC' },
   { id: 'heavy_equipment_v1', icon: '🚜', label: '장비' }
 ];
+
+// 빠른 작업으로 추가된 placemark의 스키마별 시각 (아이콘 + 색상)
+//   v0.382: 메뉴 이모지와 1:1 일치하는 핀 SVG 사용 — 농장 도구 정통 컨셉
+//   색상은 기존 그대로 유지 (사용자가 색 구분에 익숙해진 상태)
+const SCHEMA_VISUAL_MAP = {
+  'harvest_yield_v1':   { icon: 'machete',   color: '#ffc107', size: 'm' },  // 낫/노랑 = 🔪 수확
+  'fertilization_v1':   { icon: 'pill',      color: '#2b7de9', size: 'm' },  // 알약/파랑 = 💊 시비
+  'maintenance_v1':     { icon: 'scissors',  color: '#43a047', size: 'm' },  // 가위/녹색 = ✂️ 무육
+  'qc_pest_v1':         { icon: 'magnifier', color: '#e8001c', size: 'm' },  // 돋보기/빨강 = 🔍 QC
+  'heavy_equipment_v1': { icon: 'vehicle',   color: '#795548', size: 'm' },  // 차량/갈색 = 🚜 장비 (유지)
+  'general_misc_v1':    { icon: 'flag',      color: '#7e57c2', size: 'm' }   // 깃발/보라 = 🚩 기타 (유지)
+};
+
+function _getSchemaVisual(schemaId){
+  return SCHEMA_VISUAL_MAP[schemaId] || null;  // null이면 _newPlacemark의 기본값 사용
+}
 
 // 빠른 작업 추가 핸들러 (v0.308 Phase 2b)
 // blockName: 블록 이름 (예: "A13"), layerName: 레이어 이름, schemaId: 사용할 스키마
@@ -19668,6 +19904,10 @@ function quickAddWork(blockName, layerName, schemaId){
   }
 
   // placemark 생성 — blockCode 자동 채움 + 스키마 ID 부착
+  // v0.379: 사용자 보고 "수확량 정보를 입력해도 메모 아이콘이 생성됨"
+  //   원인: v0.377에서 quickAddWorkAt(좌표 기반)에는 visual 적용했으나
+  //         quickAddWork(블록 정보창 → 카드 경로)에는 빠뜨렸음
+  //   수정: 동일한 _getSchemaVisual(schemaId) 적용
   const now = new Date();
   const pm = _newPlacemark({
     lat: centerLat, lon: centerLon,
@@ -19676,7 +19916,8 @@ function quickAddWork(blockName, layerName, schemaId){
     layerName: layerName || '',
     date: now.toISOString().slice(0,10),
     time: now.toTimeString().slice(0,5),
-    attributes: { _schemaId: schemaId }
+    attributes: { _schemaId: schemaId },
+    visual: _getSchemaVisual(schemaId)   // v0.379: 스키마별 아이콘/색상
   });
 
   // pinX/pinY 계산 (보정점 있을 때만)
@@ -19724,6 +19965,11 @@ function quickAddWorkAt(lat, lon, schemaId, blockNameHint){
     if(found){ blockCode = found.blockCode || ''; layerName = found.layer?.name || ''; }
   }
 
+  // v0.377: 스키마별 visual 자동 설정 (사용자 보고: "지도에서 메모 아이콘으로만 보임")
+  //   각 스키마에 맞는 아이콘 + 색상으로 placemark 생성
+  //   사용자가 나중에 visual 편집(openVisualEdit)으로 변경 가능
+  const _visual = _getSchemaVisual(schemaId);
+
   // placemark 생성
   const now = new Date();
   const pm = _newPlacemark({
@@ -19733,7 +19979,8 @@ function quickAddWorkAt(lat, lon, schemaId, blockNameHint){
     layerName,
     date: now.toISOString().slice(0,10),
     time: now.toTimeString().slice(0,5),
-    attributes: { _schemaId: schemaId }
+    attributes: { _schemaId: schemaId },
+    visual: _visual   // v0.377: 스키마별 아이콘/색상
   });
 
   // pinX/pinY 계산 (보정점 있을 때만)
@@ -20998,6 +21245,20 @@ function _showLongpressMenu(clientX, clientY){
   const px = (clientX - r.left - ox) / scale;
   const py = (clientY - r.top  - oy) / scale;
   _longpressCanvasXY = {px, py};
+
+  // v0.372: long-press 시 트랙 라인 위면 트랙 정보창 우선 표시
+  //   사용자 보고: "트랙 위에서 길게 누르면 일반 '점 추가' 메뉴가 뜸 → 트랙 정보가 보여야 함"
+  //   동작: 트랙 hit → showTrackIDCard (정보창 + 편집), 아니면 기존 메뉴
+  //   외부 레이어 polygon은 별도 (탭으로도 정보창 뜨므로 long-press는 동일하게)
+  if(typeof hitTestTracks === 'function'){
+    const hitTrk = hitTestTracks(px, py);
+    if(hitTrk && typeof showTrackIDCard === 'function'){
+      // 진동 피드백 (long-press 인식 표시)
+      if(navigator.vibrate) try { navigator.vibrate(20); } catch(_){}
+      showTrackIDCard(hitTrk);
+      return;
+    }
+  }
 
   const menu = document.getElementById('longpress-menu'); if(!menu) return;
   const coord = document.getElementById('longpress-coord');
